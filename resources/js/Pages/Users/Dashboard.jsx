@@ -425,11 +425,11 @@ export default function Dashboard({ auth }) {
                                                                 -1,
                                                             )
                                                         }
-                                                        className="px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-850 font-bold transition-colors"
+                                                        className="px-3 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
                                                     >
                                                         -
                                                     </button>
-                                                    <span className="px-4 text-xs font-bold font-mono min-w-[2rem] text-center">
+                                                    <span className="px-4 text-xs font-bold font-mono min-w-[2rem] text-center text-slate-800 dark:text-slate-200">
                                                         {activeCardQty}
                                                     </span>
                                                     <button
@@ -439,7 +439,7 @@ export default function Dashboard({ auth }) {
                                                                 1,
                                                             )
                                                         }
-                                                        className="px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-850 font-bold transition-colors"
+                                                        className="px-3 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
                                                     >
                                                         +
                                                     </button>
@@ -547,11 +547,11 @@ export default function Dashboard({ auth }) {
                                                     -1,
                                                 )
                                             }
-                                            className="px-1.5 text-slate-500 hover:text-rose-500 font-bold"
+                                            className="px-2 py-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 font-bold transition-colors"
                                         >
                                             -
                                         </button>
-                                        <span className="px-1.5 font-mono font-bold text-[11px]">
+                                        <span className="px-1.5 font-mono font-bold text-[11px] text-slate-800 dark:text-slate-200">
                                             {cartItem.qty}
                                         </span>
                                         <button
@@ -562,7 +562,7 @@ export default function Dashboard({ auth }) {
                                                     1,
                                                 )
                                             }
-                                            className="px-1.5 text-slate-500 hover:text-emerald-500 font-bold"
+                                            className="px-2 py-1 text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 font-bold transition-colors"
                                         >
                                             +
                                         </button>
@@ -615,7 +615,7 @@ export default function Dashboard({ auth }) {
                                     : "bg-slate-200 text-slate-400 cursor-not-allowed"
                             }`}
                         >
-                            Execute Integrated ERP Checkout
+                            Checkout
                         </button>
                     </div>
                 </div>
