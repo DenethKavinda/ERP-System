@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { Head } from "@inertiajs/react";
+import Header from "../../Components/Header"; // Adjust this relative path to match your project directory structure
 
 // ============================================================================
 // MARKETPLACE ASSET DATA STORE (PRODUCTS WITH ATTACHED SERVICE ADD-ONS)
@@ -90,7 +91,7 @@ export default function Dashboard({ auth }) {
     // Tracks state of checked add-on services per product card
     const [selectedServices, setSelectedServices] = useState({});
 
-    // NEW: Tracks the selected quantity on the product card *before* adding to cart
+    // Tracks the selected quantity on the product card before adding to cart
     const [cardQuantities, setCardQuantities] = useState({});
 
     // Helper to get selected quantity for a card (defaults to 1)
@@ -103,7 +104,7 @@ export default function Dashboard({ auth }) {
     const handleCardQtyChange = useCallback((productId, delta) => {
         setCardQuantities((prev) => {
             const current = prev[productId] || 1;
-            const updated = Math.max(1, current + delta); // Prevent numbers below 1
+            const updated = Math.max(1, current + delta);
             return { ...prev, [productId]: updated };
         });
     }, []);
@@ -130,13 +131,11 @@ export default function Dashboard({ auth }) {
                 );
 
                 if (matchIndex > -1) {
-                    // If configuration already in cart, update existing entry's quantity cleanly
                     const updatedCart = [...prevCart];
                     updatedCart[matchIndex].qty += quantityToAdd;
                     return updatedCart;
                 }
 
-                // Otherwise itemize it cleanly inside the core transaction tracking state
                 return [
                     ...prevCart,
                     {
@@ -150,7 +149,6 @@ export default function Dashboard({ auth }) {
                 ];
             });
 
-            // Reset the input configurations back to defaults on the card
             setSelectedServices((prev) => ({ ...prev, [product.id]: false }));
             setCardQuantities((prev) => ({ ...prev, [product.id]: 1 }));
         },
@@ -184,7 +182,7 @@ export default function Dashboard({ auth }) {
         );
     }, []);
 
-    // Service price is flat (same rate regardless of item quantity total)
+    // Service price calculation is a flat addition
     const cartTotal = useMemo(() => {
         return cart.reduce(
             (sum, item) => sum + item.price * item.qty + item.serviceRate,
@@ -219,43 +217,12 @@ export default function Dashboard({ auth }) {
         >
             <Head title="Enterprise Product Bundle Console" />
 
-            {/* APP HEADER BANNER */}
-            <header
-                className={`sticky top-0 z-40 border-b backdrop-blur-md px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors ${
-                    isDarkMode
-                        ? "bg-slate-900/90 border-slate-800"
-                        : "bg-white/90 border-slate-200"
-                }`}
-            >
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight">
-                        Enterprise Client Marketplace
-                    </h1>
-                    <p
-                        className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
-                    >
-                        Account Advisor Node:{" "}
-                        <span className="font-semibold text-blue-600">
-                            {auth?.user?.name || "Insurance Advisor"}
-                        </span>
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setIsDarkMode(!isDarkMode)}
-                        className={`px-4 py-2 rounded-lg border text-xs font-semibold shadow-sm transition-all ${
-                            isDarkMode
-                                ? "bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700"
-                                : "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
-                        }`}
-                    >
-                        {isDarkMode
-                            ? "☀️ Light Interface"
-                            : "🌙 Dark Interface"}
-                    </button>
-                </div>
-            </header>
+            {/* SEPARATED HEADER REFACTOR */}
+            <Header
+                isDarkMode={isDarkMode}
+                setIsDarkMode={setIsDarkMode}
+                auth={auth}
+            />
 
             {/* MAIN APP SHELL CONTENT LAYOUT */}
             <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 pb-40 md:pb-32">
@@ -458,7 +425,7 @@ export default function Dashboard({ auth }) {
                                                                 -1,
                                                             )
                                                         }
-                                                        className="px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
+                                                        className="px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-850 font-bold transition-colors"
                                                     >
                                                         -
                                                     </button>
@@ -472,7 +439,7 @@ export default function Dashboard({ auth }) {
                                                                 1,
                                                             )
                                                         }
-                                                        className="px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
+                                                        className="px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-850 font-bold transition-colors"
                                                     >
                                                         +
                                                     </button>
