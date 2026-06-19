@@ -4,17 +4,19 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\DashboardController;
+
+
+// Route::get('/', function () {
+//     return Inertia::render('Welcome', [
+//         'canLogin' => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//         'laravelVersion' => Application::VERSION,
+//         'phpVersion' => PHP_VERSION,
+//     ]);
+// });
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
-
-Route::get('/user/dashboard', function () {
     // Mock data mimicking an ERP database response
     $mockProducts = [
         ['id' => 1, 'name' => 'Premium Wireless Headphones', 'description' => 'Noise-canceling over-ear studio headphones.', 'price' => 199],
@@ -31,4 +33,30 @@ Route::get('/user/dashboard', function () {
         'services' => $mockServices,
     ]);
 });
+
+
+
+// Main Dashboard (Fetches dynamic cards from the database)
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+// ERP Portal Section Route
+Route::get('/ERP', function () {
+    return Inertia::render('Users/ERP');
+});
+
+// Simple Authentication Protected Management System Routes
+// Since there's no role-based check, any logged-in user can reach these endpoints
+// Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
+Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
+Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
+// });
+
+// Profile Management Routes
+// Route::middleware('auth')->group(function () {
+Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// });
+
 require __DIR__ . '/auth.php';
