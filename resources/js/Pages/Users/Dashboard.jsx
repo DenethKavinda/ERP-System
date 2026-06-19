@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { Head } from "@inertiajs/react";
-import Header from "../../Components/Header"; // Adjust this relative path to match your project directory structure
+import Header from "../../Components/Header";
 
 // ============================================================================
 // MARKETPLACE ASSET DATA STORE (PRODUCTS WITH ATTACHED SERVICE ADD-ONS)
@@ -182,10 +182,10 @@ export default function Dashboard({ auth }) {
         );
     }, []);
 
-    // Service price calculation is a flat addition
+    // Service price calculation matches item quantity scaling behavior
     const cartTotal = useMemo(() => {
         return cart.reduce(
-            (sum, item) => sum + item.price * item.qty + item.serviceRate,
+            (sum, item) => sum + (item.price + item.serviceRate) * item.qty,
             0,
         );
     }, [cart]);
@@ -212,184 +212,199 @@ export default function Dashboard({ auth }) {
             className={`min-h-screen font-sans transition-colors duration-300 ${
                 isDarkMode
                     ? "bg-slate-950 text-slate-100"
-                    : "bg-slate-50 text-slate-900"
+                    : "bg-[#f8f9fa] text-slate-800"
             }`}
         >
             <Head title="Enterprise Product Bundle Console" />
 
-            {/* SEPARATED HEADER REFACTOR */}
+            {/* SEPARATED HEADER */}
             <Header
                 isDarkMode={isDarkMode}
                 setIsDarkMode={setIsDarkMode}
                 auth={auth}
             />
 
-            {/* MAIN APP SHELL CONTENT LAYOUT */}
-            <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 pb-40 md:pb-32">
-                {/* SEARCH AND CATEGORY SELECTION FILTERS */}
+            {/* VIBRANT HIGH-COLOR HERO COVER BAR */}
+            <div className="relative bg-slate-950 text-white min-h-[55vh] flex items-center justify-center py-16 px-4 border-b border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div
-                    className={`p-4 rounded-xl border flex flex-col md:flex-row items-center gap-4 shadow-sm transition-colors ${
-                        isDarkMode
-                            ? "bg-slate-900 border-slate-800"
-                            : "bg-white border-slate-200"
-                    }`}
-                >
-                    <div className="w-full md:w-1/2">
-                        <label
-                            className={`text-xs font-bold uppercase tracking-wider block mb-1.5 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
-                        >
-                            Search Core Inventory
-                        </label>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search by product name, SKU title code refs..."
-                            className={`w-full text-sm px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all ${
-                                isDarkMode
-                                    ? "bg-slate-950 border-slate-800 text-white"
-                                    : "bg-slate-50 border-slate-200 text-slate-800"
-                            }`}
-                        />
-                    </div>
+                    className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-screen scale-105"
+                    style={{ backgroundImage: "url('/img/hero-bg.jpg')" }}
+                />
 
-                    <div className="w-full md:w-1/2">
-                        <label
-                            className={`text-xs font-bold uppercase tracking-wider block mb-1.5 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
-                        >
-                            Category Filter Inclusion
-                        </label>
-                        <div className="flex gap-2 flex-wrap">
-                            {[
-                                "ALL",
-                                "Appliances",
-                                "Climate Control",
-                                "Audio Equipment",
-                                "Office Infrastructure",
-                            ].map((cat) => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setSelectedCategory(cat)}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                                        selectedCategory === cat
-                                            ? "bg-blue-600 text-white shadow-sm"
-                                            : isDarkMode
-                                              ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                    }`}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+
+                <div className="relative z-10 max-w-4xl w-full text-center space-y-6">
+                    <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                        Bring your big ideas to life.
+                    </h1>
+                    <p className="text-sm md:text-base text-slate-200 max-w-xl mx-auto font-medium drop-shadow-md">
+                        Search for tailored infrastructure, active configuration
+                        modules, and bundle options at value pricing.
+                    </p>
+
+                    {/* Integrated Search Box Floating Layer */}
+                    <div className="p-4 md:p-6 rounded-xl border border-white/20 bg-slate-950/80 backdrop-blur-lg shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col md:flex-row items-stretch md:items-center gap-4 text-left max-w-3xl mx-auto">
+                        <div className="w-full md:w-1/2 relative flex flex-col justify-center">
+                            <label className="text-xs font-bold block mb-1.5 text-slate-300">
+                                Find your product package
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) =>
+                                        setSearchQuery(e.target.value)
+                                    }
+                                    placeholder="Enter keywords or reference codes..."
+                                    className="w-full text-sm pl-11 pr-4 py-2.5 rounded-lg border border-slate-700 bg-slate-900/90 text-white placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition-all"
+                                />
+                                <svg
+                                    className="absolute left-4 top-3 h-4 w-4 text-slate-500"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
                                 >
-                                    {cat}
-                                </button>
-                            ))}
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div className="w-full md:w-1/2 flex flex-col justify-center">
+                            <label className="text-xs font-bold block mb-1.5 text-slate-300">
+                                Filter by Category Tier
+                            </label>
+                            <div className="flex gap-1.5 flex-wrap">
+                                {[
+                                    "ALL",
+                                    "Appliances",
+                                    "Climate Control",
+                                    "Audio Equipment",
+                                    "Office Infrastructure",
+                                ].map((cat) => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setSelectedCategory(cat)}
+                                        className={`px-2.5 py-1.5 text-[11px] font-bold rounded transition-all border ${
+                                            selectedCategory === cat
+                                                ? "bg-orange-500 border-orange-500 text-white shadow-sm"
+                                                : "bg-slate-800/90 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+                                        }`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* PRODUCT LIST GRID SEGMENT */}
-                <div className="space-y-4">
-                    <h2 className="text-lg font-bold tracking-tight uppercase border-l-4 border-blue-600 pl-3">
-                        Available Products & Custom Bundles
-                    </h2>
+            {/* MAIN APP SHELL CONTENT LAYOUT */}
+            <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 pb-72 sm:pb-64 md:pb-48">
+                <div className="space-y-6">
+                    <div className="border-b pb-3 border-slate-200 dark:border-slate-800">
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                            Choose Your Custom Framework Packages
+                        </h2>
+                    </div>
 
                     {filteredProducts.length === 0 ? (
                         <div
-                            className={`border-2 border-dashed p-12 text-center rounded-xl ${isDarkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200"}`}
+                            className={`border border-dashed p-16 text-center rounded-xl ${isDarkMode ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200"}`}
                         >
                             <p className="text-sm text-slate-400 font-medium">
-                                No inventory matrix matches your active
-                                selection parameters.
+                                No matching setup elements were found matching
+                                your filters.
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                            {filteredProducts.map((product) => {
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredProducts.map((product, index) => {
                                 const hasAddonChecked =
                                     !!selectedServices[product.id];
                                 const activeCardQty = getCardQty(product.id);
 
+                                // Calculate row assignment dynamically to apply staggered delay rows
+                                const rowNumber = Math.floor(index / 3) + 1;
+                                const delayClass =
+                                    rowNumber === 1
+                                        ? "delay-row-1"
+                                        : rowNumber === 2
+                                          ? "delay-row-2"
+                                          : "delay-row-3";
+
                                 return (
                                     <div
                                         key={product.id}
-                                        className={`border rounded-xl overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition-all ${
+                                        className={`animate-fade-in-up ${delayClass} border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300 ${
                                             isDarkMode
-                                                ? "bg-slate-900 border-slate-800"
-                                                : "bg-white border-slate-200"
+                                                ? "bg-slate-900 border-slate-800/80 hover:border-slate-700"
+                                                : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md"
                                         }`}
                                     >
-                                        <div className="p-5 space-y-4">
-                                            {/* Top Meta Header Layer */}
-                                            <div className="flex gap-4">
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    className="w-24 h-24 object-cover rounded-lg border border-slate-200/20 shrink-0 bg-slate-100"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src =
-                                                            "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=150";
-                                                    }}
-                                                />
-                                                <div className="space-y-1">
-                                                    <span
-                                                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                                                            isDarkMode
-                                                                ? "bg-slate-800 text-slate-300"
-                                                                : "bg-slate-100 text-slate-600"
-                                                        }`}
-                                                    >
+                                        <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                        {product.category}
+                                                    </span>
+                                                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
                                                         {product.sku}
                                                     </span>
-                                                    <h3 className="font-bold text-lg leading-tight text-blue-600 dark:text-blue-400">
-                                                        {product.name}
-                                                    </h3>
-                                                    <p
-                                                        className={`text-xs line-clamp-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
-                                                    >
-                                                        {product.description}
-                                                    </p>
                                                 </div>
-                                            </div>
-
-                                            {/* Price Allocation Layer */}
-                                            <div className="flex justify-between items-baseline pt-2">
-                                                <span
-                                                    className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
+                                                <h3 className="font-bold text-base text-slate-900 dark:text-white leading-tight">
+                                                    {product.name}
+                                                </h3>
+                                                <p
+                                                    className={`text-xs line-clamp-3 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
                                                 >
-                                                    Base Product Price
-                                                </span>
-                                                <span className="text-2xl font-black text-emerald-600 font-mono">
-                                                    ${product.price}
+                                                    {product.description}
+                                                </p>
+                                            </div>
+
+                                            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 text-center py-1">
+                                                <div className="flex justify-center items-baseline">
+                                                    <span className="text-3xl font-bold text-slate-900 dark:text-white font-sans">
+                                                        ${product.price}
+                                                    </span>
+                                                    <span className="text-xs text-slate-400 dark:text-slate-500 ml-1"></span>
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 block mt-0.5">
+                                                    Renews at standard rate
                                                 </span>
                                             </div>
 
-                                            {/* INTEGRATED SERVICE BUNDLE ADD-ON CONTAINER */}
                                             <div
                                                 onClick={() =>
                                                     toggleServiceCheckbox(
                                                         product.id,
                                                     )
                                                 }
-                                                className={`p-3.5 rounded-lg border-2 transition-all cursor-pointer select-none flex items-start gap-3 ${
+                                                className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer select-none flex items-start gap-3 ${
                                                     hasAddonChecked
-                                                        ? "bg-blue-50/10 border-blue-500"
+                                                        ? "bg-orange-50 dark:bg-orange-950/20 border-orange-500/40"
                                                         : isDarkMode
                                                           ? "bg-slate-950 border-slate-800 hover:border-slate-700"
-                                                          : "bg-slate-50 border-slate-200 hover:border-slate-300"
+                                                          : "bg-[#f8f9fa] border-slate-200 hover:border-slate-300"
                                                 }`}
                                             >
                                                 <input
                                                     type="checkbox"
                                                     checked={hasAddonChecked}
                                                     onChange={() => {}}
-                                                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 mt-0.5 cursor-pointer"
+                                                    className="w-3.5 h-3.5 mt-0.5 rounded text-orange-500 focus:ring-orange-500 border-slate-300 cursor-pointer transition-transform duration-200 active:scale-90"
                                                 />
                                                 <div className="flex-1 space-y-0.5">
-                                                    <div className="flex justify-between items-baseline">
-                                                        <h4 className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                                                            Add Service Operator
-                                                            & Tuning Support
-                                                            (Flat Price)
+                                                    <div className="flex justify-between items-baseline flex-wrap gap-1">
+                                                        <h4 className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                                                            Add Supporting Setup
                                                         </h4>
-                                                        <span className="text-xs font-bold text-emerald-600 font-mono">
+                                                        <span className="text-[11px] font-bold text-slate-600 dark:text-orange-400">
                                                             +$
                                                             {
                                                                 product
@@ -398,9 +413,7 @@ export default function Dashboard({ auth }) {
                                                             }
                                                         </span>
                                                     </div>
-                                                    <p
-                                                        className={`text-[11px] leading-normal ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
-                                                    >
+                                                    <p className="text-[10px] leading-tight line-clamp-2 text-slate-500 dark:text-slate-400">
                                                         {
                                                             product
                                                                 .availableService
@@ -411,62 +424,42 @@ export default function Dashboard({ auth }) {
                                             </div>
                                         </div>
 
-                                        {/* Dynamic Card Pricing & Pre-Cart Controls */}
                                         <div
-                                            className={`p-4 border-t px-5 flex flex-col sm:flex-row items-center gap-4 justify-between ${isDarkMode ? "border-slate-800 bg-slate-950/40" : "border-slate-100 bg-slate-50/50"}`}
+                                            className={`p-4 border-t px-5 flex items-center justify-between gap-3 ${isDarkMode ? "border-slate-800 bg-slate-950/20" : "border-slate-100 bg-[#f8f9fa]"}`}
                                         >
-                                            <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-                                                {/* Pre-Cart Quantity Selector Widgets */}
-                                                <div className="flex items-center border rounded-lg overflow-hidden bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
-                                                    <button
-                                                        onClick={() =>
-                                                            handleCardQtyChange(
-                                                                product.id,
-                                                                -1,
-                                                            )
-                                                        }
-                                                        className="px-3 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
-                                                    >
-                                                        -
-                                                    </button>
-                                                    <span className="px-4 text-xs font-bold font-mono min-w-[2rem] text-center text-slate-800 dark:text-slate-200">
-                                                        {activeCardQty}
-                                                    </span>
-                                                    <button
-                                                        onClick={() =>
-                                                            handleCardQtyChange(
-                                                                product.id,
-                                                                1,
-                                                            )
-                                                        }
-                                                        className="px-3 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-
-                                                <div className="text-left">
-                                                    <span className="text-[9px] uppercase text-slate-400 font-semibold block">
-                                                        Estimated Group Cost
-                                                    </span>
-                                                    <span className="text-base font-bold font-mono text-emerald-600">
-                                                        $
-                                                        {product.price *
-                                                            activeCardQty +
-                                                            (hasAddonChecked
-                                                                ? product
-                                                                      .availableService
-                                                                      .rate
-                                                                : 0)}
-                                                    </span>
-                                                </div>
+                                            <div className="flex items-center border rounded bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 overflow-hidden">
+                                                <button
+                                                    onClick={() =>
+                                                        handleCardQtyChange(
+                                                            product.id,
+                                                            -1,
+                                                        )
+                                                    }
+                                                    className="px-2.5 py-1 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-orange-500 dark:hover:text-orange-400 font-bold transition-colors text-xs"
+                                                >
+                                                    —
+                                                </button>
+                                                <span className="px-1 text-xs font-bold min-w-[1.2rem] text-center text-slate-800 dark:text-slate-100">
+                                                    {activeCardQty}
+                                                </span>
+                                                <button
+                                                    onClick={() =>
+                                                        handleCardQtyChange(
+                                                            product.id,
+                                                            1,
+                                                        )
+                                                    }
+                                                    className="px-2.5 py-1 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-orange-500 dark:hover:text-orange-400 font-bold transition-colors text-xs"
+                                                >
+                                                    +
+                                                </button>
                                             </div>
 
                                             <button
                                                 onClick={() =>
                                                     handleAddToCart(product)
                                                 }
-                                                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-lg uppercase tracking-wider transition-all transform active:scale-95 shadow-sm"
+                                                className="flex-1 max-w-[140px] bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded text-center transition-all uppercase tracking-wider active:scale-95 shadow-sm hover:shadow"
                                             >
                                                 Add to Cart
                                             </button>
@@ -479,66 +472,84 @@ export default function Dashboard({ auth }) {
                 </div>
             </main>
 
-            {/* STICKY DRAW-PANEL CART FOOTER MODAL */}
+            {/* STICKY DRAW-PANEL CART FOOTER WITH SMOOTH ENTRANCE ANIMATIONS */}
             <footer
-                className={`fixed bottom-0 inset-x-0 z-50 p-4 border-t shadow-[0_-15px_40px_rgba(0,0,0,0.15)] transition-all ${
+                className={`fixed bottom-0 inset-x-0 z-50 p-4 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.12)] transition-all duration-500 ease-in-out ${
+                    cartVolume > 0
+                        ? "translate-y-0 opacity-100 pointer-events-auto"
+                        : "translate-y-4 opacity-90 pointer-events-auto"
+                } ${
                     isDarkMode
-                        ? "bg-slate-900 border-slate-800 text-white"
+                        ? "bg-slate-900 border-slate-800 text-slate-100"
                         : "bg-white border-slate-200 text-slate-900"
                 }`}
             >
-                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
-                    {/* Cart Status Totals */}
-                    <div className="flex items-center gap-4 shrink-0">
-                        <div className="bg-blue-600 text-white h-12 w-12 rounded-xl flex items-center justify-center text-xl shadow-md font-bold">
-                            🛒
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+                    <div className="flex items-center gap-3 shrink-0">
+                        <div className="bg-slate-800 dark:bg-slate-950 text-white h-10 w-10 rounded flex items-center justify-center relative transition-transform duration-300 ease-out active:scale-95 border dark:border-slate-800">
+                            <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                            </svg>
+                            {cartVolume > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center animate-bounce">
+                                    {cartVolume}
+                                </span>
+                            )}
                         </div>
                         <div>
-                            <h4 className="font-bold text-sm uppercase tracking-wide">
-                                Master Order Terminal
+                            <h4 className="font-bold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Shopping Cart Selection
                             </h4>
-                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                Total Units: {cartVolume} Items
+                            <p className="text-xs text-slate-800 dark:text-slate-200 transition-all duration-200">
+                                {cartVolume} items configured
                             </p>
                         </div>
                     </div>
 
-                    {/* Horizontal Cart Line Item List View Panel */}
                     <div
-                        className={`flex-1 flex items-center gap-2 overflow-x-auto p-2 rounded-lg border min-h-[52px] ${
+                        className={`flex-1 flex items-center gap-2 overflow-y-auto md:overflow-x-auto p-2 rounded border flex-wrap md:flex-nowrap max-h-[100px] md:max-h-[56px] min-h-[40px] transition-all duration-300 ${
                             isDarkMode
-                                ? "bg-slate-950 border-slate-800"
-                                : "bg-slate-50 border-slate-150"
+                                ? "bg-slate-950 border-slate-800/80"
+                                : "bg-[#f8f9fa] border-slate-200"
                         }`}
                     >
                         {cart.length === 0 ? (
-                            <p className="text-xs text-slate-400 font-medium tracking-wide w-full text-center py-1">
-                                Your transactional workspace pipeline memory is
-                                empty.
+                            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium w-full text-center py-1 transition-opacity duration-300">
+                                No packages selected yet. Choose options from
+                                the grid above.
                             </p>
                         ) : (
                             cart.map((cartItem, idx) => (
                                 <div
                                     key={`${cartItem.id}-${cartItem.hasService}-${idx}`}
-                                    className={`inline-flex items-center gap-3 text-xs font-medium border px-2.5 py-1.5 rounded-md shadow-sm shrink-0 ${
+                                    className={`inline-flex items-center gap-2.5 text-xs border px-2.5 py-1 rounded shadow-sm shrink-0 max-w-full md:max-w-[240px] transition-all duration-300 transform scale-100 hover:scale-[1.02] ${
                                         isDarkMode
-                                            ? "bg-slate-900 border-slate-700 text-white"
+                                            ? "bg-slate-900 border-slate-700 text-slate-100"
                                             : "bg-white border-slate-200 text-slate-800"
                                     }`}
                                 >
-                                    <div className="flex flex-col">
-                                        <span className="font-bold max-w-[120px] truncate text-blue-600 dark:text-blue-400">
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <span className="font-bold truncate text-slate-900 dark:text-slate-100">
                                             {cartItem.name}
                                         </span>
                                         {cartItem.hasService && (
-                                            <span className="text-[9px] font-semibold text-amber-600 uppercase tracking-tight">
-                                                + Operator Support (Flat)
+                                            <span className="text-[9px] font-bold text-orange-500 uppercase tracking-tight">
+                                                + Support Add-on
                                             </span>
                                         )}
                                     </div>
 
-                                    {/* Direct Checkout Panel Quantity Tweaks */}
-                                    <div className="flex items-center bg-slate-100 dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                    <div className="flex items-center bg-slate-100 dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800 overflow-hidden shrink-0">
                                         <button
                                             onClick={() =>
                                                 handleUpdateCartQty(
@@ -547,11 +558,11 @@ export default function Dashboard({ auth }) {
                                                     -1,
                                                 )
                                             }
-                                            className="px-2 py-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 font-bold transition-colors"
+                                            className="px-1.5 py-0.5 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 font-bold transition-colors"
                                         >
                                             -
                                         </button>
-                                        <span className="px-1.5 font-mono font-bold text-[11px] text-slate-800 dark:text-slate-200">
+                                        <span className="px-1 text-[11px] font-bold text-slate-800 dark:text-slate-100">
                                             {cartItem.qty}
                                         </span>
                                         <button
@@ -562,7 +573,7 @@ export default function Dashboard({ auth }) {
                                                     1,
                                                 )
                                             }
-                                            className="px-2 py-1 text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 font-bold transition-colors"
+                                            className="px-1.5 py-0.5 text-slate-500 dark:text-slate-400 hover:text-green-500 dark:hover:text-green-400 font-bold transition-colors"
                                         >
                                             +
                                         </button>
@@ -575,8 +586,7 @@ export default function Dashboard({ auth }) {
                                                 cartItem.hasService,
                                             )
                                         }
-                                        className="text-slate-400 hover:text-rose-500 font-bold transition-colors"
-                                        title="Flush entry item index"
+                                        className="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold p-0.5 transition-colors"
                                     >
                                         ✕
                                     </button>
@@ -585,34 +595,26 @@ export default function Dashboard({ auth }) {
                         )}
                     </div>
 
-                    {/* Operational Trigger Actions */}
-                    <div className="flex items-center justify-between lg:justify-end gap-4 border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-200/40">
-                        <div
-                            className={`p-2 rounded border px-4 min-w-[140px] text-right ${
-                                isDarkMode
-                                    ? "bg-slate-950 border-slate-800"
-                                    : "bg-slate-50 border-slate-200"
-                            }`}
-                        >
-                            <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">
-                                Total Cart Value
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/60 dark:border-slate-800 shrink-0">
+                        <div className="text-right px-2">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 block uppercase tracking-wider">
+                                Subtotal
                             </span>
-                            <span className="text-xl font-black text-emerald-600 font-mono">
-                                ${cartTotal.toLocaleString()}
+                            <span className="text-xl font-bold text-slate-900 dark:text-white transition-all duration-300">
+                                ${cartTotal}
                             </span>
                         </div>
-
                         <button
                             disabled={cart.length === 0}
                             onClick={() =>
                                 alert(
-                                    `Processing transaction ledger dispatch containing combined product-service arrays totaling: $${cartTotal}`,
+                                    `Processing checkout workflow: $${cartTotal}`,
                                 )
                             }
-                            className={`text-xs font-bold px-6 py-3 rounded-lg uppercase tracking-wider transition-all whitespace-nowrap shadow-md ${
+                            className={`text-xs font-bold px-6 py-2.5 rounded transition-all duration-200 uppercase tracking-wider ${
                                 cart.length > 0
-                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white transform active:scale-95"
-                                    : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                    ? "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer active:scale-95 shadow-md shadow-orange-500/10"
+                                    : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
                             }`}
                         >
                             Checkout

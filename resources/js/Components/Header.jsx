@@ -20,15 +20,16 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
         <header
             className={`sticky top-0 z-40 border-b backdrop-blur-md transition-colors duration-200 ${
                 isDarkMode
-                    ? "bg-slate-900/90 border-slate-800"
+                    ? "bg-slate-950/90 border-slate-800"
                     : "bg-white/90 border-slate-200"
             }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 gap-4">
-                    {/* LEFT SEGMENT: LOGO BRAND CONTAINER */}
+                    {/* LEFT SEGMENT: NEW ORANGE TECH LOGO & BRAND CONTAINER */}
                     <div className="flex items-center gap-3 shrink-0">
-                        <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
+                        <div className="p-2 bg-orange-500/10 text-orange-500 dark:text-orange-400 rounded-lg shrink-0">
+                            {/* Updated tech network/bundle icon to match Namecheap vibe */}
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
@@ -40,12 +41,27 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"
+                                    pathLength="1"
+                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                                />
+                                <polyline
+                                    points="3.27 6.96 12 12.01 20.73 6.96"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                                <line
+                                    x1="12"
+                                    y1="22.08"
+                                    x2="12"
+                                    y2="12"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 />
                             </svg>
                         </div>
-                        <h1 className="text-lg font-bold tracking-tight whitespace-nowrap">
-                            Enterprise Client Marketplace
+                        <h1 className="text-lg font-black tracking-tight whitespace-nowrap text-slate-900 dark:text-white">
+                            Enterprise Client{" "}
+                            <span className="text-orange-500">Marketplace</span>
                         </h1>
                     </div>
 
@@ -55,11 +71,11 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                             <a
                                 key={link.label}
                                 href={link.href}
-                                className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all uppercase ${
+                                className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-all uppercase ${
                                     link.active
-                                        ? "bg-blue-600 text-white shadow-sm"
+                                        ? "bg-orange-500 text-white shadow-sm"
                                         : isDarkMode
-                                          ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                          ? "text-slate-300 hover:bg-slate-900 hover:text-white"
                                           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                                 }`}
                             >
@@ -74,7 +90,7 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                             onClick={() => setIsDarkMode(!isDarkMode)}
                             className={`px-4 py-2 rounded-lg border text-xs font-bold shadow-sm transition-all uppercase tracking-wider ${
                                 isDarkMode
-                                    ? "bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700"
+                                    ? "bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800"
                                     : "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
                             }`}
                         >
@@ -90,7 +106,7 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                             }
                             className={`p-2 rounded-lg border transition-all ${
                                 isDarkMode
-                                    ? "bg-slate-800 border-slate-700 text-slate-200"
+                                    ? "bg-slate-900 border-slate-800 text-slate-200"
                                     : "bg-slate-100 border-slate-200 text-slate-700"
                             }`}
                         >
@@ -136,7 +152,7 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                 <div
                     className={`md:hidden border-t px-4 pt-2 pb-4 space-y-2 shadow-inner transition-all ${
                         isDarkMode
-                            ? "bg-slate-900 border-slate-800"
+                            ? "bg-slate-950 border-slate-800"
                             : "bg-slate-50 border-slate-200"
                     }`}
                 >
@@ -148,9 +164,9 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
                                     link.active
-                                        ? "bg-blue-600 text-white"
+                                        ? "bg-orange-500 text-white"
                                         : isDarkMode
-                                          ? "text-slate-300 hover:bg-slate-800"
+                                          ? "text-slate-300 hover:bg-slate-900"
                                           : "text-slate-600 hover:bg-slate-200"
                                 }`}
                             >
@@ -164,7 +180,7 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                                 setIsDarkMode(!isDarkMode);
                                 setIsMobileMenuOpen(false);
                             }}
-                            className="w-full text-center px-4 py-2.5 rounded-lg border text-xs font-black uppercase tracking-widest bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                            className="w-full text-center px-4 py-2.5 rounded-lg border text-xs font-black uppercase tracking-widest bg-orange-500/10 text-orange-500 dark:text-orange-400 border-orange-500/20"
                         >
                             {isDarkMode
                                 ? "☀️ Set Light Theme Mode"
