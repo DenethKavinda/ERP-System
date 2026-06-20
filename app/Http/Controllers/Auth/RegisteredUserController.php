@@ -31,22 +31,32 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // 1. Validate all specific required fields matching your spec
         $request->validate([
+            'nic' => 'required|string|max:20|unique:' . User::class . ',nic',
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'address' => 'required|string',
+            'mobile_number' => 'required|string|max:20',
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class . ',email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // 2. Persist the record into your modified users table mapping
         $user = User::create([
+            'nic' => $request->nic,
             'name' => $request->name,
+            'address' => $request->address,
+            'mobile_number' => $request->mobile_number,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($request->password), // Secure database hashing
+            'role' => 'user', // Default role assigned automatically
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // 3. Dynamic destination handling routing users straight to your new ERP grid interface
+        return redirect()->route('erp.index');
     }
 }

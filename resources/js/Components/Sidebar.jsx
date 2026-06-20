@@ -8,7 +8,7 @@ export default function Sidebar({ isDarkMode }) {
     const menuItems = [
         {
             name: "Main Dashboard",
-            path: "/dashboard-manager",
+            path: "/admin/dashboard-manager",
             icon: (
                 <svg
                     className="w-4 h-4"
@@ -27,7 +27,7 @@ export default function Sidebar({ isDarkMode }) {
         },
         {
             name: "ERP Packages",
-            path: "/erp-packages",
+            path: "/admin/erp-packages",
             icon: (
                 <svg
                     className="w-4 h-4"

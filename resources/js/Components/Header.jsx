@@ -1,13 +1,14 @@
 import React, { useState } from "react";
+import { Link } from "@inertiajs/react"; // Import Inertia Link for the POST request
 
 export default function Header({ isDarkMode, setIsDarkMode }) {
     // Mobile navigation state
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const navLinks = [
-        { label: "Inventory Dashboard", href: "/", active: true },
+        { label: "Inventory Dashboard", href: "/dashboard-user", active: true },
         { label: "Transactional Ledger", href: "#ledger", active: false },
-        { label: "Service Workspace", href: "#services", active: false },
+        { label: "Service Workspace", href: "/services", active: false },
         { label: "Compliance Audits", href: "#compliance", active: false },
     ];
 
@@ -79,8 +80,9 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                         ))}
                     </nav>
 
-                    {/* INTERFACE THEME ACTION SWITCH COMPONENT */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    {/* ACTIONS BAR (THEME TOGGLE + LOGOUT) */}
+                    <div className="flex items-center gap-3 shrink-0">
+                        {/* INTERFACE THEME ACTION SWITCH COMPONENT */}
                         <button
                             onClick={() => setIsDarkMode(!isDarkMode)}
                             className={`p-2 rounded-lg border transition-all ${
@@ -122,6 +124,34 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                                 </svg>
                             )}
                         </button>
+
+                        {/* DESKTOP LOGOUT BUTTON */}
+                        <Link
+                            href={route("logout")}
+                            method="post"
+                            as="button"
+                            className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide border rounded-lg transition-all ${
+                                isDarkMode
+                                    ? "bg-slate-900 border-slate-800 text-rose-400 hover:bg-rose-950/30 hover:border-rose-900"
+                                    : "bg-slate-100 border-slate-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200"
+                            }`}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={2}
+                                stroke="currentColor"
+                                className="w-3.5 h-3.5"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                                />
+                            </svg>
+                            Logout
+                        </Link>
                     </div>
 
                     {/* MOBILE HAMBURGER TOGGLE BUTTON */}
@@ -196,6 +226,39 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                                 {link.label}
                             </a>
                         ))}
+
+                        <hr
+                            className={`my-2 ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}
+                        />
+
+                        {/* MOBILE LOGOUT LINK */}
+                        <Link
+                            href={route("logout")}
+                            method="post"
+                            as="button"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors text-left ${
+                                isDarkMode
+                                    ? "text-rose-400 hover:bg-rose-950/20"
+                                    : "text-rose-600 hover:bg-rose-50"
+                            }`}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={2}
+                                stroke="currentColor"
+                                className="w-4 h-4"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                                />
+                            </svg>
+                            Logout
+                        </Link>
                     </nav>
                 </div>
             )}
