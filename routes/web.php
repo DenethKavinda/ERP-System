@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ErpPackageController;
 
 
 // Route::get('/', function () {
@@ -40,9 +41,8 @@ Route::get('/', function () {
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
 // ERP Portal Section Route
-Route::get('/ERP', function () {
-    return Inertia::render('Users/ERP');
-});
+Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
+
 
 // Simple Authentication Protected Management System Routes
 // Since there's no role-based check, any logged-in user can reach these endpoints
@@ -50,6 +50,10 @@ Route::get('/ERP', function () {
 Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
 Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
 Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
+
+// Administrative Workspace Engine Routes (No auth role protection active yet)
+Route::get('/erp-packages', [ErpPackageController::class, 'adminIndex'])->name('admin.packages.index');
+Route::post('/erp-packages', [ErpPackageController::class, 'store'])->name('admin.packages.store');
 // });
 
 // Profile Management Routes

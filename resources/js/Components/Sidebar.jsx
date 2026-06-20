@@ -27,7 +27,7 @@ export default function Sidebar({ isDarkMode }) {
         },
         {
             name: "ERP Packages",
-            path: "#",
+            path: "/erp-packages",
             icon: (
                 <svg
                     className="w-4 h-4"
