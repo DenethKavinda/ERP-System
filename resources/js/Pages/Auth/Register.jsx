@@ -20,7 +20,7 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen font-sans bg-[url(''),_linear-gradient(to_bottom,_#fdfbf7,_#f7f4eb)] bg-amber-50/40 text-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="min-h-screen font-sans bg-[url('/img/registerANDlogin.jpg')] bg-cover bg-center text-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
             {/* Soft decorative background glowing spheres */}
             <div className="absolute -top-10 -left-10 w-96 h-96 bg-orange-400/10 blur-[120px] rounded-full pointer-events-none" />
             <div className="absolute -bottom-10 -right-10 w-96 h-96 bg-amber-400/10 blur-[120px] rounded-full pointer-events-none" />

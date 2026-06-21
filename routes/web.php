@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ErpPackageController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\KnowledgeCenter;
 
 // Public Auth Action Layer endpoints 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -28,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
     Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+    Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.center');
 
     // Profile Management (Accessible globally by both standard users and admins at /profile)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

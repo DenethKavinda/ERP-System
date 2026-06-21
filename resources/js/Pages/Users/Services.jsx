@@ -315,7 +315,7 @@ export default function Services({ services = [] }) {
                                             >
                                                 {isInCart
                                                     ? "Selected ✓"
-                                                    : "Add Asset"}
+                                                    : "Add to Cart"}
                                             </button>
                                         </div>
                                     </div>
