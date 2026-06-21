@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ErpPackageController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\ServiceController;
 
 // Public Auth Action Layer endpoints 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -26,6 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // User Workspace Interfaces
     Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
+    Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
 
     // Profile Management (Accessible globally by both standard users and admins at /profile)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -42,6 +44,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
     Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
     Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
+
+    Route::get('/adminservices', [ServiceController::class, 'adminIndex'])->name('services.index');
+    Route::post('/adminservices', [ServiceController::class, 'store'])->name('services.store');
+    Route::delete('/adminservices/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
 
     // Administrative Workspace Engine Routes
     Route::get('/erp-packages', [ErpPackageController::class, 'adminIndex'])->name('packages.index');

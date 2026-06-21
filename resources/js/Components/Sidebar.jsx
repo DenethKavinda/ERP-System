@@ -46,7 +46,7 @@ export default function Sidebar({ isDarkMode }) {
         },
         {
             name: "Services",
-            path: "#",
+            path: "/admin/adminservices",
             icon: (
                 <svg
                     className="w-4 h-4"
