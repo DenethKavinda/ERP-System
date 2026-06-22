@@ -11,7 +11,7 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
         { label: "Inventory Dashboard", href: "/dashboard-user" },
         { label: "Transactional Ledger", href: "/ledger" },
         { label: "Service Workspace", href: "/services" },
-        { label: "Compliance Audits", href: "/compliance" },
+        { label: "Compliance Audits", href: "/complaints" },
     ];
 
     return (

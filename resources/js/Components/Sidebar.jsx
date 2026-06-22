@@ -65,7 +65,7 @@ export default function Sidebar({ isDarkMode }) {
         },
         {
             name: "Complaints",
-            path: "#",
+            path: "/admin/complaints", // Highlight-add: Set active administrative route path URL
             icon: (
                 <svg
                     className="w-4 h-4"

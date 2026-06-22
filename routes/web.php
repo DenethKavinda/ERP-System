@@ -9,6 +9,7 @@ use App\Http\Controllers\ErpPackageController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\KnowledgeCenter;
+use App\Http\Controllers\ComplaintController;
 
 // Public Auth Action Layer endpoints 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -30,6 +31,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
     Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
     Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.center');
+
+    Route::get('/complaints', [ComplaintController::class, 'create'])->name('complaints.create');
+    Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::get('/complaints/download/{id}', [ComplaintController::class, 'downloadAttachment'])->name('complaints.download');
 
     // Profile Management (Accessible globally by both standard users and admins at /profile)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -58,6 +63,13 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/erp-packages', [ErpPackageController::class, 'store'])->name('packages.store');
     Route::put('/erp-packages/{id}', [ErpPackageController::class, 'update'])->name('packages.update');
     Route::delete('/erp-packages/{id}', [ErpPackageController::class, 'destroy'])->name('packages.destroy');
+
+
+    // Administrative Complaints Management Console
+    Route::get('/complaints', [ComplaintController::class, 'adminIndex'])->name('complaints.index');
+    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.status');
+    Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
+    Route::post('/complaints/{id}/reply', [ComplaintController::class, 'storeReply'])->name('admin.complaints.reply');
 });
 
 require __DIR__ . '/auth.php';
