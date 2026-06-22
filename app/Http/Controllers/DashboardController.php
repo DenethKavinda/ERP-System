@@ -46,4 +46,20 @@ class DashboardController extends Controller
         DashboardCard::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Card deleted successfully.');
     }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'path' => 'required|string|max:255',
+            'button_text' => 'required|string|max:255',
+            'description' => 'required|string',
+            'accent_color' => 'required|string',
+        ]);
+
+        $card = DashboardCard::findOrFail($id);
+        $card->update($validated);
+
+        return redirect()->back()->with('success', 'Card updated successfully.');
+    }
 }

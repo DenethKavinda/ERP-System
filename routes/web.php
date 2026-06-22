@@ -46,14 +46,18 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
     Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
     Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
+    Route::put('/dashboard-manager/{id}', [DashboardController::class, 'update'])->name('dashboard.update');
 
     Route::get('/adminservices', [ServiceController::class, 'adminIndex'])->name('services.index');
     Route::post('/adminservices', [ServiceController::class, 'store'])->name('services.store');
     Route::delete('/adminservices/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
+    Route::put('/adminservices/{id}', [ServiceController::class, 'update'])->name('services.update');
 
     // Administrative Workspace Engine Routes
     Route::get('/erp-packages', [ErpPackageController::class, 'adminIndex'])->name('packages.index');
     Route::post('/erp-packages', [ErpPackageController::class, 'store'])->name('packages.store');
+    Route::put('/erp-packages/{id}', [ErpPackageController::class, 'update'])->name('packages.update');
+    Route::delete('/erp-packages/{id}', [ErpPackageController::class, 'destroy'])->name('packages.destroy');
 });
 
 require __DIR__ . '/auth.php';

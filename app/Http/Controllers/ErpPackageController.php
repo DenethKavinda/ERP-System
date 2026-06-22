@@ -50,4 +50,34 @@ class ErpPackageController extends Controller
 
         return redirect()->back()->with('success', 'ERP package published successfully.');
     }
+
+    /**
+     * Update an existing ERP package record row parameters in database storage
+     */
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'suitable_for' => 'nullable|string',
+            'features' => 'nullable|string',
+            'benefits' => 'nullable|string',
+            'rating' => 'nullable|string|max:5',
+        ]);
+
+        $package = ErpPackage::findOrFail($id);
+        $package->update($validated);
+
+        return redirect()->back()->with('success', 'ERP package updated successfully.');
+    }
+
+    /**
+     * Complete removal of an individual package from inventory store logs
+     */
+    public function destroy($id)
+    {
+        ErpPackage::findOrFail($id)->delete();
+
+        return redirect()->back()->with('success', 'ERP package dropped successfully.');
+    }
 }

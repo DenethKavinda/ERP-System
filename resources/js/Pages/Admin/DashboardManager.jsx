@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Head, useForm, router } from "@inertiajs/react";
-import Sidebar from "../../Components/Sidebar"; // Verify your file path structure matches this relative reference
+import Sidebar from "../../Components/Sidebar";
 
 export default function DashboardManager({ auth, cards }) {
     const [isDarkMode, setIsDarkMode] = useState(false);
+    // Highlight-add: Track whether we are editing an existing node
+    const [editingId, setEditingId] = useState(null);
 
-    const { data, setData, post, reset, errors } = useForm({
+    const { data, setData, post, put, reset, errors } = useForm({
         name: "",
         path: "",
         button_text: "",
@@ -13,16 +15,47 @@ export default function DashboardManager({ auth, cards }) {
         accent_color: "from-blue-500 to-indigo-600",
     });
 
+    // Highlight-add: Populate form for editing
+    const handleEditInit = (card) => {
+        setEditingId(card.id);
+        setData({
+            name: card.name,
+            path: card.path,
+            button_text: card.button_text,
+            description: card.description || "",
+            accent_color: card.accent_color,
+        });
+    };
+
+    // Highlight-add: Clear form and exit edit mode
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        reset();
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        post("/dashboard-manager", {
-            onSuccess: () => reset(),
-        });
+
+        // Highlight-select: Conditional routing logic based on state
+        if (editingId) {
+            put(`/admin/dashboard-manager/${editingId}`, {
+                onSuccess: () => {
+                    setEditingId(null);
+                    reset();
+                },
+            });
+        } else {
+            post("/admin/dashboard-manager", {
+                onSuccess: () => reset(),
+            });
+        }
     };
 
     const handleDelete = (id) => {
         if (confirm("Are you sure you want to remove this navigation node?")) {
-            router.delete(`/dashboard-manager/${id}`);
+            router.delete(`/admin/dashboard-manager/${id}`);
+            // If deleting the item currently being edited, reset the form state
+            if (editingId === id) handleCancelEdit();
         }
     };
 
@@ -31,11 +64,8 @@ export default function DashboardManager({ auth, cards }) {
             className={`min-h-screen flex transition-colors duration-300 ${isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"}`}
         >
             <Head title="Admin Framework Manager" />
-
-            {/* SIDEBAR COMPONENT LINKED INTO LEFT COLUMN NODE */}
             <Sidebar isDarkMode={isDarkMode} />
 
-            {/* MAIN APP WORKSPACE CONTENT AREA FRAME */}
             <main className="flex-1 p-4 md:p-8 space-y-8 max-w-7xl">
                 <div className="border-b pb-3 border-slate-200 dark:border-slate-800 flex justify-between items-center">
                     <div>
@@ -43,7 +73,6 @@ export default function DashboardManager({ auth, cards }) {
                             Admin Dashboard Content System Manager
                         </h2>
                     </div>
-                    {/* Toggle Switch helper for testing Sidebar themes */}
                     <button
                         onClick={() => setIsDarkMode(!isDarkMode)}
                         className="text-[11px] font-bold tracking-wide uppercase border px-3 py-1 rounded bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-900"
@@ -57,8 +86,11 @@ export default function DashboardManager({ auth, cards }) {
                     <div
                         className={`p-6 rounded-xl border self-start ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
                     >
+                        {/* Highlight-select: Dynamic Heading titles */}
                         <h3 className="font-bold text-base mb-4">
-                            Add Custom Portal Card
+                            {editingId
+                                ? "Modify Registered Node"
+                                : "Add Custom Portal Card"}
                         </h3>
                         <form
                             onSubmit={handleSubmit}
@@ -171,12 +203,27 @@ export default function DashboardManager({ auth, cards }) {
                                     </option>
                                 </select>
                             </div>
-                            <button
-                                type="submit"
-                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded transition-all uppercase tracking-wider"
-                            >
-                                Deploy Node to Dashboard
-                            </button>
+
+                            {/* Highlight-select: Conditional Form Buttons */}
+                            <div className="flex gap-2">
+                                <button
+                                    type="submit"
+                                    className={`flex-1 font-bold py-2.5 rounded transition-all uppercase tracking-wider text-white ${editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-500 hover:bg-orange-600"}`}
+                                >
+                                    {editingId
+                                        ? "Save Engine Engine Updates"
+                                        : "Deploy Node to Dashboard"}
+                                </button>
+                                {editingId && (
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelEdit}
+                                        className="px-3 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold rounded transition-all uppercase tracking-wider"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                            </div>
                         </form>
                     </div>
 
@@ -195,7 +242,7 @@ export default function DashboardManager({ auth, cards }) {
                                 {cards.map((card) => (
                                     <div
                                         key={card.id}
-                                        className={`p-4 border rounded-xl flex items-center justify-between gap-4 text-xs ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
+                                        className={`p-4 border rounded-xl flex items-center justify-between gap-4 text-xs ${editingId === card.id ? "ring-2 ring-blue-500" : ""} ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <div
@@ -211,14 +258,25 @@ export default function DashboardManager({ auth, cards }) {
                                                 </p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() =>
-                                                handleDelete(card.id)
-                                            }
-                                            className="bg-red-500/10 hover:bg-red-600 hover:text-white text-red-500 font-bold px-3 py-1.5 rounded transition-all"
-                                        >
-                                            Remove Card
-                                        </button>
+                                        <div className="flex gap-2">
+                                            {/* Highlight-add: Edit Action Hook Trigger */}
+                                            <button
+                                                onClick={() =>
+                                                    handleEditInit(card)
+                                                }
+                                                className="bg-blue-500/10 hover:bg-blue-600 hover:text-white text-blue-500 font-bold px-3 py-1.5 rounded transition-all"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(card.id)
+                                                }
+                                                className="bg-red-500/10 hover:bg-red-600 hover:text-white text-red-500 font-bold px-3 py-1.5 rounded transition-all"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

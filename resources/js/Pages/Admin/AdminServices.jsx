@@ -1,13 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "@inertiajs/react";
 import Sidebar from "../../Components/Sidebar";
 
 export default function AdminServices({ services = [], isDarkMode = false }) {
+    // Highlight-add: State hook tracking the record currently being modified
+    const [editingId, setEditingId] = useState(null);
+
     // Standard Inertia Form hook layer configured for input state handling
     const {
         data,
         setData,
         post,
+        put,
         delete: destroy,
         reset,
         processing,
@@ -20,12 +24,41 @@ export default function AdminServices({ services = [], isDarkMode = false }) {
         description: "",
     });
 
+    // Highlight-add: Populate form context for updating action
+    const handleEditInit = (item) => {
+        setEditingId(item.id);
+        setData({
+            name: item.name,
+            category: item.category,
+            price: item.price,
+            billing_type: item.billing_type,
+            description: item.description || "",
+        });
+    };
+
+    // Highlight-add: Exit editing view reset parameters
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        reset();
+    };
+
     // Form submission processing loop
     const handleSubmit = (event) => {
         event.preventDefault();
-        post(route("admin.services.store"), {
-            onSuccess: () => reset(),
-        });
+
+        // Highlight-select: Handle route execution depending on form operational mode
+        if (editingId) {
+            put(route("admin.services.update", editingId), {
+                onSuccess: () => {
+                    setEditingId(null);
+                    reset();
+                },
+            });
+        } else {
+            post(route("admin.services.store"), {
+                onSuccess: () => reset(),
+            });
+        }
     };
 
     // Row extraction delete handler matching system logic
@@ -36,6 +69,7 @@ export default function AdminServices({ services = [], isDarkMode = false }) {
             )
         ) {
             destroy(route("admin.services.destroy", id));
+            if (editingId === id) handleCancelEdit();
         }
     };
 
@@ -61,7 +95,7 @@ export default function AdminServices({ services = [], isDarkMode = false }) {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* LEFT SIDEBAR: Creation Input Card Wrapper */}
+                        {/* LEFT SIDEBAR: Creation / Modification Input Card Wrapper */}
                         <div
                             className={`lg:col-span-1 p-6 rounded-xl border h-fit ${
                                 isDarkMode
@@ -69,8 +103,11 @@ export default function AdminServices({ services = [], isDarkMode = false }) {
                                     : "bg-white border-slate-200"
                             }`}
                         >
+                            {/* Highlight-select: Change title based on editing mode */}
                             <h2 className="text-lg font-bold mb-4">
-                                Add New Service
+                                {editingId
+                                    ? "Modify Existing Service"
+                                    : "Add New Service"}
                             </h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 {/* Service Name input slot element */}
@@ -217,13 +254,31 @@ export default function AdminServices({ services = [], isDarkMode = false }) {
                                     />
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg text-xs font-black uppercase tracking-wider transition-colors disabled:opacity-50"
-                                >
-                                    Publish New Service
-                                </button>
+                                {/* Highlight-select: Conditional button styling and cancel option */}
+                                <div className="flex gap-2">
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className={`flex-1 text-white p-3 rounded-lg text-xs font-black uppercase tracking-wider transition-colors disabled:opacity-50 ${
+                                            editingId
+                                                ? "bg-blue-600 hover:bg-blue-700"
+                                                : "bg-orange-500 hover:bg-orange-600"
+                                        }`}
+                                    >
+                                        {editingId
+                                            ? "Save Service Changes"
+                                            : "Publish New Service"}
+                                    </button>
+                                    {editingId && (
+                                        <button
+                                            type="button"
+                                            onClick={handleCancelEdit}
+                                            className="px-3 border border-slate-300 dark:border-slate-600 text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
                             </form>
                         </div>
 
@@ -268,7 +323,12 @@ export default function AdminServices({ services = [], isDarkMode = false }) {
                                                 {services.map((item) => (
                                                     <tr
                                                         key={item.id}
-                                                        className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30"
+                                                        className={`hover:bg-slate-50/50 dark:hover:bg-slate-700/30 ${
+                                                            editingId ===
+                                                            item.id
+                                                                ? "bg-blue-500/5 dark:bg-blue-500/10"
+                                                                : ""
+                                                        }`}
                                                     >
                                                         <td className="py-3 pr-4">
                                                             <span className="font-semibold block">
@@ -297,16 +357,32 @@ export default function AdminServices({ services = [], isDarkMode = false }) {
                                                             </span>
                                                         </td>
                                                         <td className="py-3 text-right">
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleDelete(
-                                                                        item.id,
-                                                                    )
-                                                                }
-                                                                className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 text-xs font-black uppercase tracking-wider bg-transparent border-none cursor-pointer outline-none transition-colors"
-                                                            >
-                                                                Delete
-                                                            </button>
+                                                            {/* Highlight-add: Edit triggering link added to item actions row layout */}
+                                                            <div className="flex justify-end items-center gap-2">
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleEditInit(
+                                                                            item,
+                                                                        )
+                                                                    }
+                                                                    className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-black uppercase tracking-wider bg-transparent border-none cursor-pointer outline-none transition-colors"
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                                <span className="text-slate-300 dark:text-slate-600">
+                                                                    |
+                                                                </span>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleDelete(
+                                                                            item.id,
+                                                                        )
+                                                                    }
+                                                                    className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 text-xs font-black uppercase tracking-wider bg-transparent border-none cursor-pointer outline-none transition-colors"
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}

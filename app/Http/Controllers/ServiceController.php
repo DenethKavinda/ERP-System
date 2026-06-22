@@ -54,4 +54,23 @@ class ServiceController extends Controller
         Service::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Service deleted successfully.');
     }
+
+    /**
+     * Update an individual service record in the catalog
+     */
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'billing_type' => 'required|string|in:one-time,monthly',
+            'description' => 'nullable|string',
+        ]);
+
+        $service = Service::findOrFail($id);
+        $service->update($validated);
+
+        return redirect()->back()->with('success', 'Service catalog row updated successfully.');
+    }
 }

@@ -317,7 +317,6 @@ export default function ERP({ packages = [] }) {
                                                                             feature
                                                                         }
                                                                     </span>
-                                                                    Cimaginative
                                                                 </li>
                                                             ),
                                                         )}
