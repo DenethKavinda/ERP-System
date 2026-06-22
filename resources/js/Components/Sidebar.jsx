@@ -102,8 +102,8 @@ export default function Sidebar({ isDarkMode }) {
             ),
         },
         {
-            name: "Knowledge Center",
-            path: "#",
+            name: "Knowledge Manager",
+            path: "/admin/knowledge-manager",
             icon: (
                 <svg
                     className="w-4 h-4"

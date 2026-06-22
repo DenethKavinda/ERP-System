@@ -11,6 +11,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\KnowledgeCenter;
 use App\Http\Controllers\ComplaintController;
 
+
 // Public Auth Action Layer endpoints 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/', [AuthController::class, 'login']);
@@ -30,7 +31,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
     Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+
     Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.center');
+    Route::get('/knowledge-center/download/{id}', [KnowledgeCenter::class, 'download'])->name('knowledge.download');
 
     Route::get('/complaints', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
@@ -70,6 +73,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.status');
     Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
     Route::post('/complaints/{id}/reply', [ComplaintController::class, 'storeReply'])->name('admin.complaints.reply');
+
+    // Administrative Knowledge Center Management Console
+    Route::get('/knowledge-manager', [KnowledgeCenter::class, 'adminIndex'])->name('knowledge.manager');
+    Route::post('/knowledge-manager', [KnowledgeCenter::class, 'store'])->name('knowledge.store');
+    Route::delete('/knowledge-manager/{id}', [KnowledgeCenter::class, 'destroy'])->name('knowledge.destroy');
+    Route::post('/knowledge-manager/{id}', [KnowledgeCenter::class, 'update'])->name('knowledge.update');
 });
 
 require __DIR__ . '/auth.php';
