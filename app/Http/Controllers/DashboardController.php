@@ -7,18 +7,32 @@ use App\Models\DashboardCard;
 use Inertia\Inertia;
 use App\Models\PackageCart;
 use App\Models\Package;
+use App\Models\Service;
 
 class DashboardController extends Controller
 {
     /**
      * Render public customer/user workspace dashboard node.
-     * Eager loads all package carts alongside their nested sub-packages.
+     * Eager loads all package carts alongside their nested sub-packages and injects session flash memory data.
      */
     public function index()
     {
+        $navigationCards = DashboardCard::all();
+        $packageCarts = PackageCart::with('packages')->get();
+        $services = Service::where('is_active', true)->get();
+
         return Inertia::render('Users/Dashboard', [
-            'navigationCards' => DashboardCard::all(),
-            'packageCarts' => PackageCart::with('packages')->get()
+            'navigationCards' => $navigationCards,
+            'packageCarts' => $packageCarts,
+            'services' => $services,
+
+            // 🚀 SECURE FLASH SYSTEM DEPLOYMENT MAP:
+            // Extracts server-side session memory keys and hydrates Inertia props natively
+            'flashPayment' => [
+                'order_id' => session('payment_success_order_id'),
+                'amount'   => session('payment_success_amount'),
+                'items'    => session('payment_success_items'),
+            ]
         ]);
     }
 
@@ -103,7 +117,7 @@ class DashboardController extends Controller
             'button_name' => 'required|string|max:255',
             'description' => 'required|string',
             'color_class' => 'required|string',
-            'youtube_link' => 'nullable|url', // Shifted here
+            'youtube_link' => 'nullable|url',
         ]);
 
         PackageCart::create($validated);
@@ -117,7 +131,7 @@ class DashboardController extends Controller
             'button_name' => 'required|string|max:255',
             'description' => 'required|string',
             'color_class' => 'required|string',
-            'youtube_link' => 'nullable|url', // Shifted here
+            'youtube_link' => 'nullable|url',
         ]);
 
         $cart = PackageCart::findOrFail($id);

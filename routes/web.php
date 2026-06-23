@@ -10,14 +10,14 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\KnowledgeCenter;
 use App\Http\Controllers\ComplaintController;
-
+use App\Http\Controllers\CheckoutController;
+use Illuminate\Http\Request;
 
 // Public Auth Action Layer endpoints 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
-
 
 // Logout Session Endpoint
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -26,6 +26,16 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // 1. SHARED AUTHENTICATED ROUTES (All Logged-In Roles)
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    // 🚀 NEW SECURE CALLBACK INTERCEPTOR GATE:
+    // Captures PayHere's redirect keys, saves them securely inside server session memory, and passes them to Dashboard
+    Route::get('/checkout/success-callback', function (Request $request) {
+        session()->flash('payment_success_order_id', $request->get('order_id'));
+        session()->flash('payment_success_amount', $request->get('amount', '0.00'));
+        session()->flash('payment_success_items', $request->get('items', 'Package Purchase'));
+
+        return redirect()->route('dashboard');
+    })->name('checkout.success.callback');
 
     // User Workspace Interfaces
     Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
@@ -39,7 +49,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
     Route::get('/complaints/download/{id}', [ComplaintController::class, 'downloadAttachment'])->name('complaints.download');
 
-    // Profile Management (Accessible globally by both standard users and admins at /profile)
+    Route::post('/checkout/initialize', [CheckoutController::class, 'initialize'])->name('checkout.initialize');
+    Route::get('/checkout/receipt/download', [CheckoutController::class, 'downloadReceipt'])->name('receipt.download');
+
+    // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -50,15 +63,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ==========================================
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
-    // Administrative Dashboard Control System - Central Operations Framework
+    // Administrative Dashboard Control System
     Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
     Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
     Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
     Route::put('/dashboard-manager/{id}', [DashboardController::class, 'update'])->name('dashboard.update');
 
-    // ==========================================
-    // NEW SYSTEM ENTRIES: NEW AD-HOC PACKAGES MANAGEMENT ENDPOINTS
-    // ==========================================
+    // Packages Management
     Route::get('/packages', [DashboardController::class, 'adminPackagesIndex'])->name('packages.manager');
     Route::post('/packages/cart', [DashboardController::class, 'storeCart'])->name('packages.cart.store');
     Route::post('/packages/item', [DashboardController::class, 'storePackage'])->name('packages.item.store');

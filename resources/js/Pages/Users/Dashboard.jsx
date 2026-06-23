@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { Head, router } from "@inertiajs/react";
 import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
+import axios from "axios";
 
 export default function Dashboard({
     auth,
     navigationCards = [],
     packageCarts = [],
+    services = [],
+    flashPayment = null, // Injected securely via DashboardController session flash
 }) {
     // UI Theme state controls
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -14,7 +17,7 @@ export default function Dashboard({
     // State to manage the open package pop-up window overlay
     const [selectedCart, setSelectedCart] = useState(null);
 
-    // Video Player Interaction Tracking Parameters for internal layout view
+    // Video Player Interaction Tracking Parameters
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [activeVideoId, setActiveVideoId] = useState("dQw4w9WgXcQ");
     const videoRef = useRef(null);
@@ -24,39 +27,20 @@ export default function Dashboard({
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
 
-    // Sample Available Add-on Services Data Structure
-    const additionalServices = [
-        {
-            id: "srv_backup",
-            name: "Automated Cloud Backup Storage",
-            price: 1500,
-            type: "monthly",
-            description: "Hourly snapshots secure database nodes redundantly.",
-        },
-        {
-            id: "srv_support",
-            name: "24/7 Dedicated Priority VIP Support",
-            price: 3500,
-            type: "monthly",
-            description:
-                "Direct engineering hotline channel communication SLA.",
-        },
-        {
-            id: "srv_setup",
-            name: "Custom On-Site Data Migration & Setup",
-            price: 12000,
-            type: "one-time",
-            description: "Engineers port your legacy SQL archives seamlessly.",
-        },
-        {
-            id: "srv_security",
-            name: "Advanced Enterprise Firewall & Hardening",
-            price: 8500,
-            type: "one-time",
-            description:
-                "Implements strict identity access token guard layers.",
-        },
-    ];
+    // ==================== POST-PAYMENT SUCCESS STATE ====================
+    const [paymentSuccessData, setPaymentSuccessData] = useState(null);
+
+    // Securely catches flash indicators passed down from server session memory
+    useEffect(() => {
+        if (flashPayment && flashPayment.order_id) {
+            setPaymentSuccessData({
+                order_id: flashPayment.order_id,
+                package_name:
+                    flashPayment.items || "Selected Architecture Package",
+                amount: flashPayment.amount || "0.00",
+            });
+        }
+    }, [flashPayment]);
 
     // Sync state with HTML class list to enable Tailwind dark: variants globally
     useEffect(() => {
@@ -72,7 +56,7 @@ export default function Dashboard({
         router.visit(path);
     };
 
-    // Helper utility to parse YouTube watch links to fetch video embed IDs safely
+    // Helper utility to parse YouTube watch links safely
     const extractVideoId = (url) => {
         if (!url) return "dQw4w9WgXcQ";
         const regExp =
@@ -99,7 +83,7 @@ export default function Dashboard({
         }
     };
 
-    // Helper function to calculate final discounted price cleanly with decimal constraints
+    // Helper function to calculate final discounted price cleanly
     const getDiscountedPrice = (price, discountPercentage) => {
         const basePrice = Number(price);
         const discount = Number(discountPercentage || 0);
@@ -116,19 +100,64 @@ export default function Dashboard({
             selectedPackage.discount_percentage,
         );
 
-        additionalServices.forEach((srv) => {
+        services.forEach((srv) => {
             if (selectedServices.includes(srv.id)) {
-                total += srv.price;
+                total += Number(srv.price);
             }
         });
         return total;
     };
 
+    // Single production-ready PayHere Sandbox submission hook
     const handlePaymentConfirm = () => {
-        alert(
-            `Order Confirmed!\n\nPackage: ${selectedPackage.package_name}\nTotal Value: LKR ${calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n\n*Payment gateway redirection pipeline integration points will connect here.*`,
+        const basePlanPrice = getDiscountedPrice(
+            selectedPackage.price,
+            selectedPackage.discount_percentage,
         );
-        setIsCheckoutModalOpen(false);
+
+        axios
+            .post("/checkout/initialize", {
+                package_id: selectedPackage.id,
+                package_name: selectedPackage.package_name,
+                base_price: basePlanPrice,
+                addon_ids: selectedServices,
+            })
+            .then((response) => {
+                const data = response.data;
+
+                // Generate an automatic form element to submit parameters securely to PayHere
+                const form = document.createElement("form");
+                form.setAttribute("method", "post");
+                form.setAttribute(
+                    "action",
+                    data.sandbox
+                        ? "https://sandbox.payhere.lk/pay/checkout"
+                        : "https://www.payhere.lk/pay/checkout",
+                );
+
+                // Bind backend parameters into structured input payloads
+                Object.keys(data).forEach((key) => {
+                    if (key !== "sandbox") {
+                        const hiddenField = document.createElement("input");
+                        hiddenField.setAttribute("type", "hidden");
+                        hiddenField.setAttribute("name", key);
+                        hiddenField.setAttribute("value", data[key]);
+                        form.appendChild(hiddenField);
+                    }
+                });
+
+                document.body.appendChild(form);
+                setIsCheckoutModalOpen(false);
+
+                // Redirect browser directly to the PayHere Portal
+                form.submit();
+            })
+            .catch((error) => {
+                console.error("Payment initialization gateway error: ", error);
+                alert(
+                    "Failed to establish checkout secure loop stream connection.",
+                );
+            });
     };
 
     const handleMouseEnter = () => {
@@ -165,6 +194,75 @@ export default function Dashboard({
                     setIsDarkMode={setIsDarkMode}
                     auth={auth}
                 />
+
+                {/* ==========================================================
+                    SUCCESSFUL TRANSACTION RECEIPT BANNER NOTIFICATION 
+                ========================================================== */}
+                {paymentSuccessData && (
+                    <div className="max-w-7xl mx-auto px-4 md:px-8 mt-6 animate-fadeIn">
+                        <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                            <div className="flex items-start gap-4 text-center md:text-left">
+                                <div className="p-3 bg-emerald-500 text-white rounded-full mx-auto md:mx-0 shadow-sm">
+                                    <svg
+                                        className="w-6 h-6"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.5}
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="font-black text-emerald-900 dark:text-emerald-400 text-base">
+                                        Payment Verification Successful!
+                                    </h3>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                                        Order ID:{" "}
+                                        <span className="font-bold tracking-tight text-slate-900 dark:text-white">
+                                            {paymentSuccessData.order_id}
+                                        </span>{" "}
+                                        • Your system operational nodes are
+                                        compiling now.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="w-full md:w-auto shrink-0 flex gap-3">
+                                {/* PROP-BOUND TOTAL SECURED TO RETRIEVE ACCURATE TRANSACTIONS */}
+                                <a
+                                    href={`/checkout/receipt/download?order_id=${paymentSuccessData.order_id}&package_name=${encodeURIComponent(paymentSuccessData.package_name)}&total_amount=${paymentSuccessData.amount}`}
+                                    className="w-full md:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+                                >
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.2}
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                        />
+                                    </svg>
+                                    <span>Download PDF Receipt</span>
+                                </a>
+
+                                <button
+                                    onClick={() => setPaymentSuccessData(null)}
+                                    className="px-3 py-3 border border-slate-300 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs rounded-xl font-bold"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* HERO COVER HEADER */}
                 <div className="relative bg-slate-900 text-white min-h-[40vh] flex items-center justify-center py-16 px-4 border-b border-slate-800 overflow-hidden">
@@ -213,7 +311,6 @@ export default function Dashboard({
                                                 : "bg-white border-slate-200"
                                         }`}
                                     >
-                                        {/* FIXED CONTRAST HOOKS: Changes color perfectly depending on current layout mode */}
                                         <div className="p-6 space-y-2">
                                             <h3 className="font-black text-xl tracking-tight text-slate-900 dark:text-white">
                                                 {cart.cart_name}
@@ -333,7 +430,7 @@ export default function Dashboard({
             </div>
 
             {/* ==========================================================
-                DYNAMIC CONFIGURATION WINDOW OVERLAY MODAL
+                DYNAMIC WORKSPACE DETAIL pop-up MODAL
             ========================================================== */}
             {selectedCart && (
                 <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
@@ -346,7 +443,6 @@ export default function Dashboard({
                     >
                         {/* Modal Header */}
                         <div className="p-4 border-b flex items-center justify-between dark:border-slate-800 shrink-0 relative z-30">
-                            {/* FIXED DYNAMIC HEADER LOGIC COLOR FOR ACTIVE CONTAINER CONTAINER LABELS */}
                             <span className="text-xs font-black uppercase tracking-wider text-orange-500">
                                 {selectedCart.cart_name} Node System
                             </span>
@@ -360,7 +456,7 @@ export default function Dashboard({
 
                         {/* Modal Content Space */}
                         <div className="p-6 md:p-8 overflow-y-auto space-y-12 flex-1 relative">
-                            {/* OVERVIEW VIDEO EMBED BOX LAYER */}
+                            {/* HOVER HOVER AUTOPLAY OVERVIEW WALKTHROUGH PREVIEW BOX */}
                             <div
                                 className="w-full relative z-20"
                                 onMouseEnter={handleMouseEnter}
@@ -377,7 +473,7 @@ export default function Dashboard({
                                             setIsVideoModalOpen(true);
                                         } else {
                                             alert(
-                                                "No central overview walkthrough tutorial video link configured for this category stack node.",
+                                                "No walkthrough tutorial video configured for this node category stack.",
                                             );
                                         }
                                     }}
@@ -431,36 +527,30 @@ export default function Dashboard({
                                             </h2>
                                             <p className="text-slate-200 text-[10px] font-semibold mt-0.5 hidden sm:block drop-shadow-sm">
                                                 Hover to scan preview footage •
-                                                Click to initialize full theater
-                                                layout view
+                                                Click to load full layout viewer
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* DYNAMIC VIEW CATEGORY HEADER ATTRIBUTES (FIXED INSIDE THE MODAL CONTAINER) */}
+                            {/* TEXT HEADINGS */}
                             <div className="text-center space-y-2 relative z-10">
-                                <h3
-                                    className={`text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white`}
-                                >
+                                <h3 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                                     {selectedCart.cart_name}
                                 </h3>
-                                <p
-                                    className={`max-w-xl mx-auto text-xs text-slate-600 dark:text-slate-400`}
-                                >
+                                <p className="max-w-xl mx-auto text-xs text-slate-600 dark:text-slate-400">
                                     {selectedCart.description}
                                 </p>
                             </div>
 
-                            {/* PACKAGES GRID LAYOUT DISPLAY */}
+                            {/* NESTED PACKAGES PRICING MATRIX GRID */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch relative z-10">
                                 {selectedCart.packages &&
                                 selectedCart.packages.length === 0 ? (
                                     <div className="col-span-full text-center py-12 opacity-60 text-xs font-semibold text-slate-600 dark:text-slate-400">
                                         No structural architecture modules
-                                        configured under this category node
-                                        segment yet.
+                                        configured under this segment node yet.
                                     </div>
                                 ) : (
                                     selectedCart.packages &&
@@ -477,8 +567,8 @@ export default function Dashboard({
                                                 key={pkg.id}
                                                 className={`rounded-2xl border p-6 flex flex-col justify-between relative group transform transition-all duration-500 ease-in-out hover:-translate-y-1.5 hover:shadow-xl ${
                                                     isDarkMode
-                                                        ? "bg-slate-900/80 border-slate-800 text-white hover:border-orange-500/40 hover:shadow-orange-500/5"
-                                                        : "bg-white/90 border-slate-200/80 text-slate-900 hover:border-orange-500/30 hover:shadow-slate-300/60"
+                                                        ? "bg-slate-900/80 border-slate-800 text-white hover:border-orange-500/40"
+                                                        : "bg-white/90 border-slate-200/80 text-slate-900 hover:border-orange-500/30"
                                                 }`}
                                             >
                                                 <div className="relative z-10">
@@ -497,7 +587,6 @@ export default function Dashboard({
                                                         </span>
                                                     </div>
 
-                                                    {/* CALCULATED VALUE TIERS WITH DUAL DECIMALS */}
                                                     <div className="mb-4">
                                                         {hasDiscount ? (
                                                             <div className="space-y-0.5">
@@ -508,11 +597,10 @@ export default function Dashboard({
                                                                             "en-US",
                                                                             {
                                                                                 minimumFractionDigits: 2,
-                                                                                maximumFractionDigits: 2,
                                                                             },
                                                                         )}
                                                                     </span>
-                                                                    <span className="text-xs line-through opacity-50 font-bold text-slate-500 dark:text-slate-400">
+                                                                    <span className="text-xs line-through opacity-50 font-bold text-slate-500">
                                                                         LKR{" "}
                                                                         {Number(
                                                                             pkg.price,
@@ -520,7 +608,6 @@ export default function Dashboard({
                                                                             "en-US",
                                                                             {
                                                                                 minimumFractionDigits: 2,
-                                                                                maximumFractionDigits: 2,
                                                                             },
                                                                         )}
                                                                     </span>
@@ -534,11 +621,6 @@ export default function Dashboard({
                                                                         (-
                                                                         {Number(
                                                                             pkg.discount_percentage,
-                                                                        ).toLocaleString(
-                                                                            "en-US",
-                                                                            {
-                                                                                maximumFractionDigits: 2,
-                                                                            },
                                                                         )}
                                                                         %)
                                                                     </span>
@@ -553,12 +635,11 @@ export default function Dashboard({
                                                                     "en-US",
                                                                     {
                                                                         minimumFractionDigits: 2,
-                                                                        maximumFractionDigits: 2,
                                                                     },
                                                                 )}
                                                             </span>
                                                         )}
-                                                        <span className="text-slate-400 text-[10px] font-bold block mt-0.5">
+                                                        <span className="text-slate-400 text-[10px] block mt-0.5">
                                                             / month
                                                         </span>
                                                     </div>
@@ -584,9 +665,7 @@ export default function Dashboard({
                                                         <h5 className="text-[9px] uppercase font-black tracking-wider text-slate-400 mb-1.5">
                                                             Core Feature Sets
                                                         </h5>
-                                                        <p
-                                                            className={`text-[11px] leading-relaxed text-slate-700 dark:text-slate-300`}
-                                                        >
+                                                        <p className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-300">
                                                             {pkg.core_features}
                                                         </p>
                                                     </div>
@@ -596,7 +675,7 @@ export default function Dashboard({
                                                             Core Benefits
                                                         </h5>
                                                         <div
-                                                            className={`p-3 rounded-xl border text-[11px] leading-relaxed ${isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-100/70 border-slate-200/60 text-slate-600 dark:text-slate-400"}`}
+                                                            className={`p-3 rounded-xl border text-[11px] leading-relaxed ${isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-100/70 border-slate-200/60 text-slate-600"}`}
                                                         >
                                                             {pkg.benefits}
                                                         </div>
@@ -610,7 +689,7 @@ export default function Dashboard({
                                                                 pkg,
                                                             )
                                                         }
-                                                        className="w-full text-center py-2.5 px-4 bg-slate-900 text-white rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 hover:bg-orange-500 dark:bg-orange-600 dark:hover:bg-orange-500 active:scale-[0.98]"
+                                                        className="w-full text-center py-2.5 px-4 bg-slate-900 text-white rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 hover:bg-orange-500 dark:bg-orange-600"
                                                     >
                                                         Buy Now
                                                     </button>
@@ -626,7 +705,7 @@ export default function Dashboard({
             )}
 
             {/* ==========================================================
-                2. BILLING CHECKOUT MODAL WINDOW WITH CALCULATED DISCOUNT
+                2. BILLING CHECKOUT CONFIGURATION MODAL
             ========================================================== */}
             {isCheckoutModalOpen && selectedPackage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
@@ -639,13 +718,13 @@ export default function Dashboard({
                                     Configure Your Plan
                                 </h3>
                                 <p className="text-xs text-slate-400 mt-0.5">
-                                    Customize your cloud deployment premium
-                                    setup add-ons before billing confirmation.
+                                    Customize deployment premium features before
+                                    checking out.
                                 </p>
                             </div>
                             <button
                                 onClick={() => setIsCheckoutModalOpen(false)}
-                                className="p-1.5 rounded-lg border dark:border-slate-800 text-slate-400 hover:text-slate-200"
+                                className="p-1.5 rounded-lg border text-slate-400"
                             >
                                 ✕
                             </button>
@@ -662,16 +741,6 @@ export default function Dashboard({
                                     <h4 className="text-md font-extrabold mt-0.5">
                                         {selectedPackage.package_name}
                                     </h4>
-                                    {Number(
-                                        selectedPackage.discount_percentage,
-                                    ) > 0 && (
-                                        <span className="text-[10px] text-red-500 font-bold block mt-0.5">
-                                            Applied Discount:{" "}
-                                            {
-                                                selectedPackage.discount_description
-                                            }
-                                        </span>
-                                    )}
                                 </div>
                                 <div className="text-right">
                                     <span className="text-lg font-black text-orange-500">
@@ -681,69 +750,71 @@ export default function Dashboard({
                                             selectedPackage.discount_percentage,
                                         ).toLocaleString("en-US", {
                                             minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
                                         })}
-                                    </span>
-                                    <span className="text-slate-400 text-[10px] block">
-                                        / month
                                     </span>
                                 </div>
                             </div>
 
+                            {/* PREMIUM INVENTORY ADDON CHECKS */}
                             <div>
                                 <h4 className="text-xs uppercase font-black tracking-wider text-slate-400 mb-3">
                                     Available Premium Add-ons
                                 </h4>
-                                <div className="space-y-3">
-                                    {additionalServices.map((service) => {
-                                        const isChecked =
-                                            selectedServices.includes(
-                                                service.id,
-                                            );
-                                        return (
-                                            <label
-                                                key={service.id}
-                                                className={`p-4 rounded-xl border flex items-start gap-4 cursor-pointer transition-all ${isChecked ? "border-orange-500/50 bg-orange-500/[0.02]" : "dark:border-slate-800 bg-transparent hover:border-slate-700"}`}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isChecked}
-                                                    onChange={() =>
-                                                        handleServiceToggle(
-                                                            service.id,
-                                                        )
-                                                    }
-                                                    className="mt-1 w-4 h-4 rounded text-orange-500 focus:ring-orange-500 border-slate-300"
-                                                />
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between items-start gap-2">
-                                                        <span className="text-xs font-black tracking-tight">
-                                                            {service.name}
-                                                        </span>
-                                                        <div className="text-right shrink-0">
+                                {services.length === 0 ? (
+                                    <p className="text-xs text-slate-400 font-medium py-2">
+                                        No modular extensions deployed under
+                                        catalog node layers.
+                                    </p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {services.map((service) => {
+                                            const isChecked =
+                                                selectedServices.includes(
+                                                    service.id,
+                                                );
+                                            return (
+                                                <label
+                                                    key={service.id}
+                                                    className={`p-4 rounded-xl border flex items-start gap-4 cursor-pointer transition-all ${isChecked ? "border-orange-500/50 bg-orange-500/[0.02]" : "dark:border-slate-800 bg-transparent"}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() =>
+                                                            handleServiceToggle(
+                                                                service.id,
+                                                            )
+                                                        }
+                                                        className="mt-1 w-4 h-4 rounded text-orange-500 focus:ring-orange-500"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between items-start gap-2">
+                                                            <span className="text-xs font-black tracking-tight text-slate-900 dark:text-white">
+                                                                {service.name}
+                                                            </span>
                                                             <span className="text-xs font-extrabold text-orange-500">
                                                                 +LKR{" "}
-                                                                {service.price.toLocaleString(
+                                                                {Number(
+                                                                    service.price,
+                                                                ).toLocaleString(
                                                                     "en-US",
                                                                     {
                                                                         minimumFractionDigits: 2,
-                                                                        maximumFractionDigits: 2,
                                                                     },
                                                                 )}
                                                             </span>
-                                                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded ml-1.5 bg-slate-800 text-slate-300">
-                                                                {service.type}
-                                                            </span>
                                                         </div>
+                                                        <p className="text-[11px] text-slate-500 mt-1">
+                                                            {
+                                                                service.description
+                                                            }
+                                                        </p>
                                                     </div>
-                                                    <p className="text-[11px] text-slate-400 font-medium mt-1">
-                                                        {service.description}
-                                                    </p>
-                                                </div>
-                                            </label>
-                                        );
-                                    })}
-                                </div>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -758,7 +829,6 @@ export default function Dashboard({
                                     LKR{" "}
                                     {calculateTotal().toLocaleString("en-US", {
                                         minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
                                     })}
                                 </div>
                             </div>
@@ -767,13 +837,13 @@ export default function Dashboard({
                                     onClick={() =>
                                         setIsCheckoutModalOpen(false)
                                     }
-                                    className="px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+                                    className="px-4 py-2.5 rounded-xl text-xs font-bold border text-slate-400"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handlePaymentConfirm}
-                                    className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md"
+                                    className="px-6 py-2.5 bg-orange-500 text-white rounded-xl text-xs font-black uppercase tracking-wider"
                                 >
                                     Confirm Plan
                                 </button>
@@ -784,7 +854,7 @@ export default function Dashboard({
             )}
 
             {/* ==========================================================
-                3. THEATER PLAYER IFRAME POP-UP MODAL
+                3. THEATER PLAYER CONTROL MODAL
             ========================================================== */}
             {isVideoModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fadeIn">
@@ -797,7 +867,7 @@ export default function Dashboard({
                             </h3>
                             <button
                                 onClick={() => setIsVideoModalOpen(false)}
-                                className="p-1.5 rounded-lg border text-slate-400 hover:text-slate-200"
+                                className="p-1.5 rounded-lg border text-slate-400"
                             >
                                 ✕
                             </button>
@@ -808,7 +878,6 @@ export default function Dashboard({
                                 src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`}
                                 title="System Walkthrough Video Player"
                                 frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowFullScreen
                             ></iframe>
                         </div>
