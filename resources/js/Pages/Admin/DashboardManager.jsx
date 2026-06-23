@@ -201,6 +201,15 @@ export default function DashboardManager({ auth, cards }) {
                                     <option value="from-cyan-500 to-blue-600">
                                         Cyan-Blue Gradient
                                     </option>
+                                    <option value="from-green-500 to-lime-600">
+                                        Green-Lime Gradient
+                                    </option>
+                                    <option value="from-pink-500 to-rose-600">
+                                        Pink-Rose Gradient
+                                    </option>
+                                    <option value="from-yellow-500 to-orange-600">
+                                        Yellow-Orange Gradient
+                                    </option>
                                 </select>
                             </div>
 

@@ -6,6 +6,9 @@ export default function ERP({ packages = [] }) {
     // Shared state configuration for tracking interface theme mode
     const [isDarkMode, setIsDarkMode] = useState(false);
 
+    // Highlight-add: State hook to track search string query text
+    const [searchQuery, setSearchQuery] = useState("");
+
     // Video Player UI State Control Parameters
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [youtubeVideoId, setYoutubeVideoId] = useState("dQw4w9WgXcQ");
@@ -49,7 +52,6 @@ export default function ERP({ packages = [] }) {
                 "Implements strict identity access token guard layers.",
         },
     ];
-    // ===============================================================
 
     // Helper function to turn comma-separated text into custom arrays
     const parseMeta = (inputString) => {
@@ -60,10 +62,18 @@ export default function ERP({ packages = [] }) {
             .filter(Boolean);
     };
 
+    // Highlight-select: Filter packages dynamically matching search query against name or suitability constraints
+    const filteredPackages = packages.filter((pkg) => {
+        const query = searchQuery.toLowerCase();
+        const matchesName = pkg.name?.toLowerCase().includes(query);
+        const matchesSuitable = pkg.suitable_for?.toLowerCase().includes(query);
+        return matchesName || matchesSuitable;
+    });
+
     // Triggered when clicking the primary "Buy Now" buttons
     const handleBuyButtonClick = (pkg) => {
         setSelectedPackage(pkg);
-        setSelectedServices([]); // Reset any chosen add-ons from previous clicks
+        setSelectedServices([]);
         setIsCheckoutModalOpen(true);
     };
 
@@ -91,7 +101,6 @@ export default function ERP({ packages = [] }) {
         return total;
     };
 
-    // Mock handle placeholder for payment gateways to be created later
     const handlePaymentConfirm = () => {
         alert(
             `Order Confirmed!\n\nPackage: ${selectedPackage.name}\nTotal Cart Value: LKR ${calculateTotal().toLocaleString()}\n\n*Payment gateway redirection pipeline integration points will be connected here later.*`,
@@ -128,7 +137,7 @@ export default function ERP({ packages = [] }) {
                 <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
                 <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 relative">
-                    {/* VIDEO HERO BANNER SECTION */}
+                    {/* VIDEO HERO BANNER SECTION (Restored to its original state) */}
                     <div
                         className="w-full mb-12 relative z-20"
                         onMouseEnter={handleMouseEnter}
@@ -197,7 +206,7 @@ export default function ERP({ packages = [] }) {
                     <div className="absolute top-48 left-1/4 w-80 h-80 bg-orange-500/10 blur-[120px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-blue-500/5 blur-[150px] rounded-full pointer-events-none" />
 
-                    <div className="text-center mb-16 relative z-10 animate-fade-in">
+                    <div className="text-center mb-10 relative z-10 animate-fade-in">
                         <h1
                             className={`text-4xl sm:text-5xl font-black tracking-tight mb-3 transition-colors duration-500 ${isDarkMode ? "text-white" : "text-slate-900"}`}
                         >
@@ -212,7 +221,45 @@ export default function ERP({ packages = [] }) {
                         </p>
                     </div>
 
-                    {/* Packages Grid */}
+                    {/* Highlight-add: Interactive Search/Filter bar styled seamlessly right under main header titles */}
+                    <div className="max-w-md mx-auto mb-12 relative z-20">
+                        <div className="relative flex items-center shadow-sm rounded-xl">
+                            <input
+                                type="text"
+                                className={`w-full p-3.5 pl-11 rounded-xl text-xs border bg-transparent focus:outline-none focus:border-orange-500 transition-colors ${
+                                    isDarkMode
+                                        ? "border-slate-800 text-white placeholder-slate-600 bg-slate-900/20"
+                                        : "border-slate-200 text-slate-900 placeholder-slate-400 bg-white"
+                                }`}
+                                placeholder="Filter by package name or audience (e.g., Small shops)..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <svg
+                                className="w-4 h-4 absolute left-4 text-slate-400"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                            </svg>
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-4 text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Packages Grid Section Layout */}
                     {packages.length === 0 ? (
                         <div
                             className={`text-center py-12 max-w-xl mx-auto rounded-2xl border p-8 shadow-sm transition-all duration-500 ${isDarkMode ? "bg-slate-900/60 border-slate-800" : "bg-white/80 border-slate-200"}`}
@@ -229,7 +276,7 @@ export default function ERP({ packages = [] }) {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch relative z-10">
-                            {packages.map((pkg) => {
+                            {filteredPackages.map((pkg) => {
                                 const audienceList = parseMeta(
                                     pkg.suitable_for,
                                 );
@@ -341,7 +388,7 @@ export default function ERP({ packages = [] }) {
                                                                 >
                                                                     <span
                                                                         className={`w-1 h-1 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-300"}`}
-                                                                    ></span>
+                                                                    />
                                                                     {benefit}
                                                                 </li>
                                                             ),
@@ -352,7 +399,6 @@ export default function ERP({ packages = [] }) {
                                         </div>
 
                                         <div className="relative z-10 mt-4">
-                                            {/* CHANGED: Clicking "Buy Now" opens the interactive modal popup */}
                                             <button
                                                 onClick={() =>
                                                     handleBuyButtonClick(pkg)
@@ -370,13 +416,12 @@ export default function ERP({ packages = [] }) {
                 </main>
             </div>
 
-            {/* ==================== NEW: INTERACTIVE CHECKOUT POPUP MODAL ==================== */}
+            {/* CHECKOUT MODAL WINDOW COMPONENT */}
             {isCheckoutModalOpen && selectedPackage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
                     <div
                         className={`w-full max-w-2xl rounded-2xl overflow-hidden border shadow-2xl flex flex-col max-h-[90vh] ${isDarkMode ? "border-slate-800 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-900"}`}
                     >
-                        {/* Modal Header */}
                         <div className="flex items-center justify-between px-6 py-5 border-b border-inherit">
                             <div>
                                 <h3 className="text-lg font-black tracking-tight">
@@ -408,9 +453,7 @@ export default function ERP({ packages = [] }) {
                             </button>
                         </div>
 
-                        {/* Modal Body (Scrollable for options) */}
                         <div className="p-6 overflow-y-auto space-y-6 flex-1">
-                            {/* Base Selection Display Card */}
                             <div
                                 className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-100"}`}
                             >
@@ -435,7 +478,6 @@ export default function ERP({ packages = [] }) {
                                 </div>
                             </div>
 
-                            {/* Additional Services Checklist Stream Selection */}
                             <div>
                                 <h4 className="text-xs uppercase font-black tracking-wider text-slate-400 mb-3">
                                     Available Premium Add-ons
@@ -480,16 +522,7 @@ export default function ERP({ packages = [] }) {
                                                                 {service.price.toLocaleString()}
                                                             </span>
                                                             <span
-                                                                className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ml-1.5 inline-block ${
-                                                                    service.type ===
-                                                                    "monthly"
-                                                                        ? isDarkMode
-                                                                            ? "bg-blue-950 text-blue-400"
-                                                                            : "bg-blue-50 text-blue-700"
-                                                                        : isDarkMode
-                                                                          ? "bg-purple-950 text-purple-400"
-                                                                          : "bg-purple-50 text-purple-700"
-                                                                }`}
+                                                                className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ml-1.5 inline-block ${service.type === "monthly" ? (isDarkMode ? "bg-blue-950 text-blue-400" : "bg-blue-50 text-blue-700") : isDarkMode ? "bg-purple-950 text-purple-400" : "bg-purple-50 text-purple-700"}`}
                                                             >
                                                                 {service.type}
                                                             </span>
@@ -506,7 +539,6 @@ export default function ERP({ packages = [] }) {
                             </div>
                         </div>
 
-                        {/* Modal Footer (Live Cart Price and Confirmation action) */}
                         <div
                             className={`p-6 border-t border-inherit flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isDarkMode ? "bg-slate-950/40" : "bg-slate-50/60"}`}
                         >
@@ -544,7 +576,7 @@ export default function ERP({ packages = [] }) {
                 </div>
             )}
 
-            {/* VIDEO MODAL */}
+            {/* FULL THEATER LAYER VIDEO OVERLAY MODAL */}
             {isVideoModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
                     <div

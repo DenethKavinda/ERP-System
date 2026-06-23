@@ -45,17 +45,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-/// 2. PROTECTED ADMINISTRATIVE ROUTES (Admins Only)
+// ==========================================
+// 2. PROTECTED ADMINISTRATIVE ROUTES (Admins Only)
 // ==========================================
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
-    // Administrative Dashboard Control System
-    // REMOVED '/admin' from the paths because ->prefix('admin') handles it automatically!
+    // Administrative Dashboard Control System - Central Operations Framework
     Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
     Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
     Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
     Route::put('/dashboard-manager/{id}', [DashboardController::class, 'update'])->name('dashboard.update');
 
+    // ==========================================
+    // NEW SYSTEM ENTRIES: NEW AD-HOC PACKAGES MANAGEMENT ENDPOINTS
+    // ==========================================
+    Route::get('/packages', [DashboardController::class, 'adminPackagesIndex'])->name('packages.manager');
+    Route::post('/packages/cart', [DashboardController::class, 'storeCart'])->name('packages.cart.store');
+    Route::post('/packages/item', [DashboardController::class, 'storePackage'])->name('packages.item.store');
+    Route::delete('/packages/cart/{id}', [DashboardController::class, 'destroyCart'])->name('packages.cart.destroy');
+
+    // Service Management Panels
     Route::get('/adminservices', [ServiceController::class, 'adminIndex'])->name('services.index');
     Route::post('/adminservices', [ServiceController::class, 'store'])->name('services.store');
     Route::delete('/adminservices/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
@@ -67,12 +76,11 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('/erp-packages/{id}', [ErpPackageController::class, 'update'])->name('packages.update');
     Route::delete('/erp-packages/{id}', [ErpPackageController::class, 'destroy'])->name('packages.destroy');
 
-
     // Administrative Complaints Management Console
     Route::get('/complaints', [ComplaintController::class, 'adminIndex'])->name('complaints.index');
     Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.status');
     Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
-    Route::post('/complaints/{id}/reply', [ComplaintController::class, 'storeReply'])->name('admin.complaints.reply');
+    Route::post('/complaints/{id}/reply', [ComplaintController::class, 'storeReply'])->name('complaints.reply');
 
     // Administrative Knowledge Center Management Console
     Route::get('/knowledge-manager', [KnowledgeCenter::class, 'adminIndex'])->name('knowledge.manager');

@@ -1,30 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "@inertiajs/react";
 
 export default function Sidebar({ isDarkMode }) {
     // Current window path to highlight active state
     const currentPath = window.location.pathname;
 
+    // Control accordion expansion state for Main Dashboard sub-items
+    // Automatically open if the user is currently on one of the two sub-routes
+    const [isDashboardOpen, setIsDashboardOpen] = useState(
+        currentPath === "/admin/dashboard-manager" ||
+            currentPath === "/admin/packages",
+    );
+
+    // Existing secondary menu items retained exactly as they were
     const menuItems = [
-        {
-            name: "Main Dashboard",
-            path: "/admin/dashboard-manager",
-            icon: (
-                <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"
-                    />
-                </svg>
-            ),
-        },
         {
             name: "ERP Packages",
             path: "/admin/erp-packages",
@@ -65,7 +54,7 @@ export default function Sidebar({ isDarkMode }) {
         },
         {
             name: "Complaints",
-            path: "/admin/complaints", // Highlight-add: Set active administrative route path URL
+            path: "/admin/complaints",
             icon: (
                 <svg
                     className="w-4 h-4"
@@ -170,6 +159,88 @@ export default function Sidebar({ isDarkMode }) {
 
             {/* Nav Menu Options */}
             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                {/* Expandable Accordion for Main Dashboard */}
+                <div className="space-y-1">
+                    <button
+                        onClick={() => setIsDashboardOpen(!isDashboardOpen)}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-xs font-bold transition-all ${
+                            isDashboardOpen
+                                ? isDarkMode
+                                    ? "bg-slate-800 text-white"
+                                    : "bg-slate-100 text-slate-900"
+                                : isDarkMode
+                                  ? "hover:bg-slate-800/60 hover:text-white"
+                                  : "hover:bg-slate-100 hover:text-slate-900"
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"
+                                />
+                            </svg>
+                            <span>Main Dashboard</span>
+                        </div>
+                        <svg
+                            className={`w-3 h-3 transition-transform duration-200 ${isDashboardOpen ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19 9l-7 7-7-7"
+                            />
+                        </svg>
+                    </button>
+
+                    {/* Sub Options Menu Container */}
+                    {isDashboardOpen && (
+                        <div className="pl-9 pr-2 py-1 space-y-1 flex flex-col border-l border-slate-200 dark:border-slate-800 ml-6">
+                            <Link
+                                href="/admin/dashboard-manager"
+                                className={`px-3 py-2 rounded-md text-[11px] font-bold transition-all ${
+                                    currentPath === "/admin/dashboard-manager"
+                                        ? "bg-orange-500 text-white shadow-sm"
+                                        : isDarkMode
+                                          ? "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                }`}
+                            >
+                                Central Operations Framework
+                            </Link>
+                            <Link
+                                href="/admin/packages"
+                                className={`px-3 py-2 rounded-md text-[11px] font-bold transition-all ${
+                                    currentPath === "/admin/packages"
+                                        ? "bg-orange-500 text-white shadow-sm"
+                                        : isDarkMode
+                                          ? "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                }`}
+                            >
+                                Packages
+                            </Link>
+                        </div>
+                    )}
+                </div>
+
+                {/* Separator Hint */}
+                <div className="pt-4 pb-1 text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase px-4">
+                    Other Sections
+                </div>
+
+                {/* Rest of the original navigation panel links mapped directly */}
                 {menuItems.map((item, idx) => {
                     const isActive = currentPath === item.path;
                     return (
