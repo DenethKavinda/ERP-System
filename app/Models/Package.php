@@ -9,7 +9,6 @@ class Package extends Model
 {
     protected $fillable = [
         'package_cart_id',
-        'youtube_link',
         'main_topic',
         'small_description',
         'package_name',
@@ -18,6 +17,8 @@ class Package extends Model
         'core_features',
         'benefits',
         'rating',
+        'discount_percentage',   // Added field
+        'discount_description',  // Added field
     ];
 
     /**

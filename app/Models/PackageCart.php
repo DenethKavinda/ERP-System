@@ -12,6 +12,7 @@ class PackageCart extends Model
         'button_name',
         'description',
         'color_class',
+        'youtube_link',
     ];
 
     /**

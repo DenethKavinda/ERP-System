@@ -10,17 +10,22 @@ use App\Models\Package;
 
 class DashboardController extends Controller
 {
-    // Render public customer/user dashboard using dynamic cards
+    /**
+     * Render public customer/user workspace dashboard node.
+     * Eager loads all package carts alongside their nested sub-packages.
+     */
     public function index()
     {
         return Inertia::render('Users/Dashboard', [
             'navigationCards' => DashboardCard::all(),
-            // FIXED: Eager loads the added carts with all their attached child packages onto the user page
             'packageCarts' => PackageCart::with('packages')->get()
         ]);
     }
 
-    // Render configuration panel page
+    /**
+     * Render the administrative configuration management portal page
+     * for the Central Operations Framework system nodes.
+     */
     public function adminIndex()
     {
         return Inertia::render('Admin/DashboardManager', [
@@ -28,7 +33,9 @@ class DashboardController extends Controller
         ]);
     }
 
-    // Save a brand new card layout option to the database
+    /**
+     * Save a brand new Central Operations Framework card layout option to the database.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -41,16 +48,12 @@ class DashboardController extends Controller
 
         DashboardCard::create($validated);
 
-        return redirect()->back()->with('success', 'Card created successfully.');
+        return redirect()->back()->with('success', 'Framework Card created successfully.');
     }
 
-    // Delete an existing card from the system
-    public function destroy($id)
-    {
-        DashboardCard::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Card deleted successfully.');
-    }
-
+    /**
+     * Update an existing Central Operations Framework card node within the system.
+     */
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -64,15 +67,25 @@ class DashboardController extends Controller
         $card = DashboardCard::findOrFail($id);
         $card->update($validated);
 
-        return redirect()->back()->with('success', 'Card updated successfully.');
+        return redirect()->back()->with('success', 'Framework Card updated successfully.');
     }
 
+    /**
+     * Delete an existing Central Operations Framework card from the system database.
+     */
+    public function destroy($id)
+    {
+        DashboardCard::findOrFail($id)->delete();
+        return redirect()->back()->with('success', 'Framework Card deleted successfully.');
+    }
 
+    // =========================================================================
+    // ADMINISTRATIVE ARCHITECTURE LAYER: PACKAGES & CARTS CRUDS
+    // =========================================================================
 
-    // ==========================================
-    // NEW METHODS: ADMIN PACKAGES MANAGER PANEL
-    // ==========================================
-
+    /**
+     * Render the main administration package feed manager configuration view workspace.
+     */
     public function adminPackagesIndex()
     {
         return Inertia::render('Admin/PackagesManager', [
@@ -80,6 +93,9 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * Register a new package container group (Cart component) into database logs.
+     */
     public function storeCart(Request $request)
     {
         $validated = $request->validate([
@@ -87,17 +103,46 @@ class DashboardController extends Controller
             'button_name' => 'required|string|max:255',
             'description' => 'required|string',
             'color_class' => 'required|string',
+            'youtube_link' => 'nullable|url', // Shifted here
         ]);
 
         PackageCart::create($validated);
-        return redirect()->back()->with('success', 'Package Card created successfully.');
+        return redirect()->back()->with('success', 'Package Group Cart registered successfully.');
     }
 
+    public function updateCart(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'cart_name' => 'required|string|max:255',
+            'button_name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'color_class' => 'required|string',
+            'youtube_link' => 'nullable|url', // Shifted here
+        ]);
+
+        $cart = PackageCart::findOrFail($id);
+        $cart->update($validated);
+
+        return redirect()->back()->with('success', 'Package Group Cart parameters updated.');
+    }
+
+    /**
+     * Remove an entire target package cart layout node from the ecosystem database.
+     * Note: Cascading foreign relations automatically purge attached individual variants.
+     */
+    public function destroyCart($id)
+    {
+        PackageCart::findOrFail($id)->delete();
+        return redirect()->back()->with('success', 'Package Group Cart removed successfully from ecosystem.');
+    }
+
+    /**
+     * Deploy a new individual feature variant system package allocated under a parent container.
+     */
     public function storePackage(Request $request)
     {
         $validated = $request->validate([
             'package_cart_id' => 'required|exists:package_carts,id',
-            'youtube_link' => 'nullable|url',
             'main_topic' => 'required|string|max:255',
             'small_description' => 'required|string',
             'package_name' => 'required|string|max:255',
@@ -106,15 +151,42 @@ class DashboardController extends Controller
             'core_features' => 'required|string',
             'benefits' => 'required|string',
             'rating' => 'nullable|numeric|between:1,5',
+            'discount_percentage' => 'nullable|numeric|between:0,100',
+            'discount_description' => 'nullable|string|max:255',
         ]);
 
         Package::create($validated);
-        return redirect()->back()->with('success', 'Package item appended successfully.');
+        return redirect()->back()->with('success', 'Package node registered successfully.');
     }
 
-    public function destroyCart($id)
+    public function updatePackage(Request $request, $id)
     {
-        PackageCart::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Cart removed successfully.');
+        $validated = $request->validate([
+            'package_cart_id' => 'required|exists:package_carts,id',
+            'main_topic' => 'required|string|max:255',
+            'small_description' => 'required|string',
+            'package_name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'suitable_business' => 'required|string',
+            'core_features' => 'required|string',
+            'benefits' => 'required|string',
+            'rating' => 'nullable|numeric|between:1,5',
+            'discount_percentage' => 'nullable|numeric|between:0,100',
+            'discount_description' => 'nullable|string|max:255',
+        ]);
+
+        $package = Package::findOrFail($id);
+        $package->update($validated);
+
+        return redirect()->back()->with('success', 'Package configuration updated successfully.');
+    }
+
+    /**
+     * Delete an individual sub-package entry from matching cart relation logs.
+     */
+    public function destroyPackage($id)
+    {
+        Package::findOrFail($id)->delete();
+        return redirect()->back()->with('success', 'Package item removed successfully from group allocation table.');
     }
 }

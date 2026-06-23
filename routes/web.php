@@ -63,6 +63,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/packages/cart', [DashboardController::class, 'storeCart'])->name('packages.cart.store');
     Route::post('/packages/item', [DashboardController::class, 'storePackage'])->name('packages.item.store');
     Route::delete('/packages/cart/{id}', [DashboardController::class, 'destroyCart'])->name('packages.cart.destroy');
+    Route::put('/packages/cart/{id}', [DashboardController::class, 'updateCart'])->name('packages.cart.update');
+    Route::delete('/packages/item/{id}', [DashboardController::class, 'destroyPackage'])->name('packages.item.destroy');
+    Route::put('/packages/item/{id}', [DashboardController::class, 'updatePackage'])->name('packages.item.update');
 
     // Service Management Panels
     Route::get('/adminservices', [ServiceController::class, 'adminIndex'])->name('services.index');

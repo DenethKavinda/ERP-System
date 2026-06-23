@@ -99,10 +99,23 @@ export default function Dashboard({
         }
     };
 
-    // Calculate total layout configuration values dynamically
+    // Helper function to calculate final discounted price cleanly with decimal constraints
+    const getDiscountedPrice = (price, discountPercentage) => {
+        const basePrice = Number(price);
+        const discount = Number(discountPercentage || 0);
+        const finalCalculatedPrice = basePrice - basePrice * (discount / 100);
+        return Math.round(finalCalculatedPrice * 100) / 100;
+    };
+
+    // Calculate total layout checkout configuration values dynamically
     const calculateTotal = () => {
         if (!selectedPackage) return 0;
-        let total = Number(selectedPackage.price);
+
+        let total = getDiscountedPrice(
+            selectedPackage.price,
+            selectedPackage.discount_percentage,
+        );
+
         additionalServices.forEach((srv) => {
             if (selectedServices.includes(srv.id)) {
                 total += srv.price;
@@ -113,7 +126,7 @@ export default function Dashboard({
 
     const handlePaymentConfirm = () => {
         alert(
-            `Order Confirmed!\n\nPackage: ${selectedPackage.package_name}\nTotal Value: LKR ${calculateTotal().toLocaleString()}\n\n*Payment gateway redirection pipeline points will connect here.*`,
+            `Order Confirmed!\n\nPackage: ${selectedPackage.package_name}\nTotal Value: LKR ${calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n\n*Payment gateway redirection pipeline integration points will connect here.*`,
         );
         setIsCheckoutModalOpen(false);
     };
@@ -196,16 +209,17 @@ export default function Dashboard({
                                         key={cart.id}
                                         className={`border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-sm hover:shadow-md ${
                                             isDarkMode
-                                                ? "bg-slate-900 border-slate-800 text-slate-100"
-                                                : "bg-white border-slate-200 text-slate-900"
+                                                ? "bg-slate-900 border-slate-800"
+                                                : "bg-white border-slate-200"
                                         }`}
                                     >
+                                        {/* FIXED CONTRAST HOOKS: Changes color perfectly depending on current layout mode */}
                                         <div className="p-6 space-y-2">
                                             <h3 className="font-black text-xl tracking-tight text-slate-900 dark:text-white">
                                                 {cart.cart_name}
                                             </h3>
                                             <p
-                                                className={`text-xs leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
+                                                className={`text-xs leading-relaxed text-slate-600 dark:text-slate-400`}
                                             >
                                                 {cart.description}
                                             </p>
@@ -219,6 +233,7 @@ export default function Dashboard({
                                                     setSelectedCart(cart)
                                                 }
                                                 className={`w-full bg-gradient-to-r ${cart.color_class || "from-blue-500 to-indigo-600"} hover:brightness-110 text-white text-xs font-bold px-5 py-2.5 rounded text-center transition-all uppercase tracking-wider shadow-sm`}
+                                                style={{ color: "#ffffff" }}
                                             >
                                                 {cart.button_name}
                                             </button>
@@ -318,7 +333,7 @@ export default function Dashboard({
             </div>
 
             {/* ==========================================================
-                1. DYNAMIC MODAL POP-UP (STYLIZED EXACTLY AS THE ERP PAGE WORKSPACE)
+                DYNAMIC CONFIGURATION WINDOW OVERLAY MODAL
             ========================================================== */}
             {selectedCart && (
                 <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
@@ -329,22 +344,23 @@ export default function Dashboard({
                                 : "bg-gradient-to-br from-slate-100 via-white to-slate-200/70 border-slate-200 text-slate-900"
                         }`}
                     >
-                        {/* Modal Navigation/Control Bar */}
+                        {/* Modal Header */}
                         <div className="p-4 border-b flex items-center justify-between dark:border-slate-800 shrink-0 relative z-30">
+                            {/* FIXED DYNAMIC HEADER LOGIC COLOR FOR ACTIVE CONTAINER CONTAINER LABELS */}
                             <span className="text-xs font-black uppercase tracking-wider text-orange-500">
                                 {selectedCart.cart_name} Node System
                             </span>
                             <button
                                 onClick={() => setSelectedCart(null)}
-                                className="text-xs font-black px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white/20 dark:bg-slate-900/60 hover:brightness-110"
+                                className="text-xs font-black px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white/20 dark:bg-slate-900/60 text-slate-900 dark:text-white hover:brightness-110"
                             >
                                 Close Workspace ✕
                             </button>
                         </div>
 
-                        {/* Scrollable View Matching ERP Layout Page */}
+                        {/* Modal Content Space */}
                         <div className="p-6 md:p-8 overflow-y-auto space-y-12 flex-1 relative">
-                            {/* VIDEO HERO BANNER LAYER SECTION */}
+                            {/* OVERVIEW VIDEO EMBED BOX LAYER */}
                             <div
                                 className="w-full relative z-20"
                                 onMouseEnter={handleMouseEnter}
@@ -352,20 +368,18 @@ export default function Dashboard({
                             >
                                 <div
                                     onClick={() => {
-                                        if (
-                                            selectedCart.packages &&
-                                            selectedCart.packages.length > 0 &&
-                                            selectedCart.packages[0]
-                                                .youtube_link
-                                        ) {
+                                        if (selectedCart.youtube_link) {
                                             setActiveVideoId(
                                                 extractVideoId(
-                                                    selectedCart.packages[0]
-                                                        .youtube_link,
+                                                    selectedCart.youtube_link,
                                                 ),
                                             );
+                                            setIsVideoModalOpen(true);
+                                        } else {
+                                            alert(
+                                                "No central overview walkthrough tutorial video link configured for this category stack node.",
+                                            );
                                         }
-                                        setIsVideoModalOpen(true);
                                     }}
                                     className={`w-full h-52 md:h-80 rounded-2xl overflow-hidden shadow-md border cursor-pointer group relative transform transition-all duration-300 hover:scale-[1.005] hover:shadow-xl ${
                                         isDarkMode
@@ -388,13 +402,11 @@ export default function Dashboard({
                                     </video>
 
                                     <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/20 transition-colors duration-300" />
-
                                     <div className="absolute top-4 left-4 z-10">
                                         <span className="bg-orange-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded shadow-sm">
                                             System Guide Video
                                         </span>
                                     </div>
-
                                     <div className="absolute inset-0 flex items-center justify-center z-10">
                                         <div className="p-4 bg-orange-500 text-white rounded-full shadow-lg transform transition-all duration-300 group-hover:scale-110 group-hover:bg-orange-600 active:scale-95 animate-pulse group-hover:animate-none">
                                             <svg
@@ -407,7 +419,6 @@ export default function Dashboard({
                                             </svg>
                                         </div>
                                     </div>
-
                                     <div className="absolute bottom-4 left-4 right-4 z-10 flex justify-between items-end">
                                         <div>
                                             <h2 className="text-white text-lg md:text-xl font-black tracking-tight drop-shadow-md">
@@ -428,133 +439,194 @@ export default function Dashboard({
                                 </div>
                             </div>
 
-                            {/* Header Main Titles & Descriptions Block */}
+                            {/* DYNAMIC VIEW CATEGORY HEADER ATTRIBUTES (FIXED INSIDE THE MODAL CONTAINER) */}
                             <div className="text-center space-y-2 relative z-10">
                                 <h3
-                                    className={`text-2xl md:text-3xl font-black tracking-tight transition-colors duration-500 ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                                    className={`text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white`}
                                 >
-                                    Pick your Enterprise Architecture
+                                    {selectedCart.cart_name}
                                 </h3>
                                 <p
-                                    className={`max-w-xl mx-auto text-xs transition-colors duration-500 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
+                                    className={`max-w-xl mx-auto text-xs text-slate-600 dark:text-slate-400`}
                                 >
-                                    {selectedCart.packages &&
-                                    selectedCart.packages.length > 0
-                                        ? selectedCart.packages[0]
-                                              .small_description
-                                        : selectedCart.description}
+                                    {selectedCart.description}
                                 </p>
                             </div>
 
-                            {/* Dynamic Package Cards Grid Matrix */}
-                            {!selectedCart.packages ||
-                            selectedCart.packages.length === 0 ? (
-                                <p className="text-xs text-center opacity-50 italic py-6">
-                                    No specific variants have been deployed into
-                                    this dynamic feed matrix yet.
-                                </p>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch relative z-10">
-                                    {selectedCart.packages.map((pkg) => (
-                                        <div
-                                            key={pkg.id}
-                                            className={`rounded-2xl border p-6 flex flex-col justify-between relative group transform transition-all duration-500 ease-in-out hover:-translate-y-1.5 hover:shadow-xl ${
-                                                isDarkMode
-                                                    ? "bg-slate-900/80 border-slate-800 text-white hover:border-orange-500/40 hover:shadow-orange-500/5"
-                                                    : "bg-white/90 border-slate-200/80 text-slate-900 hover:border-orange-500/30 hover:shadow-slate-300/60"
-                                            }`}
-                                        >
-                                            <div className="relative z-10">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <h4 className="text-base font-extrabold tracking-tight group-hover:text-orange-500 transition-colors duration-300">
-                                                        {pkg.package_name}
-                                                    </h4>
-                                                    <span
-                                                        className={`text-[10px] font-black px-2 py-0.5 rounded transition-colors duration-500 ${isDarkMode ? "bg-slate-800 text-orange-400" : "bg-slate-200/60 text-orange-600"}`}
-                                                    >
-                                                        ⭐{" "}
-                                                        {parseFloat(
-                                                            pkg.rating || 5.0,
-                                                        ).toFixed(1)}
-                                                    </span>
-                                                </div>
+                            {/* PACKAGES GRID LAYOUT DISPLAY */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch relative z-10">
+                                {selectedCart.packages &&
+                                selectedCart.packages.length === 0 ? (
+                                    <div className="col-span-full text-center py-12 opacity-60 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                        No structural architecture modules
+                                        configured under this category node
+                                        segment yet.
+                                    </div>
+                                ) : (
+                                    selectedCart.packages &&
+                                    selectedCart.packages.map((pkg) => {
+                                        const hasDiscount =
+                                            Number(pkg.discount_percentage) > 0;
+                                        const finalPrice = getDiscountedPrice(
+                                            pkg.price,
+                                            pkg.discount_percentage,
+                                        );
 
-                                                <div className="mb-4">
-                                                    <span className="text-2xl font-black tracking-tight text-orange-500 transition-transform duration-300 inline-block group-hover:scale-105">
-                                                        LKR{" "}
-                                                        {parseFloat(
-                                                            pkg.price,
-                                                        ).toLocaleString()}
-                                                    </span>
-                                                    <span className="text-slate-400 text-[10px] font-bold block mt-0.5">
-                                                        / month
-                                                    </span>
-                                                </div>
+                                        return (
+                                            <div
+                                                key={pkg.id}
+                                                className={`rounded-2xl border p-6 flex flex-col justify-between relative group transform transition-all duration-500 ease-in-out hover:-translate-y-1.5 hover:shadow-xl ${
+                                                    isDarkMode
+                                                        ? "bg-slate-900/80 border-slate-800 text-white hover:border-orange-500/40 hover:shadow-orange-500/5"
+                                                        : "bg-white/90 border-slate-200/80 text-slate-900 hover:border-orange-500/30 hover:shadow-slate-300/60"
+                                                }`}
+                                            >
+                                                <div className="relative z-10">
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <h4 className="text-base font-extrabold tracking-tight group-hover:text-orange-500 text-slate-900 dark:text-white transition-colors duration-300">
+                                                            {pkg.package_name}
+                                                        </h4>
+                                                        <span
+                                                            className={`text-[10px] font-black px-2 py-0.5 rounded ${isDarkMode ? "bg-slate-800 text-orange-400" : "bg-slate-200/60 text-orange-600"}`}
+                                                        >
+                                                            ⭐{" "}
+                                                            {parseFloat(
+                                                                pkg.rating ||
+                                                                    5.0,
+                                                            ).toFixed(1)}
+                                                        </span>
+                                                    </div>
 
-                                                <hr
-                                                    className={`my-4 ${isDarkMode ? "border-slate-800" : "border-slate-200"}`}
-                                                />
+                                                    {/* CALCULATED VALUE TIERS WITH DUAL DECIMALS */}
+                                                    <div className="mb-4">
+                                                        {hasDiscount ? (
+                                                            <div className="space-y-0.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-2xl font-black tracking-tight text-orange-500">
+                                                                        LKR{" "}
+                                                                        {finalPrice.toLocaleString(
+                                                                            "en-US",
+                                                                            {
+                                                                                minimumFractionDigits: 2,
+                                                                                maximumFractionDigits: 2,
+                                                                            },
+                                                                        )}
+                                                                    </span>
+                                                                    <span className="text-xs line-through opacity-50 font-bold text-slate-500 dark:text-slate-400">
+                                                                        LKR{" "}
+                                                                        {Number(
+                                                                            pkg.price,
+                                                                        ).toLocaleString(
+                                                                            "en-US",
+                                                                            {
+                                                                                minimumFractionDigits: 2,
+                                                                                maximumFractionDigits: 2,
+                                                                            },
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                                {pkg.discount_description && (
+                                                                    <span className="text-[10px] text-red-500 font-extrabold block uppercase tracking-wide">
+                                                                        🔥{" "}
+                                                                        {
+                                                                            pkg.discount_description
+                                                                        }{" "}
+                                                                        (-
+                                                                        {Number(
+                                                                            pkg.discount_percentage,
+                                                                        ).toLocaleString(
+                                                                            "en-US",
+                                                                            {
+                                                                                maximumFractionDigits: 2,
+                                                                            },
+                                                                        )}
+                                                                        %)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-2xl font-black tracking-tight text-orange-500">
+                                                                LKR{" "}
+                                                                {Number(
+                                                                    pkg.price,
+                                                                ).toLocaleString(
+                                                                    "en-US",
+                                                                    {
+                                                                        minimumFractionDigits: 2,
+                                                                        maximumFractionDigits: 2,
+                                                                    },
+                                                                )}
+                                                            </span>
+                                                        )}
+                                                        <span className="text-slate-400 text-[10px] font-bold block mt-0.5">
+                                                            / month
+                                                        </span>
+                                                    </div>
 
-                                                {/* Target Suitability */}
-                                                <div className="mb-4">
-                                                    <h5 className="text-[9px] uppercase font-black tracking-wider text-slate-400 mb-1">
-                                                        Suitable For
-                                                    </h5>
-                                                    <span
-                                                        className={`text-[10px] font-bold px-2 py-0.5 rounded inline-block ${isDarkMode ? "bg-orange-950/40 text-orange-400" : "bg-orange-50 text-orange-700"}`}
-                                                    >
-                                                        {pkg.suitable_business}
-                                                    </span>
-                                                </div>
+                                                    <hr
+                                                        className={`my-4 ${isDarkMode ? "border-slate-800" : "border-slate-200"}`}
+                                                    />
 
-                                                {/* Features list */}
-                                                <div className="mb-4 text-xs font-medium space-y-1">
-                                                    <h5 className="text-[9px] uppercase font-black tracking-wider text-slate-400 mb-1.5">
-                                                        Core Feature Sets
-                                                    </h5>
-                                                    <p
-                                                        className={`text-[11px] leading-relaxed ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}
-                                                    >
-                                                        {pkg.core_features}
-                                                    </p>
-                                                </div>
+                                                    <div className="mb-4">
+                                                        <h5 className="text-[9px] uppercase font-black tracking-wider text-slate-400 mb-1">
+                                                            Suitable For
+                                                        </h5>
+                                                        <span
+                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded inline-block ${isDarkMode ? "bg-orange-950/40 text-orange-400" : "bg-orange-50 text-orange-700"}`}
+                                                        >
+                                                            {
+                                                                pkg.suitable_business
+                                                            }
+                                                        </span>
+                                                    </div>
 
-                                                {/* Benefits block */}
-                                                <div className="text-xs font-medium space-y-1">
-                                                    <h5 className="text-[9px] uppercase font-black tracking-wider text-slate-400 mb-1">
-                                                        Core Benefits
-                                                    </h5>
-                                                    <div
-                                                        className={`p-3 rounded-xl border text-[11px] leading-relaxed ${isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-100/70 border-slate-200/60 text-slate-500"}`}
-                                                    >
-                                                        {pkg.benefits}
+                                                    <div className="mb-4 text-xs font-medium space-y-1">
+                                                        <h5 className="text-[9px] uppercase font-black tracking-wider text-slate-400 mb-1.5">
+                                                            Core Feature Sets
+                                                        </h5>
+                                                        <p
+                                                            className={`text-[11px] leading-relaxed text-slate-700 dark:text-slate-300`}
+                                                        >
+                                                            {pkg.core_features}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="text-xs font-medium space-y-1">
+                                                        <h5 className="text-[9px] uppercase font-black tracking-wider text-slate-400 mb-1">
+                                                            Core Benefits
+                                                        </h5>
+                                                        <div
+                                                            className={`p-3 rounded-xl border text-[11px] leading-relaxed ${isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-100/70 border-slate-200/60 text-slate-600 dark:text-slate-400"}`}
+                                                        >
+                                                            {pkg.benefits}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div className="relative z-10 mt-5">
-                                                <button
-                                                    onClick={() =>
-                                                        handleBuyButtonClick(
-                                                            pkg,
-                                                        )
-                                                    }
-                                                    className="w-full text-center py-2.5 px-4 bg-slate-900 text-white rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 hover:bg-orange-500 dark:bg-orange-600 dark:hover:bg-orange-500 active:scale-[0.98]"
-                                                >
-                                                    Buy Now
-                                                </button>
+                                                <div className="relative z-10 mt-5">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleBuyButtonClick(
+                                                                pkg,
+                                                            )
+                                                        }
+                                                        className="w-full text-center py-2.5 px-4 bg-slate-900 text-white rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 hover:bg-orange-500 dark:bg-orange-600 dark:hover:bg-orange-500 active:scale-[0.98]"
+                                                    >
+                                                        Buy Now
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
             {/* ==========================================================
-                2. INTEGRATED PREMIUM BILLING SETUP CONFIRMATION MODAL
+                2. BILLING CHECKOUT MODAL WINDOW WITH CALCULATED DISCOUNT
             ========================================================== */}
             {isCheckoutModalOpen && selectedPackage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
@@ -573,7 +645,7 @@ export default function Dashboard({
                             </div>
                             <button
                                 onClick={() => setIsCheckoutModalOpen(false)}
-                                className="p-1.5 rounded-lg border dark:border-slate-800 text-slate-400 hover:text-slate-600"
+                                className="p-1.5 rounded-lg border dark:border-slate-800 text-slate-400 hover:text-slate-200"
                             >
                                 ✕
                             </button>
@@ -590,13 +662,27 @@ export default function Dashboard({
                                     <h4 className="text-md font-extrabold mt-0.5">
                                         {selectedPackage.package_name}
                                     </h4>
+                                    {Number(
+                                        selectedPackage.discount_percentage,
+                                    ) > 0 && (
+                                        <span className="text-[10px] text-red-500 font-bold block mt-0.5">
+                                            Applied Discount:{" "}
+                                            {
+                                                selectedPackage.discount_description
+                                            }
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="text-right">
                                     <span className="text-lg font-black text-orange-500">
                                         LKR{" "}
-                                        {parseFloat(
+                                        {getDiscountedPrice(
                                             selectedPackage.price,
-                                        ).toLocaleString()}
+                                            selectedPackage.discount_percentage,
+                                        ).toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
                                     </span>
                                     <span className="text-slate-400 text-[10px] block">
                                         / month
@@ -637,7 +723,13 @@ export default function Dashboard({
                                                         <div className="text-right shrink-0">
                                                             <span className="text-xs font-extrabold text-orange-500">
                                                                 +LKR{" "}
-                                                                {service.price.toLocaleString()}
+                                                                {service.price.toLocaleString(
+                                                                    "en-US",
+                                                                    {
+                                                                        minimumFractionDigits: 2,
+                                                                        maximumFractionDigits: 2,
+                                                                    },
+                                                                )}
                                                             </span>
                                                             <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded ml-1.5 bg-slate-800 text-slate-300">
                                                                 {service.type}
@@ -663,7 +755,11 @@ export default function Dashboard({
                                     Total Estimated Value
                                 </span>
                                 <div className="text-2xl font-black text-orange-500 tracking-tight">
-                                    LKR {calculateTotal().toLocaleString()}
+                                    LKR{" "}
+                                    {calculateTotal().toLocaleString("en-US", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -671,7 +767,7 @@ export default function Dashboard({
                                     onClick={() =>
                                         setIsCheckoutModalOpen(false)
                                     }
-                                    className="px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-800"
+                                    className="px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300"
                                 >
                                     Cancel
                                 </button>
@@ -688,7 +784,7 @@ export default function Dashboard({
             )}
 
             {/* ==========================================================
-                3. THEATER PLAYER IFRAME LINK REDIRECTION POP-UP MODAL
+                3. THEATER PLAYER IFRAME POP-UP MODAL
             ========================================================== */}
             {isVideoModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fadeIn">
