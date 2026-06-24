@@ -69,7 +69,7 @@
 
     <div class="invoice-details">
         <strong>Order ID:</strong> {{ $order_id }}<br>
-        <strong>Date:</strong> {{ date('Y-m-d H:i:s') }}<br>
+        <strong>Date:</strong> {{ $date }}<br> <!-- Render Sri Lankan Time Metrics cleanly -->
         <strong>Customer Name:</strong> {{ $customer_name }}<br>
         <strong>Email:</strong> {{ $customer_email }}
     </div>
@@ -82,14 +82,17 @@
             </tr>
         </thead>
         <tbody>
+            <!-- 📦 Package Base Price Row Line -->
             <tr>
-                <td>{{ $package_name }} (Base Plan)</td>
+                <td>Core Package: {{ $package_name }}</td>
                 <td style="text-align: right;">LKR {{ number_format($base_price, 2) }}</td>
             </tr>
+
+            <!-- ➕ Individual Chosen Service Addons Loop Render Rows -->
             @if(!empty($addons))
             @foreach($addons as $addon)
             <tr>
-                <td>➕ Add-on: {{ $addon['name'] }}</td>
+                <td>Extra Service: {{ $addon['name'] }}</td>
                 <td style="text-align: right;">LKR {{ number_format($addon['price'], 2) }}</td>
             </tr>
             @endforeach
@@ -102,7 +105,7 @@
     </div>
 
     <div class="footer">
-        This is an electronically generated payment receipt configuration sheet.
+        This is an electronically generated payment receipt sheet configuration layout.
     </div>
 
 </body>

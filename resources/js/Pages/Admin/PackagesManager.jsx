@@ -15,7 +15,7 @@ export default function PackagesManager({ auth, carts = [] }) {
         button_name: "",
         description: "",
         color_class: "from-blue-500 to-indigo-600",
-        youtube_link: "", // FIXED POSITION: Unified walkway video added safely under Cart Level elements
+        youtube_link: "", // Unified walkthrough video added safely under Cart Level elements
     });
 
     // Form 2: Appending or updating a Specific Package Item
@@ -109,14 +109,16 @@ export default function PackagesManager({ auth, carts = [] }) {
             packageForm.put(`/admin/packages/item/${editingPackageId}`, {
                 onSuccess: () => {
                     setEditingPackageId(null);
+                    // 🛠️ Clears all input parameters successfully upon dynamic update completion loop
                     packageForm.reset();
                 },
             });
         } else {
             packageForm.post("/admin/packages/item", {
                 onSuccess: () =>
-                    packageForm.reset({
-                        ...packageForm.data,
+                    // 🛠️ FIXED: Completely wipes all user inputs clean upon saving new items to live feed database logs
+                    packageForm.setData({
+                        package_cart_id: packageForm.data.package_cart_id, // Retains selection for workflow efficiency
                         main_topic: "",
                         small_description: "",
                         package_name: "",
@@ -124,6 +126,7 @@ export default function PackagesManager({ auth, carts = [] }) {
                         suitable_business: "",
                         core_features: "",
                         benefits: "",
+                        rating: "5.0",
                         discount_percentage: "0",
                         discount_description: "",
                     }),
@@ -169,7 +172,7 @@ export default function PackagesManager({ auth, carts = [] }) {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* SECTION A: CARTS FORM INTERFACE (WITH INTEGRATED YOUTUBE LINK ON STEP 1) */}
+                    {/* SECTION A: CARTS FORM INTERFACE */}
                     <div
                         className={`p-6 border rounded-xl shadow-sm ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
                     >
@@ -255,7 +258,6 @@ export default function PackagesManager({ auth, carts = [] }) {
                                 </select>
                             </div>
 
-                            {/* LOCKED HERE: MAIN CATEGORY WALKTHROUGH LINK FOR THE ENTIRE CART GRID */}
                             <div className="p-3 border border-dashed rounded-lg border-blue-500/20 bg-blue-500/[0.01]">
                                 <label className="block mb-1 font-bold text-blue-500 dark:text-blue-400">
                                     Main Category Walkthrough Video (YouTube
@@ -414,7 +416,6 @@ export default function PackagesManager({ auth, carts = [] }) {
                                 </div>
                             </div>
 
-                            {/* DISCOUNT FIELD ATTRIBUTES */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 rounded-lg border border-dashed border-orange-500/20 bg-orange-500/[0.01]">
                                 <div>
                                     <label className="block mb-1 font-bold text-orange-500">
@@ -440,7 +441,7 @@ export default function PackagesManager({ auth, carts = [] }) {
                                 </div>
                                 <div>
                                     <label className="block mb-1 font-bold text-orange-500">
-                                        Discount Tag / Badge Description
+                                        Discount Tag Description
                                     </label>
                                     <input
                                         type="text"

@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/checkout/initialize', [CheckoutController::class, 'initialize'])->name('checkout.initialize');
     Route::get('/checkout/receipt/download', [CheckoutController::class, 'downloadReceipt'])->name('receipt.download');
+    Route::post('/payhere/webhook', [CheckoutController::class, 'handleWebhook'])->name('payhere.webhook');
 
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
