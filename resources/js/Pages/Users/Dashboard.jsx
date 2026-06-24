@@ -264,9 +264,12 @@ export default function Dashboard({
                     </div>
                 )}
 
-                {/* HERO COVER HEADER */}
-                <div className="relative bg-slate-900 text-white min-h-[40vh] flex items-center justify-center py-16 px-4 border-b border-slate-800 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent z-10" />
+                {/* HERO COVER HEADER WITH BACKGROUND IMAGE */}
+                <div
+                    className="relative min-h-[40vh] flex items-center justify-center py-16 px-4 border-b border-slate-800 overflow-hidden bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: "url('/img/hero-bg.jpg')" }}
+                >
+                    <div className="absolute inset-0 bg-slate-950/70 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent z-10" />
                     <div className="relative z-10 max-w-4xl w-full text-center space-y-4">
                         <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white drop-shadow-md">
                             Pick your Enterprise Architecture

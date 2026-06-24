@@ -29,7 +29,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* 🛠️ Modern Two-Column Layout Grid for Meta Details */
+        /* Two-Column Layout Grid for Meta Details */
         .meta-container-table {
             width: 100%;
             border-collapse: collapse;
@@ -57,7 +57,7 @@
             color: #475569;
         }
 
-        /* 📊 Styled Data Table Layout */
+        /* Styled Data Table Layout */
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -93,7 +93,7 @@
             font-weight: normal;
         }
 
-        /* 💰 Final Summary Highlights */
+        /* Final Summary Highlights */
         .total-box {
             text-align: right;
             margin-top: 30px;
@@ -137,7 +137,7 @@
         <p style="font-size: 13px; color: #64748b; margin: 0;">Thank you for your business setup purchase!</p>
     </div>
 
-    <!-- 🛠️ TWO-COLUMN METADATA GRID CONTAINER -->
+    <!-- TWO-COLUMN METADATA GRID CONTAINER -->
     <table class="meta-container-table">
         <tr>
             <!-- Left Side Column: Bill To / Customer Profiles -->
@@ -167,7 +167,8 @@
             </tr>
         </thead>
         <tbody>
-            <!-- Core Package Row Base Layout Line -->
+            <!-- 🛠️ Core Package Row (Only renders if a primary package is linked) -->
+            @if($base_price > 0)
             <tr>
                 <td>
                     <span class="item-desc">Core Package: {{ $package_name }}</span><br>
@@ -175,14 +176,19 @@
                 </td>
                 <td style="text-align: right; font-weight: 600;">LKR {{ number_format($base_price, 2) }}</td>
             </tr>
+            @endif
 
-            <!-- Individual Chosen Premium Service Addons Loop -->
+            <!-- 🛠️ Individual Chosen Services Loop Array -->
             @if(!empty($addons))
             @foreach($addons as $addon)
             <tr>
                 <td>
-                    <span class="item-desc">Extra Service: {{ $addon['name'] }}</span><br>
-                    <span class="item-type">Premium Modular Micro-Service Extension Add-on</span>
+                    <span class="item-desc">
+                        {{ $base_price > 0 ? 'Extra Service Add-on:' : 'Infrastructure Service:' }} {{ $addon['name'] }}
+                    </span><br>
+                    <span class="item-type">
+                        {{ $base_price > 0 ? 'Premium Modular Micro-Service Extension' : 'Standalone Custom Framework Enhancement Component' }}
+                    </span>
                 </td>
                 <td style="text-align: right; font-weight: 600;">LKR {{ number_format($addon['price'], 2) }}</td>
             </tr>
@@ -193,8 +199,8 @@
 
     <!-- TOTAL PAID BOX ASSET SHEET -->
     <div class="total-box">
-        <span class="total-label">Total Paid (LKR):</span>
-        <span class="total-amount">{{ number_format($total_amount, 2) }}</span>
+        <span class="total-label">Total Paid:</span>
+        <span class="total-amount">LKR {{ number_format($total_amount, 2) }}</span>
     </div>
 
     <div class="footer">

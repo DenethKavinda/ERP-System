@@ -12,6 +12,7 @@ use App\Http\Controllers\KnowledgeCenter;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\CheckoutController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\LedgerController;
 
 // Public Auth Action Layer endpoints 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -63,6 +64,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Transactional Ledger Matrix Entryways
+    Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger.index');
+    Route::get('/ledger/receipt/{order_id}', [CheckoutController::class, 'downloadReceiptByOrder'])->name('ledger.receipt.download');
+
+    // Service Marketplace Payment Gateway Routes
+    Route::post('/checkout/services', [CheckoutController::class, 'initializeServices'])->name('checkout.services');
 });
 
 // ==========================================

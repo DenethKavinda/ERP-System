@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { Head } from "@inertiajs/react"; // 🚀 FIXED: Added missing Head component import
 import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
+import axios from "axios";
 
-export default function Services({ services = [] }) {
+export default function Services({ auth, services = [] }) {
     // UI Theme state controls
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [cart, setCart] = useState([]);
@@ -37,366 +39,234 @@ export default function Services({ services = [] }) {
         return cart.reduce((total, item) => total + Number(item.price), 0);
     };
 
-    const handleCheckoutConfirm = () => {
-        alert(
-            `Order Placed Successfully!\nTotal Services Selected: ${cart.length}\nTotal: LKR ${calculateTotal().toLocaleString()}`,
-        );
-        setCart([]);
-        setIsCartOpen(false);
+    // 🚀 FIXED: Wrapped explicitly inside window reference checks to eliminate runtime script initialization crashes
+    const handleCheckoutConfirm = async () => {
+        if (cart.length === 0) return;
+
+        // Verify if PayHere's native library JavaScript file is loaded inside the browser DOM scope
+        const payhereSDK =
+            window.payhere || (typeof payhere !== "undefined" ? payhere : null);
+
+        if (!payhereSDK) {
+            alert(
+                "PayHere payment gateway runtime engine script is not loaded. Please verify your script tags.",
+            );
+            return;
+        }
+
+        try {
+            const serviceIds = cart.map((item) => item.id);
+
+            // Post items array list payload to secure server side processing route
+            const response = await axios.post("/checkout/services", {
+                service_ids: serviceIds,
+            });
+
+            const paymentConfig = response.data;
+
+            // Define programmatic event trigger behaviors expected by PayHere script engine
+            payhereSDK.onCompleted = function onCompleted(orderId) {
+                window.location.href =
+                    "/checkout/success-callback?order_id=" +
+                    orderId +
+                    "&amount=" +
+                    paymentConfig.amount +
+                    "&items=" +
+                    paymentConfig.items;
+            };
+
+            payhereSDK.onDismissed = function onDismissed() {
+                console.log(
+                    "Service payment gateway panel closed by action sequence.",
+                );
+            };
+
+            payhereSDK.onError = function onError(error) {
+                alert("PayHere verification pipeline error: " + error);
+            };
+
+            // Call native payment screen container lightbox
+            payhereSDK.startPayment(paymentConfig);
+        } catch (error) {
+            console.error(
+                "Failed to generate system payment payload metrics parameters:",
+                error,
+            );
+            alert(
+                "Unable to reach payment servers. Check your configurations.",
+            );
+        }
     };
 
     return (
         <div
-            className={`min-h-screen font-sans flex flex-col justify-between transition-colors duration-300 ${
-                isDarkMode
-                    ? "bg-slate-950 text-slate-100"
-                    : "bg-slate-50 text-slate-900"
-            }`}
+            className={`min-h-screen flex flex-col justify-between transition-colors duration-300 ${isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"}`}
         >
+            <Head title="Service Workspace Center" />
+
             <div>
-                {/* GLOBAL NAVBAR HEADER */}
-                <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+                <Header
+                    isDarkMode={isDarkMode}
+                    setIsDarkMode={setIsDarkMode}
+                    auth={auth}
+                />
 
-                {/* IMMERSIVE HERO SECTION WITH DROPDOWN FILTER */}
-                <div
-                    className={`relative border-b backdrop-blur-sm ${
-                        isDarkMode
-                            ? "border-slate-900 bg-slate-950/40"
-                            : "border-slate-200 bg-white/60"
-                    }`}
-                >
-                    <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-                        <div className="space-y-4 flex-1">
-                            <div className="space-y-2">
-                                <div
-                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
-                                        isDarkMode
-                                            ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
-                                            : "bg-orange-50 text-orange-600 border-orange-100"
-                                    }`}
-                                >
-                                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                    Premium Modular Extensions
-                                </div>
-                                <h1
-                                    className={`text-3xl md:text-4xl font-extrabold tracking-tight ${
-                                        isDarkMode
-                                            ? "text-white"
-                                            : "text-slate-900"
-                                    }`}
-                                >
-                                    Standalone Ecosystem Services
-                                </h1>
-                                <p
-                                    className={`max-w-2xl text-sm ${
-                                        isDarkMode
-                                            ? "text-slate-400"
-                                            : "text-slate-500"
-                                    }`}
-                                >
-                                    Deploy highly targeted solutions modularly
-                                    to expand your workspace capabilities
-                                    instantly.
-                                </p>
-                            </div>
-
-                            {/* INLINE DROPDOWN FILTER */}
-                            <div className="space-y-1.5 max-w-xs">
-                                <label
-                                    htmlFor="category-select"
-                                    className="block text-[10px] font-bold uppercase tracking-widest text-slate-400"
-                                >
-                                    Ecosystem Catalog
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        id="category-select"
-                                        value={selectedCategory}
-                                        onChange={(e) =>
-                                            setSelectedCategory(e.target.value)
-                                        }
-                                        className={`w-full appearance-none px-4 py-2.5 border rounded-xl text-xs font-bold tracking-wide shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 cursor-pointer pr-10 capitalize ${
-                                            isDarkMode
-                                                ? "bg-slate-900 border-slate-800 text-slate-200"
-                                                : "bg-white border-slate-200 text-slate-700"
-                                        }`}
-                                    >
-                                        {categories.map((category) => (
-                                            <option
-                                                key={category}
-                                                value={category}
-                                            >
-                                                {category}{" "}
-                                                {category === "All"
-                                                    ? "Catalog"
-                                                    : ""}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div
-                                        className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 border-l my-2 ${
-                                            isDarkMode
-                                                ? "border-slate-800"
-                                                : "border-slate-200"
-                                        }`}
-                                    >
-                                        <svg
-                                            className="w-3 h-3"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2.5"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                                            />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* WORKSPACE FLOATING ACTION CARD */}
-                        <button
-                            onClick={() => setIsCartOpen(true)}
-                            className={`relative group p-4 rounded-2xl border flex items-center gap-4 transition-all duration-300 shadow-md shrink-0 self-start md:self-auto ${
-                                isDarkMode
-                                    ? "bg-slate-900 border-slate-800 text-white hover:border-slate-700"
-                                    : "bg-white border-slate-200 text-slate-900 hover:border-slate-300"
-                            }`}
-                        >
-                            <div
-                                className={`p-3 rounded-xl text-orange-500 transition-transform group-hover:scale-110 ${
-                                    isDarkMode ? "bg-slate-800" : "bg-slate-100"
-                                }`}
-                            >
-                                <svg
-                                    className="w-6 h-6"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                                    />
-                                </svg>
-                                {cart.length > 0 && (
-                                    <span className="absolute top-3 left-3 flex h-3 w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
-                                    </span>
-                                )}
-                            </div>
-                            <div className="text-left font-bold text-sm tracking-tight pr-4">
-                                <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                    Active Basket
-                                </span>
-                                {cart.length}{" "}
-                                {cart.length === 1
-                                    ? "Module Selected"
-                                    : "Modules Selected"}
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                {/* MAIN CONTENT FULL-WIDTH DISPLAY GRID */}
-                <main className="max-w-7xl mx-auto px-6 py-12">
-                    {filteredServices.length === 0 ? (
-                        <div
-                            className={`border border-dashed p-16 text-center rounded-2xl ${
-                                isDarkMode
-                                    ? "bg-slate-900/40 border-slate-800 text-slate-400"
-                                    : "bg-white border-slate-300 text-slate-500"
-                            }`}
-                        >
-                            <p className="text-sm font-semibold">
-                                No operational modules found in records.
+                <main className="max-w-7xl mx-auto p-4 md:p-8 mt-4 relative">
+                    <div className="flex justify-between items-center mb-6 border-b pb-4 dark:border-slate-800">
+                        <div>
+                            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                                Infrastructure Services Catalog
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Deploy standalone custom system enhancements
+                                directly into your framework logs pipelines.
                             </p>
                         </div>
-                    ) : (
-                        /* Balanced 3-Column Grid rows */
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredServices.map((service) => {
-                                const isInCart = cart.some(
-                                    (item) => item.id === service.id,
-                                );
-                                return (
-                                    <div
-                                        key={service.id}
-                                        className={`border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-sm group ${
-                                            isDarkMode
-                                                ? "bg-slate-900 border-slate-800 hover:border-slate-700 hover:bg-slate-900/80"
-                                                : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md"
-                                        }`}
-                                    >
-                                        {/* Content Frame */}
-                                        <div className="p-6 space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <span
-                                                    className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded uppercase ${
-                                                        isDarkMode
-                                                            ? "bg-slate-800 text-slate-300"
-                                                            : "bg-slate-100 text-slate-700"
-                                                    }`}
-                                                >
-                                                    {service.billing_type}
-                                                </span>
-                                                <div
-                                                    className={`h-1.5 w-1.5 rounded-full transition-colors group-hover:bg-orange-500 ${
-                                                        isDarkMode
-                                                            ? "bg-slate-700"
-                                                            : "bg-slate-300"
-                                                    }`}
-                                                />
-                                            </div>
 
-                                            <div className="space-y-1.5">
-                                                <h3
-                                                    className={`font-bold text-lg tracking-tight ${
-                                                        isDarkMode
-                                                            ? "text-white"
-                                                            : "text-slate-900"
-                                                    }`}
-                                                >
-                                                    {service.name}
-                                                </h3>
-                                                <p
-                                                    className={`text-xs leading-relaxed line-clamp-4 ${
-                                                        isDarkMode
-                                                            ? "text-slate-400"
-                                                            : "text-slate-600"
-                                                    }`}
-                                                >
-                                                    {service.description}
-                                                </p>
-                                            </div>
+                        <button
+                            onClick={() => setIsCartOpen(true)}
+                            className="relative px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md flex items-center gap-2"
+                        >
+                            <span>🛒 Service Pipeline</span>
+                            {cart.length > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce">
+                                    {cart.length}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* CATEGORIES SELECTION SYSTEM TRACK */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+                        {categories.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-4 py-2 border rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all ${selectedCategory === cat ? "bg-orange-500 text-white border-orange-500 shadow-sm" : isDarkMode ? "bg-slate-900 border-slate-800 text-slate-400 hover:text-white" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* CATALOG ROW DISPLAY LOG MATRIX */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {filteredServices.map((service) => {
+                            const isInCart = cart.some(
+                                (item) => item.id === service.id,
+                            );
+                            return (
+                                <div
+                                    key={service.id}
+                                    className={`p-6 border rounded-2xl flex flex-col justify-between shadow-xs transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
+                                >
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center gap-2">
+                                            <span className="text-[9px] font-black uppercase bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded tracking-wider border dark:border-slate-800">
+                                                {service.category}
+                                            </span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                {service.billing_type}
+                                            </span>
                                         </div>
-
-                                        {/* Action Interactive Segment */}
-                                        <div
-                                            className={`p-4 border-t px-6 flex items-center justify-between ${
-                                                isDarkMode
-                                                    ? "border-slate-800 bg-slate-950/40"
-                                                    : "border-slate-200 bg-slate-50"
-                                            }`}
-                                        >
-                                            <div>
-                                                <span className="text-base font-black text-orange-500 block tracking-tight">
-                                                    LKR{" "}
-                                                    {Number(
-                                                        service.price,
-                                                    ).toLocaleString()}
-                                                </span>
-                                                <span className="text-[9px] font-medium text-slate-400 block uppercase tracking-wider">
-                                                    {service.billing_type ===
-                                                    "monthly"
-                                                        ? "per month"
-                                                        : "one-time"}
-                                                </span>
-                                            </div>
-
-                                            <button
-                                                onClick={() =>
-                                                    toggleCartItem(service)
-                                                }
-                                                className={`text-xs font-bold px-4 py-2 rounded transition-all shadow-sm transform active:scale-95 uppercase tracking-wider ${
-                                                    isInCart
-                                                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                                        : isDarkMode
-                                                          ? "bg-white text-slate-900 hover:bg-slate-100"
-                                                          : "bg-slate-900 text-white hover:bg-slate-800"
-                                                }`}
-                                            >
-                                                {isInCart
-                                                    ? "Selected ✓"
-                                                    : "Add to Cart"}
-                                            </button>
-                                        </div>
+                                        <h3 className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
+                                            {service.name}
+                                        </h3>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                                            {service.description ||
+                                                "No runtime parameter configurations detailed."}
+                                        </p>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+
+                                    <div className="mt-6 pt-4 border-t border-dashed dark:border-slate-800 flex items-center justify-between gap-4">
+                                        <div>
+                                            <span className="text-[9px] font-bold uppercase text-slate-400 block tracking-wider">
+                                                Price Cost
+                                            </span>
+                                            <span className="text-base font-black text-orange-500">
+                                                LKR{" "}
+                                                {Number(service.price).toFixed(
+                                                    2,
+                                                )}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() =>
+                                                toggleCartItem(service)
+                                            }
+                                            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${isInCart ? "bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-50 hover:text-white" : "bg-orange-500 border-orange-500 text-white hover:bg-orange-600"}`}
+                                        >
+                                            {isInCart
+                                                ? "✕ Remove"
+                                                : "➕ Add to Cart"}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </main>
             </div>
 
-            {/* CART POP-UP OVERLAY MODAL */}
+            {/* OVERLAY SLIDE PIPELINE SYSTEM DRAWER CONTAINER */}
             {isCartOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-end">
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-sm animate-fadeIn">
                     <div
-                        className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm transition-opacity"
+                        className="absolute inset-0"
                         onClick={() => setIsCartOpen(false)}
                     />
                     <div
-                        className={`relative w-full max-w-md h-screen border-l shadow-2xl p-6 flex flex-col justify-between ${
-                            isDarkMode
-                                ? "bg-slate-900 border-slate-800 text-white"
-                                : "bg-white border-slate-200 text-slate-900"
-                        }`}
+                        className={`w-full max-w-md h-full shadow-2xl relative z-10 flex flex-col justify-between p-6 ${isDarkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
                     >
-                        <div>
-                            <div
-                                className={`flex justify-between items-center mb-8 pb-4 border-b ${
-                                    isDarkMode
-                                        ? "border-slate-800"
-                                        : "border-slate-100"
-                                }`}
-                            >
-                                <h3 className="text-sm font-bold tracking-wider uppercase flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-orange-500" />
-                                    Active Pipeline Basket
-                                </h3>
+                        <div className="space-y-6 overflow-y-auto max-h-[75vh]">
+                            <div className="flex justify-between items-center border-b pb-4 dark:border-slate-800">
+                                <div>
+                                    <h2 className="text-base font-black uppercase tracking-wider text-orange-500">
+                                        Service Pipeline Cart
+                                    </h2>
+                                    <p className="text-[11px] opacity-60">
+                                        Staged on-demand system components
+                                        selection queue
+                                    </p>
+                                </div>
                                 <button
                                     onClick={() => setIsCartOpen(false)}
-                                    className={`transition-colors ${
-                                        isDarkMode
-                                            ? "text-slate-400 hover:text-white"
-                                            : "text-slate-400 hover:text-slate-600"
-                                    }`}
+                                    className="text-xs font-bold px-3 py-1.5 rounded-lg border dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
                                 >
-                                    ✕
+                                    Close ✕
                                 </button>
                             </div>
 
-                            <div className="overflow-y-auto space-y-3 pr-1 max-h-[65vh]">
+                            <div className="space-y-3">
                                 {cart.length === 0 ? (
-                                    <div className="text-center py-12 text-slate-400 text-xs font-medium">
-                                        Your live workspace cart is empty.
-                                    </div>
+                                    <p className="text-xs text-slate-400 py-12 text-center italic">
+                                        Your service provisioning queue is
+                                        empty.
+                                    </p>
                                 ) : (
                                     cart.map((item) => (
                                         <div
                                             key={item.id}
-                                            className={`p-4 border rounded-xl flex items-center justify-between gap-4 ${
-                                                isDarkMode
-                                                    ? "bg-slate-950/40 border-slate-800"
-                                                    : "bg-slate-50 border-slate-200"
-                                            }`}
+                                            className={`p-3.5 border rounded-xl flex items-center justify-between gap-4 text-xs ${isDarkMode ? "bg-slate-950/40 border-slate-800" : "bg-slate-50 border-slate-100"}`}
                                         >
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="text-xs font-bold tracking-tight truncate">
+                                            <div>
+                                                <h4 className="font-bold text-slate-900 dark:text-white">
                                                     {item.name}
                                                 </h4>
-                                                <span className="text-[10px] uppercase font-bold text-slate-400 block mt-0.5">
+                                                <span className="text-[10px] text-orange-500 font-extrabold">
                                                     LKR{" "}
-                                                    {Number(
-                                                        item.price,
-                                                    ).toLocaleString()}
+                                                    {Number(item.price).toFixed(
+                                                        2,
+                                                    )}
                                                 </span>
                                             </div>
                                             <button
                                                 onClick={() =>
                                                     toggleCartItem(item)
                                                 }
-                                                className="text-[11px] text-red-500 hover:text-red-600 font-bold uppercase tracking-wider shrink-0"
+                                                className="text-rose-500 hover:text-rose-700 font-black text-sm px-1"
                                             >
-                                                Remove
+                                                ✕
                                             </button>
                                         </div>
                                     ))
@@ -405,24 +275,25 @@ export default function Services({ services = [] }) {
                         </div>
 
                         {cart.length > 0 && (
-                            <div
-                                className={`border-t pt-6 space-y-4 ${
-                                    isDarkMode
-                                        ? "border-slate-800"
-                                        : "border-slate-200"
-                                }`}
-                            >
-                                <div className="flex justify-between items-center">
+                            <div className="pt-4 border-t dark:border-slate-800 space-y-4">
+                                <div className="flex justify-between items-center text-xs">
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                        Grand Total:
+                                        Grand Total Rate:
                                     </span>
                                     <span className="text-xl font-black text-emerald-500">
-                                        LKR {calculateTotal().toLocaleString()}
+                                        LKR{" "}
+                                        {calculateTotal().toLocaleString(
+                                            undefined,
+                                            {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            },
+                                        )}
                                     </span>
                                 </div>
                                 <button
                                     onClick={handleCheckoutConfirm}
-                                    className="w-full text-center py-3.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:brightness-110 text-white font-bold text-xs uppercase tracking-widest rounded shadow-md transition-all transform active:scale-[0.99]"
+                                    className="w-full text-center py-3.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:brightness-110 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition-all active:scale-98"
                                 >
                                     Confirm Pipeline
                                 </button>
