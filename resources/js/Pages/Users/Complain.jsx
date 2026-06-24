@@ -1,12 +1,10 @@
-import React, { useState } from "react";
-import { Head, useForm } from "@inertiajs/react";
+import React, { useState, useEffect } from "react";
+import { Head, useForm, router } from "@inertiajs/react";
 import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
 
 export default function Complain({ auth, myComplaints = [] }) {
-    // Local theme fallback handler state configuration
     const [isDarkMode, setIsDarkMode] = useState(false);
-    // State to toggle the history tracking slide panel view
     const [showHistory, setShowHistory] = useState(false);
 
     const { data, setData, post, reset, processing, errors } = useForm({
@@ -14,12 +12,36 @@ export default function Complain({ auth, myComplaints = [] }) {
         category: "System Error",
         priority: "medium",
         description: "",
+        attachments: [],
     });
 
-    // Exclude 'resolved' tickets from increasing the active pending count badge
+    // 🚀 FIXED: Trims, normalizes, and automatically drops 'resolved' tickets from the badge count instantly!
     const activeNotificationCount = myComplaints.filter(
-        (ticket) => ticket.status?.toLowerCase() !== "resolved",
+        (ticket) =>
+            ticket.status &&
+            ticket.status.trim().toLowerCase() !== "resolved" &&
+            ticket.status.trim().toLowerCase() !== "closed",
     ).length;
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+    }, [isDarkMode]);
+
+    const handleFileChange = (e) => {
+        const selectedFiles = Array.from(e.target.files);
+        setData("attachments", [...data.attachments, ...selectedFiles]);
+    };
+
+    const removeFileFromQueue = (indexToRemove) => {
+        setData(
+            "attachments",
+            data.attachments.filter((_, idx) => idx !== indexToRemove),
+        );
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -28,356 +50,398 @@ export default function Complain({ auth, myComplaints = [] }) {
         });
     };
 
-    // Helper to render dynamic custom contextual styling for status loop states
+    const handleUserDeleteComplaint = (ticketId) => {
+        if (
+            confirm(
+                "Are you sure you want to permanently delete this complaint ticket and all its attached records?",
+            )
+        ) {
+            router.delete(`/complaints/user-remove/${ticketId}`);
+        }
+    };
+
     const getStatusStyle = (status) => {
-        switch (status?.toLowerCase()) {
+        switch (status?.toLowerCase()?.trim()) {
             case "resolved":
                 return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
             case "in-progress":
                 return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-            default: // open / pending
+            default:
                 return "bg-amber-500/10 text-amber-500 border-amber-500/20";
         }
     };
 
     return (
         <div
-            className={`flex flex-col min-h-screen transition-colors duration-300 ${isDarkMode ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-900"}`}
+            className={`min-h-screen font-sans flex flex-col justify-between transition-colors duration-300 ${isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"}`}
         >
-            <Head title="Submit Complaint Ticket" />
+            <Head title="Grievance Ticketing Workspace" />
 
-            {/* Shared Application Context Top Navbar Header Component */}
-            <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+            <div>
+                <Header
+                    isDarkMode={isDarkMode}
+                    setIsDarkMode={setIsDarkMode}
+                    auth={auth}
+                />
 
-            {/* Main Application Inner Grid Area Panel Wrapper */}
-            <main className="flex-1 p-4 md:p-8 overflow-y-auto relative">
-                <div className="max-w-3xl mx-auto my-6">
-                    {/* Workspace Top Description Header Layout with action panels */}
-                    <div className="mb-8 flex justify-between items-start gap-4">
-                        <div>
-                            <h1 className="text-2xl font-black tracking-tight">
-                                Support Ticket Registry
-                            </h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Encountering issues within your instance layout?
-                                Lodge an official engineering request track
-                                below.
-                            </p>
-                        </div>
-
-                        {/* Upper Top Right Context Notification Ticket History Slide Menu Button */}
+                <div className="max-w-4xl mx-auto p-4 md:p-8 mt-4 relative">
+                    <div className="flex justify-end mb-4">
                         <button
-                            onClick={() => setShowHistory(!showHistory)}
-                            className={`p-2.5 rounded-xl border relative transition-all flex items-center gap-2 group ${
-                                isDarkMode
-                                    ? "bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700"
-                                    : "bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                            }`}
-                            title="View My Submitted Complaints"
+                            onClick={() => setShowHistory(true)}
+                            className="relative px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md flex items-center gap-2"
                         >
                             <svg
-                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-4 h-4"
                                 fill="none"
                                 viewBox="0 0 24 24"
-                                strokeWidth={2}
                                 stroke="currentColor"
-                                className="w-5 h-5"
                             >
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                             </svg>
-                            <span className="text-xs font-bold tracking-wide uppercase pr-1 hidden sm:inline">
-                                My Tickets
-                            </span>
-
-                            {/* Dynamic alert pulsing badge counting structural updates */}
+                            <span>Ticket History</span>
                             {activeNotificationCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-orange-500 rounded-full text-[10px] font-black text-white flex items-center justify-center animate-pulse">
+                                <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce">
                                     {activeNotificationCount}
                                 </span>
                             )}
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-8">
-                        {/* Complaint Form Layout Card Framework Block Panel */}
-                        <div
-                            className={`p-6 rounded-xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}
+                    <div
+                        className={`border rounded-2xl p-6 md:p-8 shadow-sm transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
+                    >
+                        <div className="border-b pb-4 mb-6 dark:border-slate-800">
+                            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                                Submit Operational System Grievance
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Log architecture errors, premium module issues,
+                                or invoicing problems into management framework
+                                tracks.
+                            </p>
+                        </div>
+
+                        <form
+                            onSubmit={handleSubmit}
+                            className="space-y-5 text-xs font-medium"
                         >
-                            <form
-                                onSubmit={handleSubmit}
-                                className="space-y-5 text-xs"
-                            >
-                                {/* Subject Title Input Field */}
-                                <div>
-                                    <label className="block font-bold uppercase text-slate-400 mb-1">
-                                        Issue Subject Title
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="sm:col-span-2">
+                                    <label className="block mb-1.5 font-bold">
+                                        Ticket Subject Topic
                                     </label>
                                     <input
                                         type="text"
-                                        className={`w-full p-2.5 rounded-lg border focus:outline-none focus:border-orange-500 bg-transparent ${isDarkMode ? "border-slate-700 text-white" : "border-slate-200"}`}
+                                        placeholder="Provide brief high-level summary..."
                                         value={data.subject}
                                         onChange={(e) =>
                                             setData("subject", e.target.value)
                                         }
-                                        placeholder="e.g., Inventory sync payload connection failure"
+                                        className="w-full px-3 py-2.5 border rounded-xl dark:bg-slate-950 dark:border-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 border-inherit"
                                     />
                                     {errors.subject && (
-                                        <span className="text-red-500 mt-1 block">
+                                        <span className="text-red-500 font-bold block mt-1">
                                             {errors.subject}
                                         </span>
                                     )}
                                 </div>
 
-                                {/* Dynamic Selection Matrices Grid Area Row */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Category Select Node */}
-                                    <div>
-                                        <label className="block font-bold uppercase text-slate-400 mb-1">
-                                            Classification Category
-                                        </label>
-                                        <select
-                                            className={`w-full p-2.5 rounded-lg border focus:outline-none focus:border-orange-500 dark:bg-slate-800 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}
-                                            value={data.category}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "category",
-                                                    e.target.value,
-                                                )
-                                            }
-                                        >
-                                            <option value="System Error">
-                                                System Error / Bug
-                                            </option>
-                                            <option value="Billing Issue">
-                                                Billing & Invoicing
-                                            </option>
-                                            <option value="ERP Core Package">
-                                                ERP Package Configurations
-                                            </option>
-                                            <option value="Access Permission">
-                                                Account & Authentication Access
-                                            </option>
-                                            <option value="Other">
-                                                Other / General Inquiry
-                                            </option>
-                                        </select>
-                                    </div>
-
-                                    {/* Severity Priority Level Choice Block Option */}
-                                    <div>
-                                        <label className="block font-bold uppercase text-slate-400 mb-1">
-                                            Severity Priority Level
-                                        </label>
-                                        <select
-                                            className={`w-full p-2.5 rounded-lg border focus:outline-none focus:border-orange-500 dark:bg-slate-800 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}
-                                            value={data.priority}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "priority",
-                                                    e.target.value,
-                                                )
-                                            }
-                                        >
-                                            <option value="low">
-                                                Low - General Question
-                                            </option>
-                                            <option value="medium">
-                                                Medium - Operational Bug
-                                            </option>
-                                            <option value="high">
-                                                High - Business Impairment
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Deep Functional Context Textarea Field Element Description Node */}
                                 <div>
-                                    <label className="block font-bold uppercase text-slate-400 mb-1">
-                                        Functional Abstract Logs / Context
+                                    <label className="block mb-1.5 font-bold">
+                                        Category Sector
                                     </label>
-                                    <textarea
-                                        rows="5"
-                                        className={`w-full p-2.5 rounded-lg border focus:outline-none focus:border-orange-500 bg-transparent ${isDarkMode ? "border-slate-700 text-white" : "border-slate-200"}`}
-                                        value={data.description}
+                                    <select
+                                        value={data.category}
                                         onChange={(e) =>
-                                            setData(
-                                                "description",
-                                                e.target.value,
-                                            )
+                                            setData("category", e.target.value)
                                         }
-                                        placeholder="Provide deep structural descriptions regarding parameters or actions that threw the runtime discrepancies..."
-                                    />
-                                    {errors.description && (
-                                        <span className="text-red-500 mt-1 block">
-                                            {errors.description}
+                                        className="w-full px-3 py-2.5 border rounded-xl dark:bg-slate-950 dark:border-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 border-inherit"
+                                    >
+                                        <option value="System Error">
+                                            System Error
+                                        </option>
+                                        <option value="Billing Dispute">
+                                            Billing Dispute
+                                        </option>
+                                        <option value="Module Defect">
+                                            Module Defect
+                                        </option>
+                                        <option value="Other">
+                                            Other Category
+                                        </option>
+                                    </select>
+                                    {errors.category && (
+                                        <span className="text-red-500 font-bold block mt-1">
+                                            {errors.category}
                                         </span>
                                     )}
                                 </div>
+                            </div>
 
-                                {/* Form Fire Ingestion Action Engine Trigger Button */}
+                            <div>
+                                <label className="block mb-1.5 font-bold">
+                                    Issue Priority
+                                </label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {["low", "medium", "high"].map((prio) => (
+                                        <button
+                                            key={prio}
+                                            type="button"
+                                            onClick={() =>
+                                                setData("priority", prio)
+                                            }
+                                            className={`py-2 border rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all ${data.priority === prio ? "bg-orange-500 text-white border-orange-500 shadow-sm" : isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-white" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                                        >
+                                            {prio}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block mb-1.5 font-bold">
+                                    Comprehensive Issue Breakdown Description
+                                </label>
+                                <textarea
+                                    rows="5"
+                                    placeholder="Provide detailed error codes, trace exceptions, or background event steps context..."
+                                    value={data.description}
+                                    onChange={(e) =>
+                                        setData("description", e.target.value)
+                                    }
+                                    className="w-full px-3 py-2.5 border rounded-xl dark:bg-slate-950 dark:border-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 border-inherit"
+                                ></textarea>
+                                {errors.description && (
+                                    <span className="text-red-500 font-bold block mt-1">
+                                        {errors.description}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="p-4 border border-dashed rounded-xl border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20">
+                                <label className="block mb-2 font-bold text-slate-700 dark:text-slate-300">
+                                    Upload Multiple System Documentation
+                                    Documents (Images, PDF, ZIP)
+                                </label>
+                                <input
+                                    type="file"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-orange-500 file:text-white file:cursor-pointer hover:file:bg-orange-600"
+                                />
+
+                                {data.attachments.length > 0 && (
+                                    <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                            Staged Documents Queue (
+                                            {data.attachments.length}):
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {data.attachments.map(
+                                                (file, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border dark:border-slate-800 text-[11px]"
+                                                    >
+                                                        <span className="truncate max-w-[220px] font-medium text-slate-700 dark:text-slate-300">
+                                                            📄 {file.name}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                removeFileFromQueue(
+                                                                    idx,
+                                                                )
+                                                            }
+                                                            className="text-red-500 font-black hover:text-red-700 px-1.5 text-xs"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end pt-2">
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-black uppercase tracking-wider transition-colors disabled:opacity-50"
+                                    className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all disabled:opacity-50"
                                 >
-                                    Dispatch Issue Ticket to Engineering Group
+                                    {processing
+                                        ? "Dispatching..."
+                                        : "Dispatch Grievance Ticket"}
                                 </button>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
+            </div>
 
-                {/* SLIDE-OUT OVERLAY CANVAS RIGHT HAND DRAWER: Displays submitted complaint logging tracks */}
-                {showHistory && (
-                    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
-                        {/* Outside Backdrop click closes panel view overlay layout */}
-                        <div
-                            className="flex-1"
-                            onClick={() => setShowHistory(false)}
-                        />
+            {/* ==================== SLIDE HISTORY DRAWER PANELS ==================== */}
+            {showHistory && (
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-sm animate-fadeIn">
+                    <div
+                        className="absolute inset-0"
+                        onClick={() => setShowHistory(false)}
+                    />
 
-                        <div
-                            className={`w-full max-w-md h-full p-6 shadow-2xl flex flex-col transition-transform duration-300 transform translate-x-0 ${
-                                isDarkMode
-                                    ? "bg-slate-950 border-l border-slate-800 text-white"
-                                    : "bg-white border-l border-slate-200 text-slate-900"
-                            }`}
-                        >
-                            <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-800 mb-4">
+                    <div
+                        className={`w-full max-w-2xl h-full shadow-2xl relative z-10 flex flex-col justify-between p-6 overflow-y-auto ${isDarkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+                    >
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800">
                                 <div>
-                                    <h2 className="text-base font-black uppercase tracking-wide">
-                                        My Ticket Log History
+                                    <h2 className="text-base font-black uppercase tracking-wider text-orange-500">
+                                        Your Ticket History logs
                                     </h2>
-                                    <p className="text-[11px] text-slate-400">
-                                        Track current system evaluation reviews
-                                        and progress states.
+                                    <p className="text-[11px] opacity-60">
+                                        Scan administrative feedback notes and
+                                        operation statuses
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => setShowHistory(false)}
-                                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 text-xs font-black uppercase tracking-wider opacity-60 hover:opacity-100 transition-opacity"
+                                    className="text-xs font-bold px-3 py-1.5 rounded-lg border dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
                                 >
-                                    ✕ Close
+                                    Close ✕
                                 </button>
                             </div>
 
-                            {/* Scrolling Loop List of Personal Historical Log Items */}
-                            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                            <div className="space-y-4">
                                 {myComplaints.length === 0 ? (
-                                    <p className="text-xs text-slate-400 italic text-center py-12">
-                                        You have not submitted any complaint
-                                        tickets yet.
+                                    <p className="text-xs text-slate-400 py-8 text-center italic">
+                                        No system tickets logged yet.
                                     </p>
                                 ) : (
                                     myComplaints.map((ticket) => (
                                         <div
                                             key={ticket.id}
-                                            className={`p-4 rounded-xl border text-xs flex flex-col gap-2.5 transition-all duration-200 ${
-                                                isDarkMode
-                                                    ? "bg-slate-900/50 border-slate-800/80"
-                                                    : "bg-slate-50 border-slate-100"
-                                            }`}
+                                            className={`p-4 border rounded-xl space-y-3 text-xs ${isDarkMode ? "bg-slate-950/40 border-slate-800" : "bg-slate-50 border-slate-100"}`}
                                         >
-                                            <div className="flex justify-between items-start gap-2">
-                                                <h3 className="font-bold text-sm leading-tight text-orange-500 flex-1">
-                                                    {ticket.subject}
-                                                </h3>
-                                                {/* Core Status Lifecycle Badge Display Component Element Container */}
-                                                <span
-                                                    className={`px-2 py-0.5 rounded-full border font-bold uppercase text-[9px] tracking-wider whitespace-nowrap ${getStatusStyle(ticket.status || "open")}`}
-                                                >
-                                                    {ticket.status || "pending"}
-                                                </span>
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div>
+                                                    <span className="text-[9px] font-black uppercase bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded tracking-wider">
+                                                        {ticket.category}
+                                                    </span>
+                                                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white mt-1">
+                                                        {ticket.subject}
+                                                    </h3>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                                    <span
+                                                        className={`px-2 py-0.5 border text-[10px] font-black uppercase tracking-wider rounded-md ${getStatusStyle(ticket.status)}`}
+                                                    >
+                                                        {ticket.status}
+                                                    </span>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleUserDeleteComplaint(
+                                                                ticket.id,
+                                                            )
+                                                        }
+                                                        className="text-[10px] font-bold text-red-500 hover:underline px-1 py-0.5"
+                                                    >
+                                                        Remove Ticket ✕
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <p className="opacity-70 line-clamp-4 leading-relaxed whitespace-pre-wrap">
+
+                                            <p className="opacity-80 leading-relaxed text-slate-700 dark:text-slate-300">
                                                 {ticket.description}
                                             </p>
 
-                                            <div className="flex justify-between items-center pt-1.5 border-t border-slate-200/60 dark:border-slate-800/60 text-[10px] text-slate-400">
-                                                <span>
-                                                    Category:{" "}
-                                                    <strong className="text-slate-500 dark:text-slate-300">
-                                                        {ticket.category}
-                                                    </strong>
-                                                </span>
-                                                <span>
-                                                    {new Date(
-                                                        ticket.created_at,
-                                                    ).toLocaleDateString()}
-                                                </span>
-                                            </div>
+                                            {ticket.attachments &&
+                                                ticket.attachments.length >
+                                                    0 && (
+                                                    <div className="pt-2 flex flex-wrap gap-2">
+                                                        {ticket.attachments.map(
+                                                            (file) => (
+                                                                <a
+                                                                    key={
+                                                                        file.id
+                                                                    }
+                                                                    href={`/complaints/download/${file.id}`}
+                                                                    className="inline-flex items-center gap-1.5 px-2 py-1 border rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-[10px] font-bold text-orange-500 hover:underline"
+                                                                >
+                                                                    📄{" "}
+                                                                    {
+                                                                        file.original_name
+                                                                    }
+                                                                </a>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                )}
 
-                                            {/* NESTED RESPONSE DISPLAY AREA: Mapping inbound engineering replies */}
                                             {ticket.replies &&
                                                 ticket.replies.length > 0 && (
-                                                    <div className="mt-2 pt-2 border-t border-dashed border-slate-300 dark:border-slate-700/80 space-y-2.5">
-                                                        <h4 className="font-bold text-[9px] text-blue-500 uppercase tracking-widest flex items-center gap-1">
-                                                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                                                            Engineering Support
-                                                            Response:
+                                                    <div className="mt-3 pt-3 border-t dark:border-slate-800 space-y-2">
+                                                        <h4 className="text-[10px] font-black uppercase text-orange-500 tracking-wider">
+                                                            Management Feedback
+                                                            Notes:
                                                         </h4>
-                                                        {ticket.replies.map(
-                                                            (reply) => (
-                                                                <div
-                                                                    key={
-                                                                        reply.id
-                                                                    }
-                                                                    className={`p-3 rounded-lg border text-[11px] leading-relaxed flex flex-col gap-2 shadow-xs ${
-                                                                        isDarkMode
-                                                                            ? "bg-slate-950 border-slate-800/60 text-slate-300"
-                                                                            : "bg-white border-slate-200/80 text-slate-800"
-                                                                    }`}
-                                                                >
-                                                                    {reply.message && (
-                                                                        <p className="whitespace-pre-wrap">
+                                                        <div className="space-y-2">
+                                                            {ticket.replies.map(
+                                                                (reply) => (
+                                                                    <div
+                                                                        key={
+                                                                            reply.id
+                                                                        }
+                                                                        className="p-3 rounded-lg border bg-white dark:bg-slate-900 dark:border-slate-800/60 text-[11px] space-y-1.5"
+                                                                    >
+                                                                        <p className="text-slate-700 dark:text-slate-300 font-medium">
                                                                             {
                                                                                 reply.message
                                                                             }
                                                                         </p>
-                                                                    )}
-
-                                                                    {/* Context attachments row flex panel wrappers elements */}
-                                                                    <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-slate-100 dark:border-slate-900/60 text-[10px]">
-                                                                        {reply.link_url && (
-                                                                            <a
-                                                                                href={
-                                                                                    reply.link_url
-                                                                                }
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="text-blue-500 hover:text-blue-600 font-bold hover:underline flex items-center gap-1"
-                                                                            >
-                                                                                🔗
-                                                                                Reference
-                                                                                Web
-                                                                                Link
-                                                                            </a>
-                                                                        )}
-                                                                        {/* File download element explicitly routed through forced controller stream wrapper */}
-                                                                        {reply.file_path && (
-                                                                            <a
-                                                                                href={`/complaints/download/${reply.id}`}
-                                                                                className="text-orange-500 hover:text-orange-600 font-bold hover:underline flex items-center gap-1"
-                                                                                title="Click to download secure file stream attachment directly to device storage"
-                                                                            >
-                                                                                📂
-                                                                                Download:{" "}
-                                                                                <span className="underline italic font-medium opacity-90 max-w-[140px] truncate">
-                                                                                    {
-                                                                                        reply.file_name
+                                                                        <div className="flex flex-wrap gap-3 items-center text-[10px]">
+                                                                            {reply.link_url && (
+                                                                                <a
+                                                                                    href={
+                                                                                        reply.link_url
                                                                                     }
-                                                                                </span>
-                                                                            </a>
-                                                                        )}
+                                                                                    target="_blank"
+                                                                                    className="text-blue-500 hover:underline font-bold"
+                                                                                >
+                                                                                    🔗
+                                                                                    System
+                                                                                    Navigation
+                                                                                    Link
+                                                                                </a>
+                                                                            )}
+
+                                                                            {/* 🚀 FIXED: Pointed cleanly to shared routing endpoint stream to eliminate 403 downloads error */}
+                                                                            {reply.file_path && (
+                                                                                <a
+                                                                                    href={`/complaints/reply-download/${reply.id}`}
+                                                                                    className="text-orange-500 hover:underline font-bold flex items-center gap-1"
+                                                                                >
+                                                                                    📥
+                                                                                    Download
+                                                                                    Admin
+                                                                                    Document:{" "}
+                                                                                    <span className="underline italic font-medium">
+                                                                                        {
+                                                                                            reply.file_name
+                                                                                        }
+                                                                                    </span>
+                                                                                </a>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            ),
-                                                        )}
+                                                                ),
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 )}
                                         </div>
@@ -386,10 +450,9 @@ export default function Complain({ auth, myComplaints = [] }) {
                             </div>
                         </div>
                     </div>
-                )}
-            </main>
+                </div>
+            )}
 
-            {/* Embedded Shared Application Control Component Footer Node */}
             <Footer isDarkMode={isDarkMode} />
         </div>
     );

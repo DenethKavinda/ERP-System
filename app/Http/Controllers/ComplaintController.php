@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Complaint;
 use App\Models\ComplaintReply;
+use App\Models\ComplaintAttachment; // For multi-file tracking
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -16,9 +17,9 @@ class ComplaintController extends Controller
      */
     public function create()
     {
-        // Fetch current user's complaints ordered by latest with their engineering replies
+        // Fetch current user's complaints ordered by latest with engineering replies and multi-attachments
         $myComplaints = Complaint::where('user_id', Auth::id())
-            ->with('replies')
+            ->with(['replies', 'attachments']) // Eager load the relationships layout
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -28,7 +29,7 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Store inbound complaint data properties securely
+     * Store inbound complaint data properties securely along with multiple attachments
      */
     public function store(Request $request)
     {
@@ -37,9 +38,12 @@ class ComplaintController extends Controller
             'category' => 'required|string',
             'priority' => 'required|string|in:low,medium,high',
             'description' => 'required|string|min:10',
+            'attachments' => 'nullable|array', // Validates submission structure as an array matrix
+            'attachments.*' => 'file|mimes:jpeg,png,jpg,pdf,zip|max:20480', // Support files up to 20MB per item
         ]);
 
-        Complaint::create([
+        // Create the core grievance log entry node
+        $complaint = Complaint::create([
             'user_id'     => Auth::id(),
             'subject'     => $validated['subject'],
             'category'    => $validated['category'],
@@ -48,7 +52,23 @@ class ComplaintController extends Controller
             'status'      => 'open', // Default status upon submission
         ]);
 
-        return redirect()->back()->with('success', 'Complaint ticket issued to admin systems queue.');
+        // MULTI-FILE ATTACHMENT CONTROLLER LOOP LAYER
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                if ($file->isValid()) {
+                    $originalName = $file->getClientOriginalName();
+                    $path = $file->store('complaints', 'public');
+
+                    ComplaintAttachment::create([
+                        'complaint_id'  => $complaint->id,
+                        'file_path'     => $path,
+                        'original_name' => $originalName,
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Complaint ticket with attachments issued to admin systems queue.');
     }
 
     /**
@@ -56,8 +76,8 @@ class ComplaintController extends Controller
      */
     public function adminIndex()
     {
-        // Fetch all complaints with their creator's details and active replies
-        $complaints = Complaint::with(['user:id,name,email', 'replies'])
+        // Eager load attachments so they render on the administrative dashboard[cite: 3]
+        $complaints = Complaint::with(['user:id,name,email', 'replies', 'attachments'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -74,7 +94,7 @@ class ComplaintController extends Controller
         $request->validate([
             'message'    => 'nullable|string',
             'link_url'   => 'nullable|url',
-            'attachment' => 'nullable|file|max:20480', // Max file size capacity limit: 20MB
+            'attachment' => 'nullable|file|max:20480',
             'status'     => 'required|string|in:open,in-progress,resolved',
         ]);
 
@@ -86,20 +106,17 @@ class ComplaintController extends Controller
             'link_url'     => $request->link_url,
         ];
 
-        // Process file upload securely if present
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
-            // Stores the file inside storage/app/public/complaint_attachments
             $path = $file->store('complaint_attachments', 'public');
 
             $replyData['file_path'] = '/storage/' . $path;
             $replyData['file_name'] = $file->getClientOriginalName();
         }
 
-        // Save reply payload properties to database
         ComplaintReply::create($replyData);
 
-        // Transition the complaint lifecycle status to the chosen selection state
+        // Transition the complaint lifecycle status to the chosen selection state (e.g., resolved)
         $complaint->update(['status' => $request->status]);
 
         return redirect()->back()->with('success', 'Reply dispatched and status updated successfully.');
@@ -121,48 +138,92 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Remove complaint entry permanently from log records
+     * User-initiated Complaint Deletion Loop
      */
-    public function destroy($id)
+    public function userDestroy($id)
     {
-        $complaint = Complaint::findOrFail($id);
+        $complaint = Complaint::where('user_id', Auth::id())->with(['replies', 'attachments'])->findOrFail($id);
 
-        // Optional: Clean up associated reply attachment files from local disk storage on delete
+        foreach ($complaint->attachments as $attachment) {
+            if ($attachment->file_path) {
+                Storage::disk('public')->delete($attachment->file_path);
+            }
+        }
         foreach ($complaint->replies as $reply) {
             if ($reply->file_path) {
-                // Strips out public storage path naming context prefix matching
                 $cleanPath = str_replace('/storage/', '', $reply->file_path);
                 Storage::disk('public')->delete($cleanPath);
             }
         }
 
         $complaint->delete();
+        return redirect()->back()->with('success', 'Complaint ticket removed permanently.');
+    }
 
+    /**
+     * Remove complaint entry permanently from admin control registers
+     */
+    public function destroy($id)
+    {
+        $complaint = Complaint::with(['replies', 'attachments'])->findOrFail($id);
+
+        foreach ($complaint->attachments as $attachment) {
+            if ($attachment->file_path) {
+                Storage::disk('public')->delete($attachment->file_path);
+            }
+        }
+        foreach ($complaint->replies as $reply) {
+            if ($reply->file_path) {
+                $cleanPath = str_replace('/storage/', '', $reply->file_path);
+                Storage::disk('public')->delete($cleanPath);
+            }
+        }
+
+        $complaint->delete();
         return redirect()->back()->with('success', 'Complaint ticket removed successfully.');
     }
 
     /**
-     * Force download a reply attachment file securely
+     * Securely downloads admin reply attachments across both User & Admin spaces
      */
-    public function downloadAttachment($replyId)
+    public function downloadReplyAttachment($replyId)
     {
         $reply = ComplaintReply::findOrFail($replyId);
+        $complaint = $reply->complaint;
 
-        if (!$reply->file_path) {
-            abort(404, 'No file associated with this reply.');
+        if (Auth::id() !== $complaint->user_id && Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized access request.');
         }
 
-        // Convert web path '/storage/complaint_attachments/xyz.pdf' to internal disk path
+        if (!$reply->file_path) {
+            abort(404, 'No file associated.');
+        }
+
         $diskPath = str_replace('/storage/', '', $reply->file_path);
 
         if (!Storage::disk('public')->exists($diskPath)) {
-            abort(404, 'File not found on server storage disk.');
+            abort(404, 'File not found on disk.');
         }
 
-        // Highlight-select: Use the global response helper to stream from the public path storage directory path directly
-        // This stops Intelephense from showing a false error.
-        $fullPath = storage_path('app/public/' . $diskPath);
+        return response()->download(storage_path('app/public/' . $diskPath), $reply->file_name);
+    }
 
-        return response()->download($fullPath, $reply->file_name);
+    /**
+     * Force download user uploaded documentation records
+     */
+    public function downloadUserAttachment($id)
+    {
+        $attachment = ComplaintAttachment::findOrFail($id);
+        $complaint = $attachment->complaint;
+
+        if (Auth::id() !== $complaint->user_id && Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (!Storage::disk('public')->exists($attachment->file_path)) {
+            abort(404, 'File not found.');
+        }
+
+        return response()->download(storage_path('app/public/' . $attachment->file_path), $attachment->original_name);
     }
 }

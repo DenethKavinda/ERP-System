@@ -18,7 +18,7 @@ class Complaint extends Model
         'user_id',
         'subject',
         'category',
-        'priority',
+        'priority', // 🚀 FIXED: Added priority to allow mass assignment
         'description',
         'status',
     ];
@@ -34,5 +34,13 @@ class Complaint extends Model
     public function replies(): HasMany
     {
         return $this->hasMany(ComplaintReply::class);
+    }
+
+    /**
+     * 🚀 FIXED: Relationship mapping for the multi-file attachment table entries
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(ComplaintAttachment::class);
     }
 }

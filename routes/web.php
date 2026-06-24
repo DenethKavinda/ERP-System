@@ -27,8 +27,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // 🚀 NEW SECURE CALLBACK INTERCEPTOR GATE:
-    // Captures PayHere's redirect keys, saves them securely inside server session memory, and passes them to Dashboard
+    // SECURE CALLBACK INTERCEPTOR GATE: PayHere Processing Node Redirect
     Route::get('/checkout/success-callback', function (Request $request) {
         session()->flash('payment_success_order_id', $request->get('order_id'));
         session()->flash('payment_success_amount', $request->get('amount', '0.00'));
@@ -45,10 +44,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.center');
     Route::get('/knowledge-center/download/{id}', [KnowledgeCenter::class, 'download'])->name('knowledge.download');
 
+    // 🎫 Grievance Document Handling Matrix
     Route::get('/complaints', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
-    Route::get('/complaints/download/{id}', [ComplaintController::class, 'downloadAttachment'])->name('complaints.download');
 
+    // Non-overlapping distinct secure document streaming gateways
+    Route::get('/complaints/download/{id}', [ComplaintController::class, 'downloadUserAttachment'])->name('complaints.download');
+    Route::get('/complaints/reply-download/{id}', [ComplaintController::class, 'downloadReplyAttachment'])->name('complaints.reply.download');
+
+    Route::delete('/complaints/user-remove/{id}', [ComplaintController::class, 'userDestroy'])->name('complaints.user.destroy');
+
+    // Checkout Billing & Invoicing Actions
     Route::post('/checkout/initialize', [CheckoutController::class, 'initialize'])->name('checkout.initialize');
     Route::get('/checkout/receipt/download', [CheckoutController::class, 'downloadReceipt'])->name('receipt.download');
     Route::post('/payhere/webhook', [CheckoutController::class, 'handleWebhook'])->name('payhere.webhook');
