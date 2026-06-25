@@ -6,7 +6,18 @@ import axios from "axios";
 
 export default function Services({ auth, services = [] }) {
     // UI Theme state controls
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== "undefined") {
+            return (
+                localStorage.getItem("theme") === "dark" ||
+                (!localStorage.getItem("theme") &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches)
+            );
+        }
+        return false;
+    });
+
+    const [showHistory, setShowHistory] = useState(false);
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("All");

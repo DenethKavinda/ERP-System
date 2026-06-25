@@ -4,7 +4,18 @@ import Footer from "../../Components/Footer";
 
 export default function ERP({ packages = [] }) {
     // Shared state configuration for tracking interface theme mode
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== "undefined") {
+            return (
+                localStorage.getItem("theme") === "dark" ||
+                (!localStorage.getItem("theme") &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches)
+            );
+        }
+        return false;
+    });
+
+    const [showHistory, setShowHistory] = useState(false);
 
     // Highlight-add: State hook to track search string query text
     const [searchQuery, setSearchQuery] = useState("");

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
 
 export default function Header({ isDarkMode, setIsDarkMode }) {
@@ -13,6 +13,34 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
         { label: "Service Workspace", href: "/services" },
         { label: "Compliance Audits", href: "/complaints" },
     ];
+
+    // 1. Synchronize theme preference on initial mount
+    useEffect(() => {
+        const savedTheme = localStorage.getItem("theme");
+        // Check if user has a saved preference, or defaults to system preferences
+        const prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+        ).matches;
+
+        if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+            setIsDarkMode(true);
+            document.documentElement.classList.add("dark");
+        } else {
+            setIsDarkMode(false);
+            document.documentElement.classList.remove("dark");
+        }
+    }, [setIsDarkMode]);
+
+    // 2. Update localStorage and DOM classes whenever isDarkMode changes
+    useEffect(() => {
+        if (isDarkMode) {
+            localStorage.setItem("theme", "dark");
+            document.documentElement.classList.add("dark");
+        } else {
+            localStorage.setItem("theme", "light");
+            document.documentElement.classList.remove("dark");
+        }
+    }, [isDarkMode]);
 
     return (
         <header

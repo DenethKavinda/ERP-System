@@ -4,7 +4,17 @@ import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
 
 export default function Complain({ auth, myComplaints = [] }) {
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== "undefined") {
+            return (
+                localStorage.getItem("theme") === "dark" ||
+                (!localStorage.getItem("theme") &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches)
+            );
+        }
+        return false;
+    });
+
     const [showHistory, setShowHistory] = useState(false);
 
     const { data, setData, post, reset, processing, errors } = useForm({
@@ -113,13 +123,13 @@ export default function Complain({ auth, myComplaints = [] }) {
                     </div>
 
                     <div
-                        className={`border rounded-2xl p-6 md:p-8 shadow-sm transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
+                        className={`border rounded-2xl p-6 md:p-8 shadow-sm transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-800/80 shadow-xl/50" : "bg-white border-slate-200"}`}
                     >
-                        <div className="border-b pb-4 mb-6 dark:border-slate-800">
-                            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                        <div className="border-b pb-4 mb-6 border-slate-200 dark:border-slate-800">
+                            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100">
                                 Submit Operational System Grievance
                             </h1>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 Log architecture errors, premium module issues,
                                 or invoicing problems into management framework
                                 tracks.
@@ -132,7 +142,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="sm:col-span-2">
-                                    <label className="block mb-1.5 font-bold">
+                                    <label className="block mb-1.5 font-bold text-slate-700 dark:text-slate-300">
                                         Ticket Subject Topic
                                     </label>
                                     <input
@@ -142,7 +152,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                         onChange={(e) =>
                                             setData("subject", e.target.value)
                                         }
-                                        className="w-full px-3 py-2.5 border rounded-xl dark:bg-slate-950 dark:border-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 border-inherit"
+                                        className="w-full px-3 py-2.5 border rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                                     />
                                     {errors.subject && (
                                         <span className="text-red-500 font-bold block mt-1">
@@ -152,7 +162,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                 </div>
 
                                 <div>
-                                    <label className="block mb-1.5 font-bold">
+                                    <label className="block mb-1.5 font-bold text-slate-700 dark:text-slate-300">
                                         Category Sector
                                     </label>
                                     <select
@@ -160,18 +170,30 @@ export default function Complain({ auth, myComplaints = [] }) {
                                         onChange={(e) =>
                                             setData("category", e.target.value)
                                         }
-                                        className="w-full px-3 py-2.5 border rounded-xl dark:bg-slate-950 dark:border-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 border-inherit"
+                                        className="w-full px-3 py-2.5 border rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 cursor-pointer"
                                     >
-                                        <option value="System Error">
+                                        <option
+                                            value="System Error"
+                                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                                        >
                                             System Error
                                         </option>
-                                        <option value="Billing Dispute">
+                                        <option
+                                            value="Billing Dispute"
+                                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                                        >
                                             Billing Dispute
                                         </option>
-                                        <option value="Module Defect">
+                                        <option
+                                            value="Module Defect"
+                                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                                        >
                                             Module Defect
                                         </option>
-                                        <option value="Other">
+                                        <option
+                                            value="Other"
+                                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                                        >
                                             Other Category
                                         </option>
                                     </select>
@@ -184,7 +206,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                             </div>
 
                             <div>
-                                <label className="block mb-1.5 font-bold">
+                                <label className="block mb-1.5 font-bold text-slate-700 dark:text-slate-300">
                                     Issue Priority
                                 </label>
                                 <div className="grid grid-cols-3 gap-3">
@@ -195,7 +217,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                             onClick={() =>
                                                 setData("priority", prio)
                                             }
-                                            className={`py-2 border rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all ${data.priority === prio ? "bg-orange-500 text-white border-orange-500 shadow-sm" : isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-white" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                                            className={`py-2.5 border rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all ${data.priority === prio ? "bg-orange-500 text-white border-orange-500 shadow-sm" : isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                                         >
                                             {prio}
                                         </button>
@@ -204,7 +226,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                             </div>
 
                             <div>
-                                <label className="block mb-1.5 font-bold">
+                                <label className="block mb-1.5 font-bold text-slate-700 dark:text-slate-300">
                                     Comprehensive Issue Breakdown Description
                                 </label>
                                 <textarea
@@ -214,7 +236,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                     onChange={(e) =>
                                         setData("description", e.target.value)
                                     }
-                                    className="w-full px-3 py-2.5 border rounded-xl dark:bg-slate-950 dark:border-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 border-inherit"
+                                    className="w-full px-3 py-2.5 border rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                                 ></textarea>
                                 {errors.description && (
                                     <span className="text-red-500 font-bold block mt-1">
@@ -223,7 +245,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                 )}
                             </div>
 
-                            <div className="p-4 border border-dashed rounded-xl border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20">
+                            <div className="p-4 border border-dashed rounded-xl border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
                                 <label className="block mb-2 font-bold text-slate-700 dark:text-slate-300">
                                     Upload Multiple System Documentation
                                     Documents (Images, PDF, ZIP)
@@ -232,12 +254,12 @@ export default function Complain({ auth, myComplaints = [] }) {
                                     type="file"
                                     multiple
                                     onChange={handleFileChange}
-                                    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-orange-500 file:text-white file:cursor-pointer hover:file:bg-orange-600"
+                                    className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-orange-500 file:text-white file:cursor-pointer hover:file:bg-orange-600"
                                 />
 
                                 {data.attachments.length > 0 && (
                                     <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                        <h4 className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-400 tracking-wider">
                                             Staged Documents Queue (
                                             {data.attachments.length}):
                                         </h4>
@@ -246,7 +268,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                                 (file, idx) => (
                                                     <div
                                                         key={idx}
-                                                        className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border dark:border-slate-800 text-[11px]"
+                                                        className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px]"
                                                     >
                                                         <span className="truncate max-w-[220px] font-medium text-slate-700 dark:text-slate-300">
                                                             📄 {file.name}
@@ -288,29 +310,29 @@ export default function Complain({ auth, myComplaints = [] }) {
 
             {/* ==================== SLIDE HISTORY DRAWER PANELS ==================== */}
             {showHistory && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-sm animate-fadeIn">
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/60 backdrop-blur-xs animate-fadeIn">
                     <div
                         className="absolute inset-0"
                         onClick={() => setShowHistory(false)}
                     />
 
                     <div
-                        className={`w-full max-w-2xl h-full shadow-2xl relative z-10 flex flex-col justify-between p-6 overflow-y-auto ${isDarkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+                        className={`w-full max-w-2xl h-full shadow-2xl relative z-10 flex flex-col justify-between p-6 overflow-y-auto ${isDarkMode ? "bg-slate-900 text-slate-100 border-l border-slate-800" : "bg-white text-slate-900"}`}
                     >
                         <div className="space-y-6">
-                            <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800">
+                            <div className="flex items-center justify-between border-b pb-4 border-slate-200 dark:border-slate-800">
                                 <div>
                                     <h2 className="text-base font-black uppercase tracking-wider text-orange-500">
                                         Your Ticket History logs
                                     </h2>
-                                    <p className="text-[11px] opacity-60">
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 opacity-80">
                                         Scan administrative feedback notes and
                                         operation statuses
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => setShowHistory(false)}
-                                    className="text-xs font-bold px-3 py-1.5 rounded-lg border dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                                 >
                                     Close ✕
                                 </button>
@@ -318,21 +340,21 @@ export default function Complain({ auth, myComplaints = [] }) {
 
                             <div className="space-y-4">
                                 {myComplaints.length === 0 ? (
-                                    <p className="text-xs text-slate-400 py-8 text-center italic">
+                                    <p className="text-xs text-slate-400 dark:text-slate-500 py-8 text-center italic">
                                         No system tickets logged yet.
                                     </p>
                                 ) : (
                                     myComplaints.map((ticket) => (
                                         <div
                                             key={ticket.id}
-                                            className={`p-4 border rounded-xl space-y-3 text-xs ${isDarkMode ? "bg-slate-950/40 border-slate-800" : "bg-slate-50 border-slate-100"}`}
+                                            className={`p-4 border rounded-xl space-y-3 text-xs ${isDarkMode ? "bg-slate-950/50 border-slate-800/80" : "bg-slate-50 border-slate-100"}`}
                                         >
                                             <div className="flex justify-between items-start gap-4">
                                                 <div>
-                                                    <span className="text-[9px] font-black uppercase bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded tracking-wider">
+                                                    <span className="text-[9px] font-black uppercase bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded tracking-wider">
                                                         {ticket.category}
                                                     </span>
-                                                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white mt-1">
+                                                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 mt-1">
                                                         {ticket.subject}
                                                     </h3>
                                                 </div>
@@ -349,14 +371,14 @@ export default function Complain({ auth, myComplaints = [] }) {
                                                                 ticket.id,
                                                             )
                                                         }
-                                                        className="text-[10px] font-bold text-red-500 hover:underline px-1 py-0.5"
+                                                        className="text-[10px] font-bold text-red-500 dark:text-red-400 hover:underline px-1 py-0.5"
                                                     >
                                                         Remove Ticket ✕
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <p className="opacity-80 leading-relaxed text-slate-700 dark:text-slate-300">
+                                            <p className="opacity-90 leading-relaxed text-slate-700 dark:text-slate-300">
                                                 {ticket.description}
                                             </p>
 
@@ -385,7 +407,7 @@ export default function Complain({ auth, myComplaints = [] }) {
 
                                             {ticket.replies &&
                                                 ticket.replies.length > 0 && (
-                                                    <div className="mt-3 pt-3 border-t dark:border-slate-800 space-y-2">
+                                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
                                                         <h4 className="text-[10px] font-black uppercase text-orange-500 tracking-wider">
                                                             Management Feedback
                                                             Notes:
@@ -397,7 +419,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                                                         key={
                                                                             reply.id
                                                                         }
-                                                                        className="p-3 rounded-lg border bg-white dark:bg-slate-900 dark:border-slate-800/60 text-[11px] space-y-1.5"
+                                                                        className="p-3 rounded-lg border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800/60 text-[11px] space-y-1.5"
                                                                     >
                                                                         <p className="text-slate-700 dark:text-slate-300 font-medium">
                                                                             {
@@ -411,7 +433,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                                                                         reply.link_url
                                                                                     }
                                                                                     target="_blank"
-                                                                                    className="text-blue-500 hover:underline font-bold"
+                                                                                    className="text-blue-500 dark:text-blue-400 hover:underline font-bold"
                                                                                 >
                                                                                     🔗
                                                                                     System
@@ -430,7 +452,7 @@ export default function Complain({ auth, myComplaints = [] }) {
                                                                                     Download
                                                                                     Admin
                                                                                     Document:{" "}
-                                                                                    <span className="underline italic font-medium">
+                                                                                    <span className="underline italic font-medium text-slate-600 dark:text-slate-400">
                                                                                         {
                                                                                             reply.file_name
                                                                                         }

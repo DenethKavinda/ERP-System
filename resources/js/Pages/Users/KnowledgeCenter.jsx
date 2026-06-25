@@ -4,7 +4,18 @@ import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
 
 export default function KnowledgeCenter({ documentation = [] }) {
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== "undefined") {
+            return (
+                localStorage.getItem("theme") === "dark" ||
+                (!localStorage.getItem("theme") &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches)
+            );
+        }
+        return false;
+    });
+
+    const [showHistory, setShowHistory] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [activeDocument, setActiveDocument] = useState(null);

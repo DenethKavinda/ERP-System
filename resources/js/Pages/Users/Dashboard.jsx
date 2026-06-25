@@ -12,7 +12,18 @@ export default function Dashboard({
     flashPayment = null, // Injected securely via DashboardController session flash
 }) {
     // UI Theme state controls
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== "undefined") {
+            return (
+                localStorage.getItem("theme") === "dark" ||
+                (!localStorage.getItem("theme") &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches)
+            );
+        }
+        return false;
+    });
+
+    const [showHistory, setShowHistory] = useState(false);
 
     // State to manage the open package pop-up window overlay
     const [selectedCart, setSelectedCart] = useState(null);
