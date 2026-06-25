@@ -13,9 +13,10 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\CheckoutController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\LedgerController;
+use App\Models\Payment;
 
 // Public Auth Action Layer endpoints 
-Route::get('/', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/', [AuthController::class, 'showLogin']);
 Route::post('/', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
@@ -116,6 +117,137 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/knowledge-manager', [KnowledgeCenter::class, 'store'])->name('knowledge.store');
     Route::delete('/knowledge-manager/{id}', [KnowledgeCenter::class, 'destroy'])->name('knowledge.destroy');
     Route::post('/knowledge-manager/{id}', [KnowledgeCenter::class, 'update'])->name('knowledge.update');
+
+
+    Route::get('/transactions', function () {
+        return Inertia::render('Admin/Transactions', [
+            // Ensure you load the relationship inside your Controller or Route: Payment::with('user')->get()
+            'payments' => Payment::with('user')->latest()->get()
+        ]);
+    })->name('transactions.index');
+
+    Route::patch('/transactions/{id}/status', function (Illuminate\Http\Request $request, $id) {
+        $request->validate([
+            'status' => 'required|in:pending,completed,failed',
+        ]);
+
+        $payment = \App\Models\Payment::findOrFail($id);
+        $payment->update(['status' => $request->status]);
+
+        return redirect()->back();
+    })->name('transactions.update-status');
+
+    Route::get('/transactions/export-excel', function (Illuminate\Http\Request $request) {
+        $search = $request->get('search');
+
+        // Fetch the transactions using the exact same filters applied on the frontend screen
+        $query = \App\Models\Payment::with('user');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_id', 'LIKE', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        $payments = $query->latest()->get();
+
+        // Generate CSV/Excel Content Stream Header rows
+        $filename = "Transactions_Report_" . date('Y-m-d_H-i-s') . ".csv";
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename={$filename}",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['Transaction ID', 'User Name', 'User Email', 'Status', 'Amount (LKR)', 'Settlement Date'];
+
+        $callback = function () use ($payments, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($payments as $payment) {
+                fputcsv($file, [
+                    $payment->order_id,
+                    $payment->user ? $payment->user->name : 'Guest User',
+                    $payment->user ? $payment->user->email : 'N/A',
+                    strtoupper($payment->status),
+                    number_format($payment->amount, 2, '.', ''),
+                    $payment->updated_at
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    })->name('transactions.export-excel');
 });
+
+
+// Inside your admin middleware route group prefix('admin'):
+Route::get('/transactions/export-summary-pdf', function (Illuminate\Http\Request $request) {
+    $search = $request->get('search');
+
+    $query = \App\Models\Payment::with('user');
+    if (!empty($search)) {
+        $query->where(function ($q) use ($search) {
+            $q->where('order_id', 'LIKE', "%{$search}%")
+                ->orWhereHas('user', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('email', 'LIKE', "%{$search}%");
+                });
+        });
+    }
+
+    $payments = $query->latest()->get();
+
+    $totalCount = $payments->count();
+    $completedCount = $payments->where('status', 'completed')->count();
+    $pendingCount = $payments->where('status', 'pending')->count();
+    $failedCount = $payments->where('status', 'failed')->count();
+
+    $completedPercentage = $totalCount > 0 ? round(($completedCount / $totalCount) * 100, 1) : 0;
+    $pendingPercentage = $totalCount > 0 ? round(($pendingCount / $totalCount) * 100, 1) : 0;
+    $failedPercentage = $totalCount > 0 ? round(($failedCount / $totalCount) * 100, 1) : 0;
+
+    $completedSum = $payments->where('status', 'completed')->sum('amount');
+    $pendingSum = $payments->where('status', 'pending')->sum('amount');
+    $totalRevenueSum = $payments->sum('amount');
+
+    $chartConfig = urlencode(json_encode([
+        'type' => 'pie',
+        'data' => [
+            'labels' => ["Completed ({$completedPercentage}%)", "Pending ({$pendingPercentage}%)", "Failed ({$failedPercentage}%)"],
+            'datasets' => [['data' => [$completedCount, $pendingCount, $failedCount], 'backgroundColor' => ['#10b981', '#f59e0b', '#ef4444']]]
+        ],
+        'options' => ['plugins' => ['legend' => ['position' => 'bottom']]]
+    ]));
+    $chartUrl = "https://quickchart.io/chart?c={$chartConfig}&w=400&h=250";
+
+    // 🚀 CLEAN AND MODULAR: Pass data array context down to the Blade file template
+    $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.transactions-summary', compact(
+        'search',
+        'totalCount',
+        'completedCount',
+        'pendingCount',
+        'failedCount',
+        'completedPercentage',
+        'pendingPercentage',
+        'failedPercentage',
+        'completedSum',
+        'pendingSum',
+        'totalRevenueSum',
+        'chartUrl'
+    ));
+
+    return $pdf->download('Transactions_Financial_Summary_' . date('Y-m-d_His') . '.pdf');
+})->name('transactions.export-summary-pdf');
 
 require __DIR__ . '/auth.php';

@@ -110,8 +110,8 @@ export default function Sidebar({ isDarkMode }) {
             ),
         },
         {
-            name: "Contact & Consultation",
-            path: "#",
+            name: "Transactions",
+            path: "/admin/transactions",
             icon: (
                 <svg
                     className="w-4 h-4"

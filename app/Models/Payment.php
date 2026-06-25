@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
@@ -26,4 +27,13 @@ class Payment extends Model
     protected $casts = [
         'addons_manifest' => 'array',
     ];
+
+    /**
+     * Get the user that owns the payment transaction node.
+     * 🚀 FIXED: Resolves the 500 internal server error during Eager Loading
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
