@@ -121,7 +121,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::get('/transactions', function () {
         return Inertia::render('Admin/Transactions', [
-            // Ensure you load the relationship inside your Controller or Route: Payment::with('user')->get()
             'payments' => Payment::with('user')->latest()->get()
         ]);
     })->name('transactions.index');
@@ -140,7 +139,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/transactions/export-excel', function (Illuminate\Http\Request $request) {
         $search = $request->get('search');
 
-        // Fetch the transactions using the exact same filters applied on the frontend screen
         $query = \App\Models\Payment::with('user');
 
         if (!empty($search)) {
@@ -155,7 +153,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
         $payments = $query->latest()->get();
 
-        // Generate CSV/Excel Content Stream Header rows
         $filename = "Transactions_Report_" . date('Y-m-d_H-i-s') . ".csv";
 
         $headers = [
@@ -166,18 +163,19 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             "Expires"             => "0"
         ];
 
-        $columns = ['Transaction ID', 'User Name', 'User Email', 'Status', 'Amount (LKR)', 'Settlement Date'];
+        // 🌟 'Status' header removed
+        $columns = ['Transaction ID', 'User Name', 'User Email', 'Amount (LKR)', 'Settlement Date'];
 
         $callback = function () use ($payments, $columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
             foreach ($payments as $payment) {
+                // 🌟 Exact matching 5 items aligned cleanly to the 5 columns above
                 fputcsv($file, [
                     $payment->order_id,
                     $payment->user ? $payment->user->name : 'Guest User',
                     $payment->user ? $payment->user->email : 'N/A',
-                    strtoupper($payment->status),
                     number_format($payment->amount, 2, '.', ''),
                     $payment->updated_at
                 ]);
@@ -231,7 +229,6 @@ Route::get('/transactions/export-summary-pdf', function (Illuminate\Http\Request
     ]));
     $chartUrl = "https://quickchart.io/chart?c={$chartConfig}&w=400&h=250";
 
-    // 🚀 CLEAN AND MODULAR: Pass data array context down to the Blade file template
     $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.transactions-summary', compact(
         'search',
         'totalCount',

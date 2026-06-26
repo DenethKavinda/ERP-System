@@ -25,19 +25,6 @@ export default function Transactions({ auth, payments = [] }) {
         }
     }, [isDarkMode]);
 
-    // Handler to programmatically change payment status via Inertia patch request
-    const handleStatusChange = (id, newStatus) => {
-        if (
-            confirm(
-                `Are you sure you want to change this transaction status to ${newStatus}?`,
-            )
-        ) {
-            router.patch(`/admin/transactions/${id}/status`, {
-                status: newStatus,
-            });
-        }
-    };
-
     // Trigger explicit download loop passing the active filtering keywords safely over window streams
     const handleExportExcel = () => {
         window.location.href = `/admin/transactions/export-excel?search=${encodeURIComponent(searchQuery)}`;
@@ -177,48 +164,9 @@ export default function Transactions({ auth, payments = [] }) {
                                                     {record.package_name}
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="relative inline-block">
-                                                        <select
-                                                            value={
-                                                                record.status
-                                                            }
-                                                            onChange={(e) =>
-                                                                handleStatusChange(
-                                                                    record.id,
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className={`px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border cursor-pointer focus:outline-none focus:ring-1 focus:ring-orange-500 ${
-                                                                record.status ===
-                                                                "completed"
-                                                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:border-emerald-500/30"
-                                                                    : record.status ===
-                                                                        "failed"
-                                                                      ? "bg-rose-500/10 text-rose-500 border-rose-500/20 dark:border-rose-500/30"
-                                                                      : "bg-amber-500/10 text-amber-500 border-amber-500/20 dark:border-amber-500/30"
-                                                            }`}
-                                                        >
-                                                            <option
-                                                                value="pending"
-                                                                className="bg-white dark:bg-slate-900 text-amber-500 font-bold"
-                                                            >
-                                                                Pending
-                                                            </option>
-                                                            <option
-                                                                value="completed"
-                                                                className="bg-white dark:bg-slate-900 text-emerald-500 font-bold"
-                                                            >
-                                                                Completed
-                                                            </option>
-                                                            <option
-                                                                value="failed"
-                                                                className="bg-white dark:bg-slate-900 text-rose-500 font-bold"
-                                                            >
-                                                                Failed
-                                                            </option>
-                                                        </select>
-                                                    </div>
+                                                    <span className="inline-flex items-center px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 dark:border-emerald-500/30">
+                                                        Completed
+                                                    </span>
                                                 </td>
                                                 <td className="p-4 text-slate-500 dark:text-slate-400">
                                                     {record.updated_at
