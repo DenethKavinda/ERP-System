@@ -73,7 +73,7 @@ export default function Sidebar({ isDarkMode }) {
         },
         {
             name: "Success Stories",
-            path: "#",
+            path: "/admin/success-stories",
             icon: (
                 <svg
                     className="w-4 h-4"

@@ -14,6 +14,7 @@ use App\Http\Controllers\CheckoutController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\LedgerController;
 use App\Models\Payment;
+use App\Http\Controllers\SuccessStoryController;
 
 // Public Auth Action Layer endpoints 
 Route::get('/', [AuthController::class, 'showLogin']);
@@ -72,6 +73,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Service Marketplace Payment Gateway Routes
     Route::post('/checkout/services', [CheckoutController::class, 'initializeServices'])->name('checkout.services');
+
+    // Inside Route::middleware(['auth', 'verified'])->group(function () { ...[cite: 2]
+    Route::get('/success-stories', [SuccessStoryController::class, 'index'])->name('success.stories.index');
+    Route::post('/success-stories', [SuccessStoryController::class, 'store'])->name('success.stories.store');
 });
 
 // ==========================================
@@ -117,6 +122,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/knowledge-manager', [KnowledgeCenter::class, 'store'])->name('knowledge.store');
     Route::delete('/knowledge-manager/{id}', [KnowledgeCenter::class, 'destroy'])->name('knowledge.destroy');
     Route::post('/knowledge-manager/{id}', [KnowledgeCenter::class, 'update'])->name('knowledge.update');
+
+    Route::get('/success-stories', [SuccessStoryController::class, 'adminIndex'])->name('admin.success.stories.index');
 
 
     Route::get('/transactions', function () {
