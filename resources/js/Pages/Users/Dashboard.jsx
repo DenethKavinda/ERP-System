@@ -295,67 +295,7 @@ export default function Dashboard({
 
                 {/* MAIN LAYOUT WRAPPER ENVIRONMENT */}
                 <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-12 pb-16">
-                    {/* ================= SECTOR 1: PACKAGES CARTS OVERVIEW ================= */}
-                    <div className="space-y-6">
-                        <div className="border-b pb-3 border-slate-200 dark:border-slate-800">
-                            <h2
-                                className={`text-lg font-black tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}
-                            >
-                                Available Packages & Modules
-                            </h2>
-                        </div>
-
-                        {!packageCarts || packageCarts.length === 0 ? (
-                            <div
-                                className={`border border-dashed p-12 text-center rounded-xl ${isDarkMode ? "bg-slate-900/40 border-slate-800 text-slate-400" : "bg-white border-slate-300 text-slate-500"}`}
-                            >
-                                <p className="text-xs font-semibold">
-                                    No custom modules configured yet by the
-                                    administration.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {packageCarts.map((cart) => (
-                                    <div
-                                        key={cart.id}
-                                        className={`border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-sm hover:shadow-md ${
-                                            isDarkMode
-                                                ? "bg-slate-900 border-slate-800"
-                                                : "bg-white border-slate-200"
-                                        }`}
-                                    >
-                                        <div className="p-6 space-y-2">
-                                            <h3 className="font-black text-xl tracking-tight text-slate-900 dark:text-white">
-                                                {cart.cart_name}
-                                            </h3>
-                                            <p
-                                                className={`text-xs leading-relaxed text-slate-600 dark:text-slate-400`}
-                                            >
-                                                {cart.description}
-                                            </p>
-                                        </div>
-
-                                        <div
-                                            className={`p-4 border-t px-6 flex items-center justify-end ${isDarkMode ? "border-slate-800 bg-slate-950/40" : "border-slate-200 bg-slate-50"}`}
-                                        >
-                                            <button
-                                                onClick={() =>
-                                                    setSelectedCart(cart)
-                                                }
-                                                className={`w-full bg-gradient-to-r ${cart.color_class || "from-blue-500 to-indigo-600"} hover:brightness-110 text-white text-xs font-bold px-5 py-2.5 rounded text-center transition-all uppercase tracking-wider shadow-sm`}
-                                                style={{ color: "#ffffff" }}
-                                            >
-                                                {cart.button_name}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* ================= SECTOR 2: CENTRAL OPERATIONS FRAMEWORK ================= */}
+                    {/* ================= SECTOR 1: CENTRAL OPERATIONS FRAMEWORK ================= */}
                     <div className="space-y-6">
                         <div className="border-b pb-3 border-slate-200 dark:border-slate-800">
                             <h2
@@ -433,6 +373,66 @@ export default function Dashboard({
                                                         d="M9 5l7 7-7 7"
                                                     />
                                                 </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ================= SECTOR 2: PACKAGES CARTS OVERVIEW ================= */}
+                    <div className="space-y-6">
+                        <div className="border-b pb-3 border-slate-200 dark:border-slate-800">
+                            <h2
+                                className={`text-lg font-black tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                            >
+                                Available Packages & Modules
+                            </h2>
+                        </div>
+
+                        {!packageCarts || packageCarts.length === 0 ? (
+                            <div
+                                className={`border border-dashed p-12 text-center rounded-xl ${isDarkMode ? "bg-slate-900/40 border-slate-800 text-slate-400" : "bg-white border-slate-300 text-slate-500"}`}
+                            >
+                                <p className="text-xs font-semibold">
+                                    No custom modules configured yet by the
+                                    administration.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {packageCarts.map((cart) => (
+                                    <div
+                                        key={cart.id}
+                                        className={`border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-sm hover:shadow-md ${
+                                            isDarkMode
+                                                ? "bg-slate-900 border-slate-800"
+                                                : "bg-white border-slate-200"
+                                        }`}
+                                    >
+                                        <div className="p-6 space-y-2">
+                                            <h3 className="font-black text-xl tracking-tight text-slate-900 dark:text-white">
+                                                {cart.cart_name}
+                                            </h3>
+                                            <p
+                                                className={`text-xs leading-relaxed text-slate-600 dark:text-slate-400`}
+                                            >
+                                                {cart.description}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            className={`p-4 border-t px-6 flex items-center justify-end ${isDarkMode ? "border-slate-800 bg-slate-950/40" : "border-slate-200 bg-slate-50"}`}
+                                        >
+                                            <button
+                                                onClick={() =>
+                                                    setSelectedCart(cart)
+                                                }
+                                                className={`w-full bg-gradient-to-r ${cart.color_class || "from-blue-500 to-indigo-600"} hover:brightness-110 text-white text-xs font-bold px-5 py-2.5 rounded text-center transition-all uppercase tracking-wider shadow-sm`}
+                                                style={{ color: "#ffffff" }}
+                                            >
+                                                {cart.button_name}
                                             </button>
                                         </div>
                                     </div>

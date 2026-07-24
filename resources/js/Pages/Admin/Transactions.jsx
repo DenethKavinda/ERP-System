@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Head, router } from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
 import Sidebar from "../../Components/Sidebar";
 
 export default function Transactions({ auth, payments = [] }) {
@@ -25,9 +25,12 @@ export default function Transactions({ auth, payments = [] }) {
         }
     }, [isDarkMode]);
 
-    // Trigger explicit download loop passing the active filtering keywords safely over window streams
-    const handleExportExcel = () => {
-        window.location.href = `/admin/transactions/export-excel?search=${encodeURIComponent(searchQuery)}`;
+    // Helper function to calculate 30 days expiry date
+    const getExpirationDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        date.setDate(date.getDate() + 30);
+        return date.toLocaleString("en-US", { hour12: true });
     };
 
     // Filter payments tracking values against ID, Name, or Email attributes
@@ -39,6 +42,55 @@ export default function Transactions({ auth, payments = [] }) {
             pay.user?.email?.toLowerCase().includes(query)
         );
     });
+
+    // Trigger Excel/CSV export containing all visible data including calculated Expire Date
+    const handleExportExcel = () => {
+        const headers = [
+            "Transaction ID",
+            "User Identity",
+            "User Email",
+            "Reference Items",
+            "Settlement Date",
+            "Expire Date",
+            "Amount Paid",
+        ];
+
+        const rows = filteredPayments.map((record) => {
+            const settlementDate = record.updated_at
+                ? new Date(record.updated_at).toLocaleString("en-US", {
+                      hour12: true,
+                  })
+                : "N/A";
+            const expireDate = getExpirationDate(record.updated_at);
+            const amount =
+                `${record.currency || ""} ${Number(record.amount || 0).toFixed(2)}`.trim();
+
+            return [
+                `"${record.order_id || ""}"`,
+                `"${record.user?.name || "Guest User"}"`,
+                `"${record.user?.email || "customer@email.com"}"`,
+                `"${record.package_name || ""}"`,
+                `"${settlementDate}"`,
+                `"${expireDate}"`,
+                `"${amount}"`,
+            ];
+        });
+
+        const csvContent =
+            "data:text/csv;charset=utf-8," +
+            [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute(
+            "download",
+            `transactions_export_${new Date().toISOString().slice(0, 10)}.csv`,
+        );
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div
@@ -64,10 +116,10 @@ export default function Transactions({ auth, payments = [] }) {
                             className="text-xs px-3 py-2 border rounded-xl w-64 focus:outline-none focus:ring-1 focus:ring-orange-500 bg-transparent transition-colors border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
                         />
 
-                        {/* 📊 EXCEL DOWNGRADE DOWNLOAD ACTION BUTTON LAYER */}
+                        {/* 📊 EXCEL EXPORT ACTION BUTTON */}
                         <button
                             onClick={handleExportExcel}
-                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
                             <span>📥 Export Excel Data</span>
                         </button>
@@ -90,8 +142,8 @@ export default function Transactions({ auth, payments = [] }) {
                             </h1>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 Monitor enterprise user invoice configurations,
-                                audit currency logs parameters, and update
-                                process statuses.
+                                audit currency logs parameters, and track
+                                package expiration.
                             </p>
                         </div>
                     </div>
@@ -120,8 +172,8 @@ export default function Transactions({ auth, payments = [] }) {
                                         <th className="p-4">User Identity</th>
                                         <th className="p-4">User Email</th>
                                         <th className="p-4">Reference Items</th>
-                                        <th className="p-4">Payment Status</th>
                                         <th className="p-4">Settlement Date</th>
+                                        <th className="p-4">Expire Date</th>
                                         <th className="p-4 text-right">
                                             Amount Paid
                                         </th>
@@ -163,12 +215,6 @@ export default function Transactions({ auth, payments = [] }) {
                                                 <td className="p-4 font-semibold text-slate-700 dark:text-slate-300">
                                                     {record.package_name}
                                                 </td>
-                                                <td className="p-4">
-                                                    {/* 🛡️ REPLACED SELECTION MATRIX WITH HARDCODED STATUS LABELS BADGE */}
-                                                    <span className="inline-block px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 dark:border-emerald-500/30">
-                                                        Completed
-                                                    </span>
-                                                </td>
                                                 <td className="p-4 text-slate-500 dark:text-slate-400">
                                                     {record.updated_at
                                                         ? new Date(
@@ -178,6 +224,11 @@ export default function Transactions({ auth, payments = [] }) {
                                                               { hour12: true },
                                                           )
                                                         : "N/A"}
+                                                </td>
+                                                <td className="p-4 text-slate-500 dark:text-slate-400">
+                                                    {getExpirationDate(
+                                                        record.updated_at,
+                                                    )}
                                                 </td>
                                                 <td className="p-4 text-right font-black text-sm text-slate-900 dark:text-white">
                                                     {record.currency}{" "}
