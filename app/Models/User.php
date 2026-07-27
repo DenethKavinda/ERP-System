@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
@@ -19,12 +18,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'business_name',
         'email',
         'password',
-        'nic',           // <-- Add this
-        'address',       // <-- Add this
-        'mobile_number', // <-- Add this
-        'role',          // <-- Add this
+        'nic',
+        'address',
+        'mobile_number',
+        'role',
     ];
 
     /**
@@ -47,9 +47,6 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    /**
-     * Retrieve all complaint support tickets logged by this user.
-     */
     public function complaints(): HasMany
     {
         return $this->hasMany(Complaint::class);

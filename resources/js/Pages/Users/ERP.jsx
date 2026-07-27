@@ -15,15 +15,12 @@ export default function ERP({ packages = [] }) {
         return false;
     });
 
-    const [showHistory, setShowHistory] = useState(false);
-
-    // Highlight-add: State hook to track search string query text
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Video Player UI State Control Parameters
+    // Video Player UI State Control Parameters for Main Hero Video
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [youtubeVideoId, setYoutubeVideoId] = useState("dQw4w9WgXcQ");
-    const videoRef = useRef(null);
+    const mainVideoRef = useRef(null);
 
     // ==================== CHECKOUT SYSTEM STATE ====================
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -73,7 +70,7 @@ export default function ERP({ packages = [] }) {
             .filter(Boolean);
     };
 
-    // Highlight-select: Filter packages dynamically matching search query against name or suitability constraints
+    // Filter packages dynamically matching search query against name or suitability constraints
     const filteredPackages = packages.filter((pkg) => {
         const query = searchQuery.toLowerCase();
         const matchesName = pkg.name?.toLowerCase().includes(query);
@@ -119,9 +116,9 @@ export default function ERP({ packages = [] }) {
         setIsCheckoutModalOpen(false);
     };
 
-    const handleMouseEnter = () => {
-        if (videoRef.current) {
-            videoRef.current.play().catch((err) => {
+    const handleMainVideoMouseEnter = () => {
+        if (mainVideoRef.current) {
+            mainVideoRef.current.play().catch((err) => {
                 console.log(
                     "Autoplay on hover blocked until user gesture interaction:",
                     err,
@@ -130,9 +127,9 @@ export default function ERP({ packages = [] }) {
         }
     };
 
-    const handleMouseLeave = () => {
-        if (videoRef.current) {
-            videoRef.current.pause();
+    const handleMainVideoMouseLeave = () => {
+        if (mainVideoRef.current) {
+            mainVideoRef.current.pause();
         }
     };
 
@@ -148,14 +145,17 @@ export default function ERP({ packages = [] }) {
                 <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
                 <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 relative">
-                    {/* VIDEO HERO BANNER SECTION (Restored to its original state) */}
+                    {/* ================= MAIN HERO VIDEO BANNER (RESTORED AT TOP) ================= */}
                     <div
                         className="w-full mb-12 relative z-20"
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
+                        onMouseEnter={handleMainVideoMouseEnter}
+                        onMouseLeave={handleMainVideoMouseLeave}
                     >
                         <div
-                            onClick={() => setIsVideoModalOpen(true)}
+                            onClick={() => {
+                                setYoutubeVideoId("dQw4w9WgXcQ");
+                                setIsVideoModalOpen(true);
+                            }}
                             className={`w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-md border cursor-pointer group relative transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl ${
                                 isDarkMode
                                     ? "border-slate-800 bg-slate-900/40 backdrop-blur-md"
@@ -163,7 +163,7 @@ export default function ERP({ packages = [] }) {
                             }`}
                         >
                             <video
-                                ref={videoRef}
+                                ref={mainVideoRef}
                                 className="w-full h-full object-cover transition-opacity duration-500 opacity-80 group-hover:opacity-100"
                                 loop
                                 muted
@@ -181,7 +181,7 @@ export default function ERP({ packages = [] }) {
 
                             <div className="absolute top-6 left-6 z-10">
                                 <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
-                                    System Guide Video
+                                    System Overview Video
                                 </span>
                             </div>
 
@@ -217,7 +217,7 @@ export default function ERP({ packages = [] }) {
                     <div className="absolute top-48 left-1/4 w-80 h-80 bg-orange-500/10 blur-[120px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-blue-500/5 blur-[150px] rounded-full pointer-events-none" />
 
-                    <div className="text-center mb-10 relative z-10 animate-fade-in">
+                    <div className="text-center mb-8 relative z-10 animate-fade-in">
                         <h1
                             className={`text-4xl sm:text-5xl font-black tracking-tight mb-3 transition-colors duration-500 ${isDarkMode ? "text-white" : "text-slate-900"}`}
                         >
@@ -232,8 +232,8 @@ export default function ERP({ packages = [] }) {
                         </p>
                     </div>
 
-                    {/* Highlight-add: Interactive Search/Filter bar styled seamlessly right under main header titles */}
-                    <div className="max-w-md mx-auto mb-12 relative z-20">
+                    {/* Search & Filter Bar */}
+                    <div className="max-w-md mx-auto mb-10 relative z-20">
                         <div className="relative flex items-center shadow-sm rounded-xl">
                             <input
                                 type="text"
@@ -270,7 +270,7 @@ export default function ERP({ packages = [] }) {
                         </div>
                     </div>
 
-                    {/* Packages Grid Section Layout */}
+                    {/* ================= PACKAGES SECTION WITH SEPARATE VIDEO FOR EACH PACKAGE ================= */}
                     {packages.length === 0 ? (
                         <div
                             className={`text-center py-12 max-w-xl mx-auto rounded-2xl border p-8 shadow-sm transition-all duration-500 ${isDarkMode ? "bg-slate-900/60 border-slate-800" : "bg-white/80 border-slate-200"}`}
@@ -286,7 +286,7 @@ export default function ERP({ packages = [] }) {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch relative z-10">
+                        <div className="space-y-8 relative z-10">
                             {filteredPackages.map((pkg) => {
                                 const audienceList = parseMeta(
                                     pkg.suitable_for,
@@ -297,127 +297,214 @@ export default function ERP({ packages = [] }) {
                                 return (
                                     <div
                                         key={pkg.id}
-                                        className={`rounded-2xl border p-8 flex flex-col justify-between relative group transform transition-all duration-500 ease-in-out hover:-translate-y-2 hover:shadow-xl ${
+                                        className={`rounded-2xl border p-6 md:p-8 relative group transition-all duration-300 hover:shadow-xl ${
                                             isDarkMode
-                                                ? "bg-slate-900/80 border-slate-800 text-white hover:border-orange-500/40 hover:shadow-orange-500/5"
-                                                : "bg-white/90 border-slate-200/80 text-slate-900 hover:border-orange-500/30 hover:shadow-slate-300/60"
+                                                ? "bg-slate-900/80 border-slate-800 text-white hover:border-orange-500/40"
+                                                : "bg-white/90 border-slate-200/80 text-slate-900 hover:border-orange-500/30"
                                         }`}
                                     >
-                                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-orange-500/[0.02] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-                                        <div className="relative z-10">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <h2 className="text-xl font-extrabold tracking-tight group-hover:text-orange-500 transition-colors duration-300">
-                                                    {pkg.name}
-                                                </h2>
-                                                <span
-                                                    className={`text-xs font-black px-2.5 py-1 rounded-md transition-colors duration-500 ${isDarkMode ? "bg-slate-800 text-orange-400" : "bg-slate-200/60 text-orange-600"}`}
+                                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                                            {/* LEFT HAND SIDE OF PACKAGE: RELEVANT PACKAGE VIDEO */}
+                                            <div className="lg:col-span-5">
+                                                <div
+                                                    onClick={() => {
+                                                        if (pkg.youtube_id) {
+                                                            setYoutubeVideoId(
+                                                                pkg.youtube_id,
+                                                            );
+                                                        }
+                                                        setIsVideoModalOpen(
+                                                            true,
+                                                        );
+                                                    }}
+                                                    className={`w-full h-56 md:h-64 rounded-xl overflow-hidden relative cursor-pointer group/video border shadow-sm transition-all ${
+                                                        isDarkMode
+                                                            ? "border-slate-800 bg-slate-950"
+                                                            : "border-slate-200 bg-slate-100"
+                                                    }`}
                                                 >
-                                                    ⭐ {pkg.rating || "5.0"}
-                                                </span>
-                                            </div>
+                                                    <video
+                                                        className="w-full h-full object-cover transition-opacity duration-500 opacity-85 group-hover/video:opacity-100"
+                                                        loop
+                                                        muted
+                                                        playsInline
+                                                        poster={
+                                                            pkg.video_poster ||
+                                                            "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop"
+                                                        }
+                                                        onMouseEnter={(e) =>
+                                                            e.target
+                                                                .play()
+                                                                .catch(() => {})
+                                                        }
+                                                        onMouseLeave={(e) =>
+                                                            e.target.pause()
+                                                        }
+                                                    >
+                                                        <source
+                                                            src={
+                                                                pkg.video_url ||
+                                                                "https://assets.mixkit.co/videos/preview/mixkit-tech-dashboard-with-charts-and-data-analysis-41614-large.mp4"
+                                                            }
+                                                            type="video/mp4"
+                                                        />
+                                                        Your browser does not
+                                                        support the video tag.
+                                                    </video>
 
-                                            <div className="mb-6">
-                                                <span className="text-3xl font-black tracking-tight text-orange-500 transition-transform duration-300 inline-block group-hover:scale-105">
-                                                    LKR{" "}
-                                                    {Number(
-                                                        pkg.price,
-                                                    ).toLocaleString()}
-                                                </span>
-                                                <span className="text-slate-400 text-xs font-bold block mt-0.5">
-                                                    / month
-                                                </span>
-                                            </div>
+                                                    <div className="absolute inset-0 bg-slate-950/30 group-hover/video:bg-slate-950/10 transition-colors" />
 
-                                            <hr
-                                                className={`my-5 transition-colors duration-500 ${isDarkMode ? "border-slate-800" : "border-slate-200"}`}
-                                            />
+                                                    <div className="absolute top-3 left-3 z-10">
+                                                        <span className="bg-slate-900/80 backdrop-blur-md text-orange-400 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded">
+                                                            📹 {pkg.name} Video
+                                                            Guide
+                                                        </span>
+                                                    </div>
 
-                                            {/* Suitable For */}
-                                            {audienceList.length > 0 && (
-                                                <div className="mb-5">
-                                                    <h4 className="text-[10px] uppercase font-black tracking-wider text-slate-400 mb-2">
-                                                        Suitable For
-                                                    </h4>
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {audienceList.map(
-                                                            (target, idx) => (
-                                                                <span
-                                                                    key={idx}
-                                                                    className={`text-[11px] font-bold px-2.5 py-1 rounded-md transition-all duration-300 group-hover:bg-orange-500/10 ${isDarkMode ? "bg-orange-950/40 text-orange-400" : "bg-orange-50 text-orange-700"}`}
-                                                                >
-                                                                    {target}
-                                                                </span>
-                                                            ),
-                                                        )}
+                                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                                        <div className="p-3.5 bg-orange-500 text-white rounded-full shadow-lg transform transition-all duration-300 group-hover/video:scale-110">
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                fill="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                                className="w-5 h-5 translate-x-0.5"
+                                                            >
+                                                                <path d="M8 5v14l11-7z" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="absolute bottom-3 left-3 right-3 z-10">
+                                                        <p className="text-white text-[10px] font-semibold drop-shadow">
+                                                            Hover to preview •
+                                                            Click to watch full
+                                                            video
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            )}
+                                            </div>
 
-                                            {/* Features */}
-                                            {featuresList.length > 0 && (
-                                                <div className="mb-6">
-                                                    <h4 className="text-[10px] uppercase font-black tracking-wider text-slate-400 mb-2">
-                                                        Core Feature Sets
-                                                    </h4>
-                                                    <ul className="space-y-2.5">
-                                                        {featuresList.map(
-                                                            (feature, idx) => (
-                                                                <li
-                                                                    key={idx}
-                                                                    className={`flex items-start gap-2 text-xs font-medium transition-colors duration-500 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}
-                                                                >
-                                                                    <span className="text-emerald-500 shrink-0 transform transition-transform duration-300 group-hover:scale-110">
-                                                                        ✅
-                                                                    </span>
-                                                                    <span>
-                                                                        {
-                                                                            feature
-                                                                        }
-                                                                    </span>
-                                                                </li>
-                                                            ),
-                                                        )}
-                                                    </ul>
+                                            {/* RIGHT HAND SIDE OF PACKAGE: PACKAGE DETAILS */}
+                                            <div className="lg:col-span-7 flex flex-col justify-between h-full">
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h2 className="text-2xl font-extrabold tracking-tight group-hover:text-orange-500 transition-colors duration-300">
+                                                            {pkg.name}
+                                                        </h2>
+                                                        <span
+                                                            className={`text-xs font-black px-2.5 py-1 rounded-md ${
+                                                                isDarkMode
+                                                                    ? "bg-slate-800 text-orange-400"
+                                                                    : "bg-slate-200/60 text-orange-600"
+                                                            }`}
+                                                        >
+                                                            ⭐{" "}
+                                                            {pkg.rating ||
+                                                                "5.0"}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="mb-4 flex items-baseline gap-2">
+                                                        <span className="text-3xl font-black tracking-tight text-orange-500">
+                                                            LKR{" "}
+                                                            {Number(
+                                                                pkg.price,
+                                                            ).toLocaleString()}
+                                                        </span>
+                                                        <span className="text-slate-400 text-xs font-bold">
+                                                            / month
+                                                        </span>
+                                                    </div>
+
+                                                    <hr
+                                                        className={`my-3 ${isDarkMode ? "border-slate-800" : "border-slate-200"}`}
+                                                    />
+
+                                                    {/* Suitable For */}
+                                                    {audienceList.length >
+                                                        0 && (
+                                                        <div className="mb-3">
+                                                            <h4 className="text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5">
+                                                                Suitable For
+                                                            </h4>
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {audienceList.map(
+                                                                    (
+                                                                        target,
+                                                                        idx,
+                                                                    ) => (
+                                                                        <span
+                                                                            key={
+                                                                                idx
+                                                                            }
+                                                                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md ${
+                                                                                isDarkMode
+                                                                                    ? "bg-orange-950/40 text-orange-400"
+                                                                                    : "bg-orange-50 text-orange-700"
+                                                                            }`}
+                                                                        >
+                                                                            {
+                                                                                target
+                                                                            }
+                                                                        </span>
+                                                                    ),
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Core Features */}
+                                                    {featuresList.length >
+                                                        0 && (
+                                                        <div className="mb-3">
+                                                            <h4 className="text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5">
+                                                                Core Features
+                                                            </h4>
+                                                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                                {featuresList.map(
+                                                                    (
+                                                                        feature,
+                                                                        idx,
+                                                                    ) => (
+                                                                        <li
+                                                                            key={
+                                                                                idx
+                                                                            }
+                                                                            className={`flex items-start gap-1.5 text-xs font-medium ${
+                                                                                isDarkMode
+                                                                                    ? "text-slate-300"
+                                                                                    : "text-slate-600"
+                                                                            }`}
+                                                                        >
+                                                                            <span className="text-emerald-500 shrink-0">
+                                                                                ✅
+                                                                            </span>
+                                                                            <span>
+                                                                                {
+                                                                                    feature
+                                                                                }
+                                                                            </span>
+                                                                        </li>
+                                                                    ),
+                                                                )}
+                                                            </ul>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
 
-                                            {/* Benefits */}
-                                            {benefitsList.length > 0 && (
-                                                <div className="mb-6">
-                                                    <h4 className="text-[10px] uppercase font-black tracking-wider text-slate-400 mb-2">
-                                                        Core Benefits
-                                                    </h4>
-                                                    <ul
-                                                        className={`space-y-1.5 p-3 rounded-xl border transition-colors duration-500 ${isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-100/70 border-slate-200/60 text-slate-500"}`}
+                                                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex justify-end">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleBuyButtonClick(
+                                                                pkg,
+                                                            )
+                                                        }
+                                                        className="w-full sm:w-auto px-8 py-3 bg-slate-900 text-white rounded-xl text-xs font-black tracking-wider uppercase shadow-sm border border-transparent transition-all hover:bg-orange-500 dark:bg-orange-600 dark:hover:bg-orange-500 active:scale-[0.98]"
                                                     >
-                                                        {benefitsList.map(
-                                                            (benefit, idx) => (
-                                                                <li
-                                                                    key={idx}
-                                                                    className="text-[11px] font-medium flex items-center gap-1.5"
-                                                                >
-                                                                    <span
-                                                                        className={`w-1 h-1 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-300"}`}
-                                                                    />
-                                                                    {benefit}
-                                                                </li>
-                                                            ),
-                                                        )}
-                                                    </ul>
+                                                        Buy Now
+                                                    </button>
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        <div className="relative z-10 mt-4">
-                                            <button
-                                                onClick={() =>
-                                                    handleBuyButtonClick(pkg)
-                                                }
-                                                className="w-full text-center py-3.5 px-4 bg-slate-900 text-white rounded-xl text-xs font-black tracking-wider uppercase shadow-sm border border-transparent transition-all duration-300 hover:bg-orange-500 dark:bg-orange-600 dark:hover:bg-orange-500 active:scale-[0.98]"
-                                            >
-                                                Buy Now
-                                            </button>
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -431,7 +518,11 @@ export default function ERP({ packages = [] }) {
             {isCheckoutModalOpen && selectedPackage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
                     <div
-                        className={`w-full max-w-2xl rounded-2xl overflow-hidden border shadow-2xl flex flex-col max-h-[90vh] ${isDarkMode ? "border-slate-800 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-900"}`}
+                        className={`w-full max-w-2xl rounded-2xl overflow-hidden border shadow-2xl flex flex-col max-h-[90vh] ${
+                            isDarkMode
+                                ? "border-slate-800 bg-slate-900 text-white"
+                                : "border-slate-200 bg-white text-slate-900"
+                        }`}
                     >
                         <div className="flex items-center justify-between px-6 py-5 border-b border-inherit">
                             <div>
@@ -445,7 +536,11 @@ export default function ERP({ packages = [] }) {
                             </div>
                             <button
                                 onClick={() => setIsCheckoutModalOpen(false)}
-                                className={`p-1.5 rounded-lg border transition-colors ${isDarkMode ? "border-slate-800 hover:bg-slate-800 text-slate-400" : "border-slate-200 hover:bg-slate-100 text-slate-500"}`}
+                                className={`p-1.5 rounded-lg border transition-colors ${
+                                    isDarkMode
+                                        ? "border-slate-800 hover:bg-slate-800 text-slate-400"
+                                        : "border-slate-200 hover:bg-slate-100 text-slate-500"
+                                }`}
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -466,7 +561,11 @@ export default function ERP({ packages = [] }) {
 
                         <div className="p-6 overflow-y-auto space-y-6 flex-1">
                             <div
-                                className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-100"}`}
+                                className={`p-4 rounded-xl border flex justify-between items-center ${
+                                    isDarkMode
+                                        ? "bg-slate-950 border-slate-800"
+                                        : "bg-slate-50 border-slate-100"
+                                }`}
                             >
                                 <div>
                                     <span className="text-[10px] uppercase font-black tracking-widest text-orange-500">
@@ -533,7 +632,16 @@ export default function ERP({ packages = [] }) {
                                                                 {service.price.toLocaleString()}
                                                             </span>
                                                             <span
-                                                                className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ml-1.5 inline-block ${service.type === "monthly" ? (isDarkMode ? "bg-blue-950 text-blue-400" : "bg-blue-50 text-blue-700") : isDarkMode ? "bg-purple-950 text-purple-400" : "bg-purple-50 text-purple-700"}`}
+                                                                className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ml-1.5 inline-block ${
+                                                                    service.type ===
+                                                                    "monthly"
+                                                                        ? isDarkMode
+                                                                            ? "bg-blue-950 text-blue-400"
+                                                                            : "bg-blue-50 text-blue-700"
+                                                                        : isDarkMode
+                                                                          ? "bg-purple-950 text-purple-400"
+                                                                          : "bg-purple-50 text-purple-700"
+                                                                }`}
                                                             >
                                                                 {service.type}
                                                             </span>
@@ -551,7 +659,11 @@ export default function ERP({ packages = [] }) {
                         </div>
 
                         <div
-                            className={`p-6 border-t border-inherit flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isDarkMode ? "bg-slate-950/40" : "bg-slate-50/60"}`}
+                            className={`p-6 border-t border-inherit flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${
+                                isDarkMode
+                                    ? "bg-slate-950/40"
+                                    : "bg-slate-50/60"
+                            }`}
                         >
                             <div>
                                 <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">
@@ -571,7 +683,11 @@ export default function ERP({ packages = [] }) {
                                     onClick={() =>
                                         setIsCheckoutModalOpen(false)
                                     }
-                                    className={`px-4 py-3 rounded-xl text-xs font-black tracking-wider uppercase border transition-all ${isDarkMode ? "border-slate-800 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-100 text-slate-600"}`}
+                                    className={`px-4 py-3 rounded-xl text-xs font-black tracking-wider uppercase border transition-all ${
+                                        isDarkMode
+                                            ? "border-slate-800 hover:bg-slate-800 text-slate-300"
+                                            : "border-slate-200 hover:bg-slate-100 text-slate-600"
+                                    }`}
                                 >
                                     Cancel
                                 </button>
@@ -591,7 +707,11 @@ export default function ERP({ packages = [] }) {
             {isVideoModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
                     <div
-                        className={`w-full max-w-4xl rounded-2xl overflow-hidden border shadow-2xl relative ${isDarkMode ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}
+                        className={`w-full max-w-4xl rounded-2xl overflow-hidden border shadow-2xl relative ${
+                            isDarkMode
+                                ? "border-slate-800 bg-slate-900"
+                                : "border-slate-200 bg-white"
+                        }`}
                     >
                         <div className="flex items-center justify-between px-6 py-4 border-b border-inherit">
                             <h3 className="text-sm font-black uppercase tracking-wider text-orange-500">
@@ -599,7 +719,11 @@ export default function ERP({ packages = [] }) {
                             </h3>
                             <button
                                 onClick={() => setIsVideoModalOpen(false)}
-                                className={`p-1.5 rounded-lg border transition-colors ${isDarkMode ? "border-slate-800 hover:bg-slate-800 text-slate-400" : "border-slate-200 hover:bg-slate-100 text-slate-500"}`}
+                                className={`p-1.5 rounded-lg border transition-colors ${
+                                    isDarkMode
+                                        ? "border-slate-800 hover:bg-slate-800 text-slate-400"
+                                        : "border-slate-200 hover:bg-slate-100 text-slate-500"
+                                }`}
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

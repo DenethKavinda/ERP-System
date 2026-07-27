@@ -5,6 +5,7 @@ export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         nic: "",
         name: "",
+        business_name: "",
         address: "",
         mobile_number: "",
         email: "",
@@ -14,6 +15,7 @@ export default function Register() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        console.log("Submitting Registration Payload:", data); // Check F12 Console!
         post("/register", {
             onFinish: () => reset("password", "password_confirmation"),
         });
@@ -21,7 +23,6 @@ export default function Register() {
 
     return (
         <div className="min-h-screen font-sans bg-[url('/img/registerANDlogin.jpg')] bg-cover bg-center text-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Soft decorative background glowing spheres */}
             <div className="absolute -top-10 -left-10 w-96 h-96 bg-orange-400/10 blur-[120px] rounded-full pointer-events-none" />
             <div className="absolute -bottom-10 -right-10 w-96 h-96 bg-amber-400/10 blur-[120px] rounded-full pointer-events-none" />
 
@@ -37,29 +38,28 @@ export default function Register() {
 
                 <div className="bg-white/90 border border-amber-100/80 shadow-xl rounded-2xl p-8 backdrop-blur-sm transition-all duration-500 hover:shadow-amber-200/40">
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Row 1: NIC & Full Name */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
-                                    National Identity Card (NIC)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={data.nic}
-                                    onChange={(e) =>
-                                        setData("nic", e.target.value)
-                                    }
-                                    className="w-full text-xs font-medium bg-amber-50/30 border border-amber-100 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 transition-colors"
-                                    placeholder="e.g., 199512345678"
-                                    required
-                                />
-                                {errors.nic && (
-                                    <p className="text-[11px] text-red-500 mt-1 font-bold">
-                                        {errors.nic}
-                                    </p>
-                                )}
-                            </div>
+                        {/* Row 1: NIC */}
+                        <div>
+                            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                                National Identity Card (NIC)
+                            </label>
+                            <input
+                                type="text"
+                                value={data.nic}
+                                onChange={(e) => setData("nic", e.target.value)}
+                                className="w-full text-xs font-medium bg-amber-50/30 border border-amber-100 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 transition-colors"
+                                placeholder="e.g., 199512345678"
+                                required
+                            />
+                            {errors.nic && (
+                                <p className="text-[11px] text-red-500 mt-1 font-bold">
+                                    {errors.nic}
+                                </p>
+                            )}
+                        </div>
 
+                        {/* Row 2: Full Name & Business Name */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
                                     Full Name
@@ -77,6 +77,26 @@ export default function Register() {
                                 {errors.name && (
                                     <p className="text-[11px] text-red-500 mt-1 font-bold">
                                         {errors.name}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                                    Business Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={data.business_name}
+                                    onChange={(e) =>
+                                        setData("business_name", e.target.value)
+                                    }
+                                    className="w-full text-xs font-medium bg-amber-50/30 border border-amber-100 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 transition-colors"
+                                    placeholder="Acme Enterprise"
+                                />
+                                {errors.business_name && (
+                                    <p className="text-[11px] text-red-500 mt-1 font-bold">
+                                        {errors.business_name}
                                     </p>
                                 )}
                             </div>
@@ -103,7 +123,7 @@ export default function Register() {
                             )}
                         </div>
 
-                        {/* Row 2: Mobile Number & Email */}
+                        {/* Row 3: Mobile & Email */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
@@ -148,7 +168,7 @@ export default function Register() {
                             </div>
                         </div>
 
-                        {/* Row 3: Passwords */}
+                        {/* Row 4: Password */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
@@ -195,7 +215,7 @@ export default function Register() {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="w-full py-3.5 text-center bg-slate-900 hover:bg-orange-600 active:scale-[0.99] text-white text-xs font-black tracking-wider uppercase rounded-xl shadow-md transition-all duration-300 disabled:opacity-50"
+                            className="w-full py-3.5 text-center bg-slate-900 hover:bg-orange-600 active:scale-[0.99] text-white text-xs font-black tracking-wider uppercase rounded-xl shadow-md transition-all duration-300 disabled:opacity-50 cursor-pointer"
                         >
                             {processing
                                 ? "Compiling Node Parameters..."

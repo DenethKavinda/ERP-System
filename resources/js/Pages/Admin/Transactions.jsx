@@ -33,12 +33,13 @@ export default function Transactions({ auth, payments = [] }) {
         return date.toLocaleString("en-US", { hour12: true });
     };
 
-    // Filter payments tracking values against ID, Name, or Email attributes
+    // Filter payments tracking values against ID, Name, Business Name, or Email attributes
     const filteredPayments = payments.filter((pay) => {
         const query = searchQuery.toLowerCase();
         return (
             pay.order_id?.toLowerCase().includes(query) ||
             pay.user?.name?.toLowerCase().includes(query) ||
+            pay.user?.business_name?.toLowerCase().includes(query) ||
             pay.user?.email?.toLowerCase().includes(query)
         );
     });
@@ -48,6 +49,7 @@ export default function Transactions({ auth, payments = [] }) {
         const headers = [
             "Transaction ID",
             "User Identity",
+            "Business Name",
             "User Email",
             "Reference Items",
             "Settlement Date",
@@ -68,6 +70,7 @@ export default function Transactions({ auth, payments = [] }) {
             return [
                 `"${record.order_id || ""}"`,
                 `"${record.user?.name || "Guest User"}"`,
+                `"${record.user?.business_name || "N/A"}"`,
                 `"${record.user?.email || "customer@email.com"}"`,
                 `"${record.package_name || ""}"`,
                 `"${settlementDate}"`,
@@ -110,7 +113,7 @@ export default function Transactions({ auth, payments = [] }) {
                     <div className="flex items-center gap-3">
                         <input
                             type="text"
-                            placeholder="Filter by ID, name, email..."
+                            placeholder="Filter by ID, name, business, email..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="text-xs px-3 py-2 border rounded-xl w-64 focus:outline-none focus:ring-1 focus:ring-orange-500 bg-transparent transition-colors border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
@@ -170,6 +173,7 @@ export default function Transactions({ auth, payments = [] }) {
                                     >
                                         <th className="p-4">Transaction ID</th>
                                         <th className="p-4">User Identity</th>
+                                        <th className="p-4">Business Name</th>
                                         <th className="p-4">User Email</th>
                                         <th className="p-4">Reference Items</th>
                                         <th className="p-4">Settlement Date</th>
@@ -183,7 +187,7 @@ export default function Transactions({ auth, payments = [] }) {
                                     {filteredPayments.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan="7"
+                                                colSpan="8"
                                                 className="p-12 text-center italic text-slate-400 dark:text-slate-500"
                                             >
                                                 No payment records matched your
@@ -207,6 +211,11 @@ export default function Transactions({ auth, payments = [] }) {
                                                 <td className="p-4 font-bold text-slate-900 dark:text-slate-100">
                                                     {record.user?.name ||
                                                         "Guest User"}
+                                                </td>
+                                                <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">
+                                                    {record.user
+                                                        ?.business_name ||
+                                                        "N/A"}
                                                 </td>
                                                 <td className="p-4 text-slate-600 dark:text-slate-400 font-medium">
                                                     {record.user?.email ||

@@ -24,18 +24,27 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'nic' => 'required|string|unique:users,nic|max:20',
-            'name' => 'required|string|max:255',
-            'address' => 'required|string',
+            'nic'           => 'required|string|unique:users,nic|max:20',
+            'name'          => 'required|string|max:255',
+            'business_name' => 'nullable|string|max:255',
+            'address'       => 'required|string',
             'mobile_number' => 'required|string|max:20',
-            'email' => 'required|string|email|unique:users,email|max:255',
-            'password' => 'required|string|min:8|confirmed',
+            'email'         => 'required|string|email|unique:users,email|max:255',
+            'password'      => 'required|string|min:8|confirmed',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
-        $validated['role'] = 'user'; // System registration default role configuration layer
+        // Instantiate directly to guarantee property setting
+        $user = new User();
+        $user->nic           = $validated['nic'];
+        $user->name          = $validated['name'];
+        $user->business_name = $request->input('business_name');
+        $user->address       = $validated['address'];
+        $user->mobile_number = $validated['mobile_number'];
+        $user->email         = $validated['email'];
+        $user->password      = Hash::make($validated['password']);
+        $user->role          = 'user';
+        $user->save(); // Persist explicitly
 
-        $user = User::create($validated);
         Auth::login($user);
 
         return redirect()->route('erp.index');
@@ -44,20 +53,17 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|string|email',
+            'email'    => 'required|string|email',
             'password' => 'required|string',
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Check the authenticated user's database role value strictly
             if (Auth::user()->role === 'admin') {
-                // FIXED: Now accurately targeting the administrative dashboard named route
                 return redirect()->intended(route('admin.dashboard.manager'));
             }
 
-            // FIXED: Now accurately targeting the standard user dashboard named route
             return redirect()->intended(route('dashboard'));
         }
 
