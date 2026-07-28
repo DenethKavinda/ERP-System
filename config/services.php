@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'erp' => [
+        'provisioning_url' => env('ERP_PROVISIONING_URL'),
+        'provisioning_key' => env('ERP_PROVISIONING_KEY'),
+    ],
+
 ];

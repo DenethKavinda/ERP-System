@@ -84,6 +84,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ==========================================
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
+    // Direct /admin shortcut redirect to dashboard manager
+    Route::get('/', function () {
+        return redirect()->route('admin.dashboard.manager');
+    });
+
     // Administrative Dashboard Control System
     Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
     Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');

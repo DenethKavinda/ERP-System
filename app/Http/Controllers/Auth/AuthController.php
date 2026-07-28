@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Mail\WelcomeEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class AuthController extends Controller
@@ -29,13 +32,23 @@ class AuthController extends Controller
             'address' => 'required|string',
             'mobile_number' => 'required|string|max:20',
             'email' => 'required|string|email|unique:users,email|max:255',
-            'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
-        $validated['role'] = 'user'; // System registration default role configuration layer
+        // System-generated random password (e.g. 10 characters)
+        $rawPassword = Str::random(10);
+
+        $validated['password'] = Hash::make($rawPassword);
+        $validated['role'] = 'user';
 
         $user = User::create($validated);
+
+        // Immediately dispatch Welcome Email with system password & ERP login link
+        try {
+            Mail::to($user->email)->send(new WelcomeEmail($user, $rawPassword));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Registration welcome mail error: " . $e->getMessage());
+        }
+
         Auth::login($user);
 
         return redirect()->route('erp.index');

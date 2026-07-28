@@ -8,14 +8,12 @@ export default function Register() {
         address: "",
         mobile_number: "",
         email: "",
-        password: "",
-        password_confirmation: "",
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
         post("/register", {
-            onFinish: () => reset("password", "password_confirmation"),
+            onFinish: () => reset(),
         });
     };
 
@@ -27,12 +25,15 @@ export default function Register() {
 
             <div className="sm:mx-auto w-full max-w-xl relative z-10 animate-fade-in">
                 <div className="text-center mb-6">
-                    <span className="text-xs font-black uppercase tracking-widest text-orange-600 bg-orange-100/60 px-3 py-1.5 rounded-full inline-block mb-3">
-                        Join Enterprise Framework
+                    <span className="text-xs font-black uppercase tracking-widest text-orange-600 bg-orange-100/60 px-3.5 py-1.5 rounded-full inline-block mb-3 shadow-sm">
+                        Free Trial Registration
                     </span>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                        Create Node Profile
+                        Create Your ERP Account
                     </h2>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">
+                        Fill in your details below to receive instant access credentials
+                    </p>
                 </div>
 
                 <div className="bg-white/90 border border-amber-100/80 shadow-xl rounded-2xl p-8 backdrop-blur-sm transition-all duration-500 hover:shadow-amber-200/40">
@@ -148,46 +149,18 @@ export default function Register() {
                             </div>
                         </div>
 
-                        {/* Row 3: Passwords */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
-                                    Secure Password
-                                </label>
-                                <input
-                                    type="password"
-                                    value={data.password}
-                                    onChange={(e) =>
-                                        setData("password", e.target.value)
-                                    }
-                                    className="w-full text-xs font-medium bg-amber-50/30 border border-amber-100 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 transition-colors"
-                                    placeholder="••••••••"
-                                    required
-                                />
-                                {errors.password && (
-                                    <p className="text-[11px] text-red-500 mt-1 font-bold">
-                                        {errors.password}
-                                    </p>
-                                )}
+                        {/* Info Banner: System Generated Password */}
+                        <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3">
+                            <div className="p-1.5 bg-orange-500 text-white rounded-lg shrink-0 mt-0.5">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z" />
+                                </svg>
                             </div>
-
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
-                                    Confirm Password
-                                </label>
-                                <input
-                                    type="password"
-                                    value={data.password_confirmation}
-                                    onChange={(e) =>
-                                        setData(
-                                            "password_confirmation",
-                                            e.target.value,
-                                        )
-                                    }
-                                    className="w-full text-xs font-medium bg-amber-50/30 border border-amber-100 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 transition-colors"
-                                    placeholder="••••••••"
-                                    required
-                                />
+                            <div className="text-xs text-slate-700">
+                                <p className="font-bold text-slate-900">Instant Free Trial Access Credentials</p>
+                                <p className="mt-0.5 text-slate-600">
+                                    A system-generated secure password and direct ERP login link will be emailed immediately to your registered address upon submission.
+                                </p>
                             </div>
                         </div>
 
@@ -198,8 +171,8 @@ export default function Register() {
                             className="w-full py-3.5 text-center bg-slate-900 hover:bg-orange-600 active:scale-[0.99] text-white text-xs font-black tracking-wider uppercase rounded-xl shadow-md transition-all duration-300 disabled:opacity-50"
                         >
                             {processing
-                                ? "Compiling Node Parameters..."
-                                : "Register Framework Access"}
+                                ? "Creating Free Trial Account..."
+                                : "Register & Claim Free Trial Access"}
                         </button>
                     </form>
 

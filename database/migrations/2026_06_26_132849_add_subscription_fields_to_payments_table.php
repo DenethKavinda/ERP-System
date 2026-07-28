@@ -13,9 +13,13 @@ return new class extends Migration
     {
         Schema::table('payments', function (Blueprint $table) {
             // Distinguish between 'one-time' and 'monthly' purchases
-            $table->string('payment_type')->default('one-time')->after('currency');
+            if (!Schema::hasColumn('payments', 'payment_type')) {
+                $table->string('payment_type')->default('one-time')->after('currency');
+            }
             // Stores future expiry timestamps for active recurring packages/services
-            $table->timestamp('expires_at')->nullable()->after('status');
+            if (!Schema::hasColumn('payments', 'expires_at')) {
+                $table->timestamp('expires_at')->nullable()->after('status');
+            }
         });
     }
 
