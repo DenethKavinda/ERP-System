@@ -3,7 +3,6 @@ import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
 
 export default function ERP({ packages = [] }) {
-    // Shared state configuration for tracking interface theme mode
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== "undefined") {
             return (
@@ -17,17 +16,16 @@ export default function ERP({ packages = [] }) {
 
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Video Player UI State Control Parameters for Main Hero Video
+    // Video Player UI State Control Parameters
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [youtubeVideoId, setYoutubeVideoId] = useState("dQw4w9WgXcQ");
     const mainVideoRef = useRef(null);
 
-    // ==================== CHECKOUT SYSTEM STATE ====================
+    // Checkout System State
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
 
-    // Sample Available Add-on Services Data Structure
     const additionalServices = [
         {
             id: "srv_backup",
@@ -61,7 +59,6 @@ export default function ERP({ packages = [] }) {
         },
     ];
 
-    // Helper function to turn comma-separated text into custom arrays
     const parseMeta = (inputString) => {
         if (!inputString) return [];
         return inputString
@@ -70,7 +67,6 @@ export default function ERP({ packages = [] }) {
             .filter(Boolean);
     };
 
-    // Filter packages dynamically matching search query against name or suitability constraints
     const filteredPackages = packages.filter((pkg) => {
         const query = searchQuery.toLowerCase();
         const matchesName = pkg.name?.toLowerCase().includes(query);
@@ -78,14 +74,12 @@ export default function ERP({ packages = [] }) {
         return matchesName || matchesSuitable;
     });
 
-    // Triggered when clicking the primary "Buy Now" buttons
     const handleBuyButtonClick = (pkg) => {
         setSelectedPackage(pkg);
         setSelectedServices([]);
         setIsCheckoutModalOpen(true);
     };
 
-    // Toggle selected add-on service state checkboxes
     const handleServiceToggle = (serviceId) => {
         if (selectedServices.includes(serviceId)) {
             setSelectedServices(
@@ -96,7 +90,6 @@ export default function ERP({ packages = [] }) {
         }
     };
 
-    // Calculate total layout summary price values dynamically
     const calculateTotal = () => {
         if (!selectedPackage) return 0;
         let total = Number(selectedPackage.price);
@@ -145,7 +138,7 @@ export default function ERP({ packages = [] }) {
                 <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
                 <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 relative">
-                    {/* ================= MAIN HERO VIDEO BANNER (RESTORED AT TOP) ================= */}
+                    {/* HERO VIDEO BANNER */}
                     <div
                         className="w-full mb-12 relative z-20"
                         onMouseEnter={handleMainVideoMouseEnter}
@@ -270,7 +263,7 @@ export default function ERP({ packages = [] }) {
                         </div>
                     </div>
 
-                    {/* ================= PACKAGES SECTION WITH SEPARATE VIDEO FOR EACH PACKAGE ================= */}
+                    {/* PACKAGES SECTION */}
                     {packages.length === 0 ? (
                         <div
                             className={`text-center py-12 max-w-xl mx-auto rounded-2xl border p-8 shadow-sm transition-all duration-500 ${isDarkMode ? "bg-slate-900/60 border-slate-800" : "bg-white/80 border-slate-200"}`}
@@ -292,7 +285,8 @@ export default function ERP({ packages = [] }) {
                                     pkg.suitable_for,
                                 );
                                 const featuresList = parseMeta(pkg.features);
-                                const benefitsList = parseMeta(pkg.benefits);
+                                const activeVideoId =
+                                    pkg.youtube_id || "dQw4w9WgXcQ";
 
                                 return (
                                     <div
@@ -304,15 +298,13 @@ export default function ERP({ packages = [] }) {
                                         }`}
                                     >
                                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                                            {/* LEFT HAND SIDE OF PACKAGE: RELEVANT PACKAGE VIDEO */}
+                                            {/* LEFT SIDE: PACKAGE VIDEO / THUMBNAIL */}
                                             <div className="lg:col-span-5">
                                                 <div
                                                     onClick={() => {
-                                                        if (pkg.youtube_id) {
-                                                            setYoutubeVideoId(
-                                                                pkg.youtube_id,
-                                                            );
-                                                        }
+                                                        setYoutubeVideoId(
+                                                            activeVideoId,
+                                                        );
                                                         setIsVideoModalOpen(
                                                             true,
                                                         );
@@ -323,34 +315,11 @@ export default function ERP({ packages = [] }) {
                                                             : "border-slate-200 bg-slate-100"
                                                     }`}
                                                 >
-                                                    <video
-                                                        className="w-full h-full object-cover transition-opacity duration-500 opacity-85 group-hover/video:opacity-100"
-                                                        loop
-                                                        muted
-                                                        playsInline
-                                                        poster={
-                                                            pkg.video_poster ||
-                                                            "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop"
-                                                        }
-                                                        onMouseEnter={(e) =>
-                                                            e.target
-                                                                .play()
-                                                                .catch(() => {})
-                                                        }
-                                                        onMouseLeave={(e) =>
-                                                            e.target.pause()
-                                                        }
-                                                    >
-                                                        <source
-                                                            src={
-                                                                pkg.video_url ||
-                                                                "https://assets.mixkit.co/videos/preview/mixkit-tech-dashboard-with-charts-and-data-analysis-41614-large.mp4"
-                                                            }
-                                                            type="video/mp4"
-                                                        />
-                                                        Your browser does not
-                                                        support the video tag.
-                                                    </video>
+                                                    <img
+                                                        src={`https://img.youtube.com/vi/${activeVideoId}/hqdefault.jpg`}
+                                                        alt={`${pkg.name} video thumbnail`}
+                                                        className="w-full h-full object-cover transition-transform duration-500 opacity-90 group-hover/video:opacity-100 group-hover/video:scale-105"
+                                                    />
 
                                                     <div className="absolute inset-0 bg-slate-950/30 group-hover/video:bg-slate-950/10 transition-colors" />
 
@@ -376,7 +345,6 @@ export default function ERP({ packages = [] }) {
 
                                                     <div className="absolute bottom-3 left-3 right-3 z-10">
                                                         <p className="text-white text-[10px] font-semibold drop-shadow">
-                                                            Hover to preview •
                                                             Click to watch full
                                                             video
                                                         </p>
@@ -384,7 +352,7 @@ export default function ERP({ packages = [] }) {
                                                 </div>
                                             </div>
 
-                                            {/* RIGHT HAND SIDE OF PACKAGE: PACKAGE DETAILS */}
+                                            {/* RIGHT SIDE: PACKAGE DETAILS */}
                                             <div className="lg:col-span-7 flex flex-col justify-between h-full">
                                                 <div>
                                                     <div className="flex justify-between items-start mb-2">
@@ -420,7 +388,6 @@ export default function ERP({ packages = [] }) {
                                                         className={`my-3 ${isDarkMode ? "border-slate-800" : "border-slate-200"}`}
                                                     />
 
-                                                    {/* Suitable For */}
                                                     {audienceList.length >
                                                         0 && (
                                                         <div className="mb-3">
@@ -453,7 +420,6 @@ export default function ERP({ packages = [] }) {
                                                         </div>
                                                     )}
 
-                                                    {/* Core Features */}
                                                     {featuresList.length >
                                                         0 && (
                                                         <div className="mb-3">
@@ -514,7 +480,7 @@ export default function ERP({ packages = [] }) {
                 </main>
             </div>
 
-            {/* CHECKOUT MODAL WINDOW COMPONENT */}
+            {/* CHECKOUT MODAL WINDOW */}
             {isCheckoutModalOpen && selectedPackage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
                     <div
@@ -715,7 +681,7 @@ export default function ERP({ packages = [] }) {
                     >
                         <div className="flex items-center justify-between px-6 py-4 border-b border-inherit">
                             <h3 className="text-sm font-black uppercase tracking-wider text-orange-500">
-                                Architecture System Overview Video
+                                Package Overview Video
                             </h3>
                             <button
                                 onClick={() => setIsVideoModalOpen(false)}
@@ -744,10 +710,11 @@ export default function ERP({ packages = [] }) {
                         <div className="relative w-full aspect-video bg-black">
                             <iframe
                                 className="absolute inset-0 w-full h-full"
-                                src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+                                src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
                                 title="YouTube video player"
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerPolicy="strict-origin-when-cross-origin"
                                 allowFullScreen
                             ></iframe>
                         </div>

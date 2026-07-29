@@ -17,6 +17,10 @@ export default function Transactions({ auth, payments = [] }) {
 
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Date Range Filter States
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add("dark");
@@ -33,18 +37,45 @@ export default function Transactions({ auth, payments = [] }) {
         return date.toLocaleString("en-US", { hour12: true });
     };
 
-    // Filter payments tracking values against ID, Name, Business Name, or Email attributes
+    // Filter payments tracking values against ID, Name, Business Name, Email, AND Date Range
     const filteredPayments = payments.filter((pay) => {
         const query = searchQuery.toLowerCase();
-        return (
+
+        // Match Search Query
+        const matchesQuery =
             pay.order_id?.toLowerCase().includes(query) ||
             pay.user?.name?.toLowerCase().includes(query) ||
             pay.user?.business_name?.toLowerCase().includes(query) ||
-            pay.user?.email?.toLowerCase().includes(query)
-        );
+            pay.user?.email?.toLowerCase().includes(query);
+
+        // Match Date Range
+        let matchesDate = true;
+        if (pay.updated_at) {
+            const recordDate = new Date(pay.updated_at);
+
+            if (startDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                if (recordDate < start) matchesDate = false;
+            }
+
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                if (recordDate > end) matchesDate = false;
+            }
+        }
+
+        return matchesQuery && matchesDate;
     });
 
-    // Trigger Excel/CSV export containing all visible data including calculated Expire Date
+    // Clear Date Filter Helper
+    const handleClearDates = () => {
+        setStartDate("");
+        setEndDate("");
+    };
+
+    // Trigger Excel/CSV export containing filtered visible data
     const handleExportExcel = () => {
         const headers = [
             "Transaction ID",
@@ -108,16 +139,47 @@ export default function Transactions({ auth, payments = [] }) {
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Upper Interface Status Alignment Header */}
                 <header
-                    className={`h-16 px-6 border-b flex items-center justify-between transition-colors ${isDarkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200"}`}
+                    className={`p-4 border-b flex flex-wrap items-center justify-between gap-4 transition-colors ${isDarkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200"}`}
                 >
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Search Bar Input */}
                         <input
                             type="text"
                             placeholder="Filter by ID, name, business, email..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="text-xs px-3 py-2 border rounded-xl w-64 focus:outline-none focus:ring-1 focus:ring-orange-500 bg-transparent transition-colors border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                            className="text-xs px-3 py-2 border rounded-xl w-60 focus:outline-none focus:ring-1 focus:ring-orange-500 bg-transparent transition-colors border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
                         />
+
+                        {/* Date Range Picker Controls */}
+                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="text-xs px-2 py-1 rounded-lg bg-transparent border-0 focus:outline-none text-slate-700 dark:text-slate-200"
+                                title="Start Date"
+                            />
+                            <span className="text-xs text-slate-400 font-bold">
+                                to
+                            </span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="text-xs px-2 py-1 rounded-lg bg-transparent border-0 focus:outline-none text-slate-700 dark:text-slate-200"
+                                title="End Date"
+                            />
+
+                            {(startDate || endDate) && (
+                                <button
+                                    onClick={handleClearDates}
+                                    className="text-[10px] font-bold px-2 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md transition-colors"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
 
                         {/* 📊 EXCEL EXPORT ACTION BUTTON */}
                         <button
@@ -157,7 +219,7 @@ export default function Transactions({ auth, payments = [] }) {
                     >
                         <div className="p-4 border-b flex items-center justify-between font-bold text-xs uppercase tracking-wider border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
                             <span>System Financial Audits Log</span>
-                            {searchQuery && (
+                            {(searchQuery || startDate || endDate) && (
                                 <span className="text-[10px] text-orange-500 font-mono normal-case normal-letter-spacing font-semibold">
                                     Filtered Mode Active: (
                                     {filteredPayments.length} records matching)

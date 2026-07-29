@@ -44,6 +44,7 @@ class ErpPackageController extends Controller
             'features' => 'nullable|string',
             'benefits' => 'nullable|string',
             'rating' => 'nullable|string|max:5',
+            'youtube_id' => 'nullable|string|max:255',
         ]);
 
         ErpPackage::create($validated);
@@ -63,6 +64,7 @@ class ErpPackageController extends Controller
             'features' => 'nullable|string',
             'benefits' => 'nullable|string',
             'rating' => 'nullable|string|max:5',
+            'youtube_id' => 'nullable|string|max:255',
         ]);
 
         $package = ErpPackage::findOrFail($id);

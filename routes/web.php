@@ -110,6 +110,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/erp-packages', [ErpPackageController::class, 'store'])->name('packages.store');
     Route::put('/erp-packages/{id}', [ErpPackageController::class, 'update'])->name('packages.update');
     Route::delete('/erp-packages/{id}', [ErpPackageController::class, 'destroy'])->name('packages.destroy');
+    Route::put('/erp-packages/{id}', [ErpPackageController::class, 'update']);
 
     // Administrative Complaints Management Console
     Route::get('/complaints', [ComplaintController::class, 'adminIndex'])->name('complaints.index');

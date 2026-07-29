@@ -3,19 +3,27 @@ import { useForm, router } from "@inertiajs/react";
 import Sidebar from "../../Components/Sidebar";
 
 export default function AdminPackages({ packages = [], isDarkMode = false }) {
-    // Highlight-add: Track active operation targets
     const [editingId, setEditingId] = useState(null);
 
     const { data, setData, post, put, reset, processing, errors } = useForm({
         name: "",
         price: "",
-        suitable_for: "", // Comma-separated string
-        features: "", // Comma-separated string
-        benefits: "", // Comma-separated string
+        suitable_for: "",
+        features: "",
+        benefits: "",
         rating: "5.0",
+        youtube_id: "",
     });
 
-    // Highlight-add: Pre-populate context values for updating state loops
+    // Helper to extract YouTube ID if user enters a full YouTube link or plain ID
+    const extractYoutubeId = (urlOrId) => {
+        if (!urlOrId) return "";
+        const regExp =
+            /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = urlOrId.match(regExp);
+        return match && match[2].length === 11 ? match[2] : urlOrId;
+    };
+
     const handleEditInit = (pkg) => {
         setEditingId(pkg.id);
         setData({
@@ -25,10 +33,10 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
             features: pkg.features || "",
             benefits: pkg.benefits || "",
             rating: pkg.rating || "5.0",
+            youtube_id: pkg.youtube_id || "",
         });
     };
 
-    // Highlight-add: Cancel current editing context loop flow
     const handleCancelEdit = () => {
         setEditingId(null);
         reset();
@@ -37,7 +45,9 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Highlight-select: Conditional redirection based on editing state
+        // Clean up YouTube ID before processing form submission
+        const cleanYoutubeId = extractYoutubeId(data.youtube_id);
+
         if (editingId) {
             put(`/admin/erp-packages/${editingId}`, {
                 onSuccess: () => {
@@ -52,7 +62,6 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
         }
     };
 
-    // Highlight-add: Destruction pipeline link sequence hook
     const handleDelete = (id) => {
         if (
             confirm(
@@ -87,7 +96,6 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                         <div
                             className={`p-6 rounded-xl border h-fit ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}
                         >
-                            {/* Highlight-select: Dynamic Heading titles based on status state */}
                             <h2 className="text-lg font-bold mb-4">
                                 {editingId
                                     ? "Modify ERP Package"
@@ -134,6 +142,31 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                                     {errors.price && (
                                         <span className="text-red-500 mt-1 block">
                                             {errors.price}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block font-bold uppercase text-slate-400 mb-1">
+                                        YouTube Video Link or Video ID
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className={`w-full p-2.5 rounded-lg border focus:outline-none focus:border-orange-500 bg-transparent ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}
+                                        value={data.youtube_id}
+                                        onChange={(e) =>
+                                            setData(
+                                                "youtube_id",
+                                                extractYoutubeId(
+                                                    e.target.value,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="https://youtu.be/w4rG5GY9IlA or Video ID"
+                                    />
+                                    {errors.youtube_id && (
+                                        <span className="text-red-500 mt-1 block">
+                                            {errors.youtube_id}
                                         </span>
                                     )}
                                 </div>
@@ -209,7 +242,6 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                                     </select>
                                 </div>
 
-                                {/* Highlight-select: Action option buttons change dynamically */}
                                 <div className="flex gap-2 pt-2">
                                     <button
                                         type="submit"
@@ -257,7 +289,7 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                                                         Package Variant Details
                                                     </th>
                                                     <th className="pb-3 font-bold">
-                                                        Target Workspace Profile
+                                                        YouTube Video
                                                     </th>
                                                     <th className="pb-3 font-bold">
                                                         Pricing Configuration
@@ -277,8 +309,19 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                                                             {pkg.name}
                                                         </td>
                                                         <td className="py-3 text-xs max-w-xs truncate text-slate-500 dark:text-slate-400">
-                                                            {pkg.suitable_for ||
-                                                                "General Use"}
+                                                            {pkg.youtube_id ? (
+                                                                <span className="text-emerald-500 font-bold">
+                                                                    ID:{" "}
+                                                                    {
+                                                                        pkg.youtube_id
+                                                                    }
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-slate-400 italic">
+                                                                    Default
+                                                                    Video
+                                                                </span>
+                                                            )}
                                                         </td>
                                                         <td className="py-3 font-black text-orange-500">
                                                             LKR{" "}
@@ -287,7 +330,6 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                                                             ).toLocaleString()}
                                                         </td>
                                                         <td className="py-3 text-right">
-                                                            {/* Highlight-add: Modifying operational tools row action anchors */}
                                                             <div className="flex justify-end items-center gap-2">
                                                                 <button
                                                                     onClick={() =>

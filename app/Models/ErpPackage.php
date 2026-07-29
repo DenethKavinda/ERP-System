@@ -13,5 +13,6 @@ class ErpPackage extends Model
         'features',
         'benefits',
         'rating',
+        'youtube_id',
     ];
 }
