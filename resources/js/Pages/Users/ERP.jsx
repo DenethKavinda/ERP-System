@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
 
@@ -21,10 +22,23 @@ export default function ERP({ packages = [] }) {
     const [youtubeVideoId, setYoutubeVideoId] = useState("dQw4w9WgXcQ");
     const mainVideoRef = useRef(null);
 
-    // Checkout System State
+    // Checkout & Payment State
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+    // Dynamically Inject PayHere SDK Script
+    useEffect(() => {
+        const scriptId = "payhere-sdk";
+        if (!document.getElementById(scriptId)) {
+            const script = document.createElement("script");
+            script.id = scriptId;
+            script.src = "https://www.payhere.lk/lib/payhere.js";
+            script.async = true;
+            document.body.appendChild(script);
+        }
+    }, []);
 
     const additionalServices = [
         {
@@ -102,20 +116,64 @@ export default function ERP({ packages = [] }) {
         return total;
     };
 
-    const handlePaymentConfirm = () => {
-        alert(
-            `Order Confirmed!\n\nPackage: ${selectedPackage.name}\nTotal Cart Value: LKR ${calculateTotal().toLocaleString()}\n\n*Payment gateway redirection pipeline integration points will be connected here later.*`,
-        );
-        setIsCheckoutModalOpen(false);
+    // PayHere Gateway Checkout Handler
+    const handlePaymentConfirm = async () => {
+        if (!selectedPackage) return;
+
+        setIsProcessingPayment(true);
+
+        try {
+            // Call Laravel CheckoutController@initialize endpoint
+            const response = await axios.post("/checkout/initialize", {
+                package_id: selectedPackage.id,
+                package_name: selectedPackage.name,
+                base_price: selectedPackage.price,
+                addon_ids: selectedServices,
+            });
+
+            const paymentData = response.data;
+
+            if (typeof window.payhere === "undefined") {
+                alert(
+                    "PayHere SDK is loading. Please try again in a few seconds.",
+                );
+                setIsProcessingPayment(false);
+                return;
+            }
+
+            // Bind PayHere Callbacks
+            window.payhere.onCompleted = function (orderId) {
+                alert("Payment Completed! Order ID: " + orderId);
+                setIsCheckoutModalOpen(false);
+                // Optionally redirect to receipt page
+                window.location.href = `/checkout/receipt/download?order_id=${orderId}`;
+            };
+
+            window.payhere.onDismissed = function () {
+                console.log("Payment dismissed by user.");
+            };
+
+            window.payhere.onError = function (error) {
+                alert("Payment Error: " + error);
+            };
+
+            // Launch PayHere Popup
+            window.payhere.startPayment(paymentData);
+        } catch (error) {
+            console.error("Payment initialization failed:", error);
+            alert(
+                error.response?.data?.message ||
+                    "Failed to initialize payment gateway session.",
+            );
+        } finally {
+            setIsProcessingPayment(false);
+        }
     };
 
     const handleMainVideoMouseEnter = () => {
         if (mainVideoRef.current) {
             mainVideoRef.current.play().catch((err) => {
-                console.log(
-                    "Autoplay on hover blocked until user gesture interaction:",
-                    err,
-                );
+                console.log("Autoplay on hover blocked:", err);
             });
         }
     };
@@ -206,10 +264,6 @@ export default function ERP({ packages = [] }) {
                         </div>
                     </div>
 
-                    {/* Decorative Blurs */}
-                    <div className="absolute top-48 left-1/4 w-80 h-80 bg-orange-500/10 blur-[120px] rounded-full pointer-events-none" />
-                    <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-blue-500/5 blur-[150px] rounded-full pointer-events-none" />
-
                     <div className="text-center mb-8 relative z-10 animate-fade-in">
                         <h1
                             className={`text-4xl sm:text-5xl font-black tracking-tight mb-3 transition-colors duration-500 ${isDarkMode ? "text-white" : "text-slate-900"}`}
@@ -235,7 +289,7 @@ export default function ERP({ packages = [] }) {
                                         ? "border-slate-800 text-white placeholder-slate-600 bg-slate-900/20"
                                         : "border-slate-200 text-slate-900 placeholder-slate-400 bg-white"
                                 }`}
-                                placeholder="Filter by package name or audience (e.g., Small shops)..."
+                                placeholder="Filter by package name or audience..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -298,7 +352,6 @@ export default function ERP({ packages = [] }) {
                                         }`}
                                     >
                                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                                            {/* LEFT SIDE: PACKAGE VIDEO / THUMBNAIL */}
                                             <div className="lg:col-span-5">
                                                 <div
                                                     onClick={() => {
@@ -342,17 +395,9 @@ export default function ERP({ packages = [] }) {
                                                             </svg>
                                                         </div>
                                                     </div>
-
-                                                    <div className="absolute bottom-3 left-3 right-3 z-10">
-                                                        <p className="text-white text-[10px] font-semibold drop-shadow">
-                                                            Click to watch full
-                                                            video
-                                                        </p>
-                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* RIGHT SIDE: PACKAGE DETAILS */}
                                             <div className="lg:col-span-7 flex flex-col justify-between h-full">
                                                 <div>
                                                     <div className="flex justify-between items-start mb-2">
@@ -480,7 +525,7 @@ export default function ERP({ packages = [] }) {
                 </main>
             </div>
 
-            {/* CHECKOUT MODAL WINDOW */}
+            {/* CHECKOUT MODAL WINDOW WITH PAYHERE GATEWAY integration */}
             {isCheckoutModalOpen && selectedPackage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
                     <div
@@ -508,20 +553,7 @@ export default function ERP({ packages = [] }) {
                                         : "border-slate-200 hover:bg-slate-100 text-slate-500"
                                 }`}
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth={2.5}
-                                    stroke="currentColor"
-                                    className="w-4 h-4"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                                ✕
                             </button>
                         </div>
 
@@ -597,20 +629,6 @@ export default function ERP({ packages = [] }) {
                                                                 +LKR{" "}
                                                                 {service.price.toLocaleString()}
                                                             </span>
-                                                            <span
-                                                                className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ml-1.5 inline-block ${
-                                                                    service.type ===
-                                                                    "monthly"
-                                                                        ? isDarkMode
-                                                                            ? "bg-blue-950 text-blue-400"
-                                                                            : "bg-blue-50 text-blue-700"
-                                                                        : isDarkMode
-                                                                          ? "bg-purple-950 text-purple-400"
-                                                                          : "bg-purple-50 text-purple-700"
-                                                                }`}
-                                                            >
-                                                                {service.type}
-                                                            </span>
                                                         </div>
                                                     </div>
                                                     <p className="text-[11px] text-slate-400 font-medium mt-1 leading-relaxed">
@@ -639,9 +657,6 @@ export default function ERP({ packages = [] }) {
                                     <span className="text-2xl font-black text-orange-500 tracking-tight">
                                         LKR {calculateTotal().toLocaleString()}
                                     </span>
-                                    <span className="text-slate-400 text-xs font-bold">
-                                        Total
-                                    </span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -659,9 +674,12 @@ export default function ERP({ packages = [] }) {
                                 </button>
                                 <button
                                     onClick={handlePaymentConfirm}
-                                    className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-black tracking-wider uppercase shadow-md transition-all active:scale-95"
+                                    disabled={isProcessingPayment}
+                                    className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-black tracking-wider uppercase shadow-md transition-all active:scale-95 disabled:opacity-50"
                                 >
-                                    Confirm Plan
+                                    {isProcessingPayment
+                                        ? "Initializing..."
+                                        : "Pay Now with PayHere"}
                                 </button>
                             </div>
                         </div>
@@ -669,7 +687,7 @@ export default function ERP({ packages = [] }) {
                 </div>
             )}
 
-            {/* FULL THEATER LAYER VIDEO OVERLAY MODAL */}
+            {/* THEATER VIDEO MODAL */}
             {isVideoModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
                     <div
@@ -691,20 +709,7 @@ export default function ERP({ packages = [] }) {
                                         : "border-slate-200 hover:bg-slate-100 text-slate-500"
                                 }`}
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth={2.5}
-                                    stroke="currentColor"
-                                    className="w-4 h-4"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                                ✕
                             </button>
                         </div>
                         <div className="relative w-full aspect-video bg-black">

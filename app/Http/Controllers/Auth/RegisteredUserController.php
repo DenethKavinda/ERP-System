@@ -35,6 +35,7 @@ class RegisteredUserController extends Controller
         $request->validate([
             'nic' => 'required|string|max:20|unique:' . User::class . ',nic',
             'name' => 'required|string|max:255',
+            'business_name' => 'nullable|string|max:255',
             'address' => 'required|string',
             'mobile_number' => 'required|string|max:20',
             'email' => 'required|string|lowercase|email|max:255|unique:' . User::class . ',email',
@@ -45,6 +46,7 @@ class RegisteredUserController extends Controller
         $user = User::create([
             'nic' => $request->nic,
             'name' => $request->name,
+            'business_name' => $request->business_name,
             'address' => $request->address,
             'mobile_number' => $request->mobile_number,
             'email' => $request->email,
@@ -57,6 +59,6 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         // 3. Dynamic destination handling routing users straight to your new ERP grid interface
-        return redirect()->route('erp.index');
+        return redirect()->route('dashboard');
     }
 }

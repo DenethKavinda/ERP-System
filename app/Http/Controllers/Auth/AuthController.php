@@ -37,7 +37,7 @@ class AuthController extends Controller
         $user = new User();
         $user->nic           = $validated['nic'];
         $user->name          = $validated['name'];
-        $user->business_name = $request->input('business_name');
+        $user->business_name = $validated['business_name'] ?? null;
         $user->address       = $validated['address'];
         $user->mobile_number = $validated['mobile_number'];
         $user->email         = $validated['email'];
