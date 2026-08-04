@@ -15,10 +15,13 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\LedgerController;
 use App\Models\Payment;
 use App\Http\Controllers\SuccessStoryController;
+use App\Http\Controllers\landingController;
+
+route::get('/', [landingController::class, 'index'])->name('landing');
 
 // Public Auth Action Layer endpoints 
-Route::get('/', [AuthController::class, 'showLogin']);
-Route::post('/', [AuthController::class, 'login']);
+Route::get('/login', [AuthController::class, 'showLogin']);
+Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 
