@@ -36,8 +36,15 @@ return [
     ],
 
     'erp' => [
-        'provisioning_url' => env('ERP_PROVISIONING_URL'),
-        'provisioning_key' => env('ERP_PROVISIONING_KEY'),
+        'api_url' => env('ERP_API_URL', 'http://localhost:8000'),
+        'app_url' => env('ERP_APP_URL', 'http://localhost:5173'),
+        'provisioning_key' => env('ERP_PROVISIONING_KEY', ''),
+    ],
+
+    'payhere' => [
+        'merchant_id' => env('PAYHERE_MERCHANT_ID', '1228224'),
+        'secret'      => env('PAYHERE_SECRET', '4TVRczJkMjU0a8u6x8a1p1f'),
+        'is_sandbox'  => env('PAYHERE_IS_SANDBOX', true),
     ],
 
 ];

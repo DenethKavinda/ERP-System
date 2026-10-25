@@ -294,9 +294,24 @@ export default function AdminComplaints({ auth, complaints = [] }) {
                     </div>
                     <button
                         onClick={() => setIsDarkMode(!isDarkMode)}
-                        className="px-4 py-2 text-xs font-bold border rounded-lg bg-white dark:bg-slate-900 dark:border-slate-800"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border rounded-lg bg-white dark:bg-slate-900 dark:border-slate-800 transition-colors"
                     >
-                        {isDarkMode ? "☀️ Light Node" : "🌙 Dark Node"}
+                        {isDarkMode ? (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-amber-400">
+                                    <circle cx="12" cy="12" r="4" />
+                                    <path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m12.73 12.73 1.41 1.41M2 12h2m16 0h2m-15.66 5.66 1.41-1.41m12.73-12.73 1.41-1.41" />
+                                </svg>
+                                <span>Light Mode</span>
+                            </>
+                        ) : (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-slate-700">
+                                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                                </svg>
+                                <span>Dark Mode</span>
+                            </>
+                        )}
                     </button>
                 </div>
                 <div

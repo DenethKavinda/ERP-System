@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Mail\WelcomeEmail;
+use App\Models\Payment;
+use App\Mail\ErpCredentialsMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -27,50 +30,176 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'nic' => 'required|string|unique:users,nic|max:20',
-            'name' => 'required|string|max:255',
-            'address' => 'required|string',
+            'nic'           => 'required|string|unique:users,nic|max:20',
+            'name'          => 'required|string|max:255',
+            'business_name' => 'nullable|string|max:255',
+            'address'       => 'required|string',
             'mobile_number' => 'required|string|max:20',
-            'email' => 'required|string|email|unique:users,email|max:255',
+            'email'         => 'required|string|email|unique:users,email|max:255',
+            'plan'          => 'nullable|string',
+            'cycle'         => 'nullable|string',
+            'addons'        => 'nullable|string',
         ]);
 
-        // System-generated random password (e.g. 10 characters)
-        $rawPassword = Str::random(10);
+        // Generate a secure random password for both portal and ERP
+        $plainPassword = $this->generateSecurePassword();
+        $hashedPassword = Hash::make($plainPassword);
 
-        $validated['password'] = Hash::make($rawPassword);
-        $validated['role'] = 'user';
-
-        $user = User::create($validated);
-
-        // Immediately dispatch Welcome Email with system password & ERP login link
-        try {
-            Mail::to($user->email)->send(new WelcomeEmail($user, $rawPassword));
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Registration welcome mail error: " . $e->getMessage());
-        }
+        // Create the portal user
+        $user = new User();
+        $user->nic           = $validated['nic'];
+        $user->name          = $validated['name'];
+        $user->business_name = $validated['business_name'] ?? null;
+        $user->address       = $validated['address'];
+        $user->mobile_number = $validated['mobile_number'];
+        $user->email         = $validated['email'];
+        $user->password      = $hashedPassword;
+        $user->role          = 'user';
+        $user->save();
 
         Auth::login($user);
 
-        return redirect()->route('erp.index');
+        $plan = strtolower($request->input('plan', 'free'));
+        $cycle = $request->input('cycle', 'monthly');
+
+        // Resolve human-readable plan name
+        $planNames = [
+            'free'       => 'ERP Free Starter',
+            'basic'      => 'ERP Basic Essentials',
+            'pro'        => 'ERP Professional Growth',
+            'enterprise' => 'Enterprise Custom Core',
+        ];
+        $planName = $planNames[$plan] ?? 'ERP Free Starter';
+
+        if ($plan === 'free' || empty($plan)) {
+            // Automatically activate 30-Day Free Starter Evaluation Plan
+            Payment::create([
+                'order_id'        => 'FREE_' . strtoupper(uniqid()),
+                'user_id'         => $user->id,
+                'package_name'    => 'ERP Free Starter',
+                'base_price'      => 0.00,
+                'addons_total'    => 0.00,
+                'amount'          => 0.00,
+                'currency'        => 'LKR',
+                'status'          => 'Completed',
+                'expires_at'      => now()->addDays(30),
+            ]);
+        }
+
+        // Provision user in the ERP System via server-to-server API
+        $erpProvisioned = $this->provisionErpAccount(
+            $validated['name'],
+            $validated['email'],
+            $hashedPassword,
+            $validated['business_name'] ?? null,
+            $plan
+        );
+
+        // Send credentials email
+        $erpUrl = config('services.erp.api_url', 'http://localhost:5173');
+        $erpAppUrl = env('ERP_APP_URL', 'http://localhost:5173');
+
+        try {
+            Mail::to($user->email)->send(new ErpCredentialsMail(
+                $user->name,
+                $user->email,
+                $plainPassword,
+                $erpAppUrl,
+                $planName
+            ));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send ERP credentials email: ' . $e->getMessage());
+        }
+
+        if ($plan === 'free' || empty($plan)) {
+            return redirect()->route('dashboard')->with([
+                'new_account_activated' => true,
+                'erp_login_email'       => $user->email,
+                'erp_provisioned'       => $erpProvisioned,
+                'plan_name'             => $planName,
+            ]);
+        } else {
+            // For paid plans, redirect back to /ERP to complete payment with PayHere
+            return redirect('/ERP?checkout=' . urlencode($plan) . '&cycle=' . urlencode($cycle) . '&new_account=true');
+        }
+    }
+
+    /**
+     * Provision the user's admin account in the ERP system.
+     * Calls the ErpUserProvisioningController endpoint.
+     */
+    private function provisionErpAccount(
+        string $name,
+        string $email,
+        string $hashedPassword,
+        ?string $companyName,
+        string $plan = 'free'
+    ): bool {
+        $apiUrl = config('services.erp.api_url');
+        $provisioningKey = config('services.erp.provisioning_key');
+
+        if (empty($apiUrl) || empty($provisioningKey)) {
+            Log::warning('ERP provisioning skipped: API URL or key not configured.');
+            return false;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'X-ERP-Provisioning-Key' => $provisioningKey,
+                'Accept'                 => 'application/json',
+                'Content-Type'           => 'application/json',
+            ])->timeout(15)->post("{$apiUrl}/api/internal/users", [
+                'name'         => $name,
+                'email'        => $email,
+                'password'     => $hashedPassword,
+                'company_name' => $companyName,
+                'plan'         => $plan,
+            ]);
+
+            if ($response->successful()) {
+                Log::info("ERP account provisioned for {$email}", $response->json());
+                return true;
+            }
+
+            Log::error("ERP provisioning failed for {$email}", [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error("ERP provisioning exception for {$email}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Generate a secure, user-friendly random password.
+     * Format: 3 uppercase + 4 lowercase + 3 digits + 2 special = 12 chars, shuffled.
+     */
+    private function generateSecurePassword(): string
+    {
+        $upper   = substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ'), 0, 3);
+        $lower   = substr(str_shuffle('abcdefghjkmnpqrstuvwxyz'), 0, 4);
+        $digits  = substr(str_shuffle('23456789'), 0, 3);
+        $special = substr(str_shuffle('!@#$&*'), 0, 2);
+
+        return str_shuffle($upper . $lower . $digits . $special);
     }
 
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|string|email',
+            'email'    => 'required|string|email',
             'password' => 'required|string',
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Check the authenticated user's database role value strictly
             if (Auth::user()->role === 'admin') {
-                // FIXED: Now accurately targeting the administrative dashboard named route
                 return redirect()->intended(route('admin.dashboard.manager'));
             }
 
-            // FIXED: Now accurately targeting the standard user dashboard named route
             return redirect()->intended(route('dashboard'));
         }
 

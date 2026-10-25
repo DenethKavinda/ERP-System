@@ -45,8 +45,8 @@ class CheckoutController extends Controller
         // 🛠️ FIXED: Standardized package description label for clarity on receipt headers
         $packageNameSummary = 'Custom Service Infrastructure Bundle';
 
-        $merchantId = config('services.payhere.merchant_id', env('PAYHERE_MERCHANT_ID'));
-        $appSecret = env('PAYHERE_SECRET');
+        $merchantId = config('services.payhere.merchant_id');
+        $appSecret = config('services.payhere.secret');
 
         $hashedAmount = number_format($totalAmount, 2, '.', '');
         $appSecretHash = strtoupper(md5($appSecret));
@@ -54,7 +54,7 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
 
-        // 🛠️ FIXED: Storing metadata inside the new split-pricing architecture framework logs
+        // 🛠️ Storing metadata with 'pending' status until PayHere webhook settlement
         Payment::create([
             'order_id' => $orderId,
             'user_id' => $user ? $user->id : null,
@@ -64,18 +64,17 @@ class CheckoutController extends Controller
             'addons_manifest' => $addonsManifestArray,
             'amount' => $totalAmount,
             'currency' => 'LKR',
-            'status' => 'Completed', // Marked as completed since this is a service bundle checkout
+            'status' => 'pending',
 
-            // 🚀 ADD THIS LINE TO AUTOMATICALLY CALCULATE 30 DAYS AHEAD
             'expires_at'      => now()->addDays(30),
         ]);
 
         $paymentData = [
-            'sandbox' => env('PAYHERE_IS_SANDBOX', true),
+            'sandbox' => (bool) config('services.payhere.is_sandbox', true),
             'merchant_id' => $merchantId,
             'return_url' => route('checkout.success.callback'),
             'cancel_url' => url('/services'),
-            'notify_url' => url('/api/payhere/webhook'),
+            'notify_url' => route('payhere.webhook'),
             'order_id' => $orderId,
             'items' => mb_strimwidth($packageNameSummary, 0, 50, '...'),
             'amount' => $hashedAmount,
@@ -110,7 +109,7 @@ class CheckoutController extends Controller
         $statusCode = $request->get('status_code');
         $md5sig = $request->get('md5sig');
 
-        $appSecret = env('PAYHERE_SECRET');
+        $appSecret = config('services.payhere.secret');
 
         $localMd5sig = strtoupper(
             md5(
@@ -129,7 +128,7 @@ class CheckoutController extends Controller
             if ($payment) {
                 if ($statusCode == 2) {
                     $payment->update([
-                        'status' => 'completed',
+                        'status' => 'Completed',
                         'payment_id' => $request->get('payment_id')
                     ]);
                 } else {
@@ -173,8 +172,8 @@ class CheckoutController extends Controller
 
         $totalAmount = $basePrice + $addonsTotal;
 
-        $merchantId = config('services.payhere.merchant_id', env('PAYHERE_MERCHANT_ID'));
-        $appSecret = env('PAYHERE_SECRET');
+        $merchantId = config('services.payhere.merchant_id');
+        $appSecret = config('services.payhere.secret');
 
         $hashedAmount = number_format($totalAmount, 2, '.', '');
         $appSecretHash = strtoupper(md5($appSecret));
@@ -182,8 +181,8 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
 
-        // 🛠️ FIXED: Added relational database split fields mapping
-        Payment::create([
+        // 🛠️ Storing transaction with 'pending' status until PayHere settlement confirmation
+        $payment = Payment::create([
             'order_id' => $orderId,
             'user_id' => $user ? $user->id : null,
             'package_name' => $request->package_name,
@@ -192,18 +191,27 @@ class CheckoutController extends Controller
             'addons_manifest' => $addonsManifestArray,
             'amount' => $totalAmount,
             'currency' => 'LKR',
-            'status' => 'Completed', // Marked as completed since this is a service bundle checkout
+            'status' => 'pending',
 
-            // 🚀 ADD THIS LINE TO AUTOMATICALLY CALCULATE 30 DAYS AHEAD
-            'expires_at'      => now()->addDays(30),
+            // Automatically calculate expiration (1 year for annual, 30 days for monthly / trial)
+            'expires_at'      => $request->get('billing_cycle') === 'annual' ? now()->addYear() : now()->addDays(30),
         ]);
 
+        if ($totalAmount <= 0) {
+            $payment->update(['status' => 'Completed']);
+            return response()->json([
+                'is_free' => true,
+                'order_id' => $orderId,
+                'message' => 'Free Plan activated successfully!'
+            ]);
+        }
+
         $paymentData = [
-            'sandbox' => env('PAYHERE_IS_SANDBOX', true),
+            'sandbox' => (bool) config('services.payhere.is_sandbox', true),
             'merchant_id' => $merchantId,
             'return_url' => route('checkout.success.callback'),
             'cancel_url' => url('/dashboard-user'),
-            'notify_url' => url('/api/payhere/webhook'),
+            'notify_url' => route('payhere.webhook'),
             'order_id' => $orderId,
             'items' => $request->package_name,
             'amount' => $hashedAmount,
@@ -222,18 +230,32 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Query-string download method updated to read split metrics correctly.
+     * Query-string download method with ownership / session verification.
      */
     public function downloadReceipt(Request $request)
     {
         $orderId = $request->get('order_id');
+
+        if (!$orderId) {
+            abort(400, "Missing order ID parameter.");
+        }
+
         $payment = Payment::where('order_id', $orderId)->first();
 
         if (!$payment) {
             abort(404, "Transaction record not found inside server database logs.");
         }
 
-        // 🛠️ FIXED: Pulling exact split variables from model array records
+        // Security / Ownership Verification:
+        // Authenticated users may download their own receipts (or admin).
+        // Guests may only download if the session just completed this exact order.
+        $isOwner = Auth::check() && ($payment->user_id === Auth::id() || Auth::user()->role === 'admin');
+        $isSessionGuest = session('payment_success_order_id') === $orderId;
+
+        if (!$isOwner && !$isSessionGuest) {
+            abort(403, "Unauthorized receipt download request.");
+        }
+
         $data = [
             'order_id'       => $payment->order_id,
             'date'           => Carbon::parse($payment->updated_at)->setTimezone('Asia/Colombo')->format('Y-m-d H:i:s'),

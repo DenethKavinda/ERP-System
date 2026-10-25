@@ -1,28 +1,42 @@
 import React, { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
+import { useLanguage } from "@/Context/LanguageContext";
+import { useT } from "@/hooks/useT";
 
-export default function Header({ isDarkMode, setIsDarkMode }) {
+export default function Header({ isDarkMode, setIsDarkMode, auth }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { language, toggleLanguage } = useLanguage();
+    const t = useT();
 
-    // Retrieve the current URL from Inertia to determine active state
-    const { url } = usePage();
+    // Retrieve the current URL and auth props from Inertia
+    const { url, props } = usePage();
+    const user = auth?.user || props?.auth?.user;
 
     const navLinks = [
-        { label: "Inventory Dashboard", href: "/dashboard-user" },
-        { label: "Transactional Ledger", href: "/ledger" },
-        { label: "Service Workspace", href: "/services" },
-        { label: "Compliance Audits", href: "/complaints" },
+        { label: t("header.dashboard"), href: "/dashboard-user" },
+        { label: t("header.erpPricing"), href: "/ERP" },
+        { label: t("header.knowledgeDocs"), href: "/knowledge-center" },
+        ...(user
+            ? [
+                  { label: t("header.transactionalLedger"), href: "/ledger" },
+                  { label: t("header.complianceAudits"), href: "/complaints" },
+              ]
+            : []),
     ];
 
-    // 1. Synchronize theme preference on initial mount
+    // 1. Synchronize theme preference on initial mount (defaults to light theme)
     useEffect(() => {
-        const savedTheme = localStorage.getItem("theme");
-        // Check if user has a saved preference, or defaults to system preferences
-        const prefersDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-        ).matches;
+        const userExplicitlyChoseTheme = localStorage.getItem("user_theme_chosen");
+        if (!userExplicitlyChoseTheme) {
+            // Default theme is ALWAYS light
+            setIsDarkMode(false);
+            localStorage.setItem("theme", "light");
+            document.documentElement.classList.remove("dark");
+            return;
+        }
 
-        if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
             setIsDarkMode(true);
             document.documentElement.classList.add("dark");
         } else {
@@ -31,16 +45,17 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
         }
     }, [setIsDarkMode]);
 
-    // 2. Update localStorage and DOM classes whenever isDarkMode changes
-    useEffect(() => {
-        if (isDarkMode) {
-            localStorage.setItem("theme", "dark");
+    const toggleTheme = () => {
+        const next = !isDarkMode;
+        setIsDarkMode(next);
+        localStorage.setItem("user_theme_chosen", "true");
+        localStorage.setItem("theme", next ? "dark" : "light");
+        if (next) {
             document.documentElement.classList.add("dark");
         } else {
-            localStorage.setItem("theme", "light");
             document.documentElement.classList.remove("dark");
         }
-    }, [isDarkMode]);
+    };
 
     return (
         <header
@@ -50,16 +65,16 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                     : "bg-white/90 border-slate-200"
             }`}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-10">
                 <div className="flex items-center justify-between h-16 gap-4">
                     {/* BRANDING LOGO */}
-                    <div className="flex items-center gap-3 shrink-0">
-                        <div className="p-2 bg-orange-500/10 text-orange-500 rounded-lg shrink-0">
+                    <Link href="/dashboard-user" className="flex items-center gap-3 shrink-0 group">
+                        <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-xl shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
                                 viewBox="0 0 24 24"
-                                strokeWidth={2}
+                                strokeWidth={2.2}
                                 stroke="currentColor"
                                 className="w-5 h-5"
                             >
@@ -83,13 +98,17 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                                 />
                             </svg>
                         </div>
-                        <h1
-                            className={`text-lg font-black tracking-tight whitespace-nowrap ${isDarkMode ? "text-white" : "text-slate-900"}`}
-                        >
-                            Enterprise Client{" "}
-                            <span className="text-orange-500">Marketplace</span>
-                        </h1>
-                    </div>
+                        <div className="flex flex-col">
+                            <span
+                                className={`text-base font-black tracking-tight leading-tight flex items-center gap-1.5 ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                            >
+                                NEXUS <span className="text-orange-500">ERP</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                                Portal
+                            </span>
+                        </div>
+                    </Link>
 
                     {/* DESKTOP NAVIGATION */}
                     <nav className="hidden md:flex items-center gap-1">
@@ -116,24 +135,136 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                     {/* ACTIONS BAR */}
                     <div className="flex items-center gap-3 shrink-0">
                         <button
-                            onClick={() => setIsDarkMode(!isDarkMode)}
-                            className={`p-2 rounded-lg border transition-all ${
+                            onClick={toggleTheme}
+                            aria-label="Toggle theme"
+                            className={`p-2 rounded-lg border transition-all flex items-center justify-center ${
                                 isDarkMode
-                                    ? "bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800"
-                                    : "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                                    ? "bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800 hover:text-amber-300"
+                                    : "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
                             }`}
                         >
-                            {isDarkMode ? "☀️" : "🌙"}
+                            {isDarkMode ? (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="w-4 h-4 text-amber-400"
+                                >
+                                    <circle cx="12" cy="12" r="4" />
+                                    <path d="M12 2v2" />
+                                    <path d="M12 20v2" />
+                                    <path d="m4.93 4.93 1.41 1.41" />
+                                    <path d="m17.66 17.66 1.41 1.41" />
+                                    <path d="M2 12h2" />
+                                    <path d="M20 12h2" />
+                                    <path d="m6.34 17.66-1.41 1.41" />
+                                    <path d="m19.07 4.93-1.41 1.41" />
+                                </svg>
+                            ) : (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="w-4 h-4 text-slate-700"
+                                >
+                                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                                </svg>
+                            )}
                         </button>
 
-                        <Link
-                            href={route("logout")}
-                            method="post"
-                            as="button"
-                            className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide border rounded-lg transition-all ${isDarkMode ? "bg-slate-900 border-slate-800 text-rose-400 hover:bg-rose-950/30" : "bg-slate-100 border-slate-200 text-rose-600 hover:bg-rose-50"}`}
+                        {user ? (
+                            <>
+                                <a
+                                    href={props?.erpAppUrl || "http://localhost:5173"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase tracking-wider rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-sm transition-all transform hover:scale-[1.02] active:scale-95"
+                                >
+                                    <svg
+                                        className="w-3.5 h-3.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2.2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                        />
+                                    </svg>
+                                    <span>{t("header.launchErp")}</span>
+                                </a>
+
+                                {user.role === "admin" && (
+                                    <Link
+                                        href="/admin/dashboard-manager"
+                                        className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide border rounded-lg transition-all ${
+                                            isDarkMode
+                                                ? "bg-slate-900 border-slate-800 text-orange-400 hover:bg-orange-950/30"
+                                                : "bg-slate-100 border-slate-200 text-orange-600 hover:bg-orange-50"
+                                        }`}
+                                    >
+                                        {t("header.adminPanel")}
+                                    </Link>
+                                )}
+                                <Link
+                                    href={route("logout")}
+                                    method="post"
+                                    as="button"
+                                    className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide border rounded-lg transition-all ${
+                                        isDarkMode
+                                            ? "bg-slate-900 border-slate-800 text-rose-400 hover:bg-rose-950/30"
+                                            : "bg-slate-100 border-slate-200 text-rose-600 hover:bg-rose-50"
+                                    }`}
+                                >
+                                    {t("header.logout")}
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide border rounded-lg transition-all ${
+                                        isDarkMode
+                                            ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
+                                            : "bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200"
+                                    }`}
+                                >
+                                    {t("header.signIn")}
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-all shadow-sm"
+                                >
+                                    {t("header.register")}
+                                </Link>
+                            </>
+                        )}
+
+                        {/* LANGUAGE SWITCHER — FAR RIGHT */}
+                        <button
+                            onClick={toggleLanguage}
+                            aria-label="Switch language"
+                            className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all text-xs font-black uppercase tracking-wider ${
+                                isDarkMode
+                                    ? "bg-orange-950/40 border-orange-500/40 text-orange-400 hover:bg-orange-950/60"
+                                    : "bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100"
+                            }`}
                         >
-                            Logout
-                        </Link>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                            </svg>
+                            {language === "en" ? "සිංහල" : "English"}
+                        </button>
                     </div>
 
                     {/* MOBILE HAMBURGER */}
@@ -142,9 +273,42 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                             onClick={() =>
                                 setIsMobileMenuOpen(!isMobileMenuOpen)
                             }
-                            className="p-2 rounded-lg border"
+                            aria-label="Toggle mobile menu"
+                            className={`p-2 rounded-lg border transition-colors ${
+                                isDarkMode
+                                    ? "border-slate-800 text-slate-300 hover:bg-slate-900"
+                                    : "border-slate-200 text-slate-700 hover:bg-slate-100"
+                            }`}
                         >
-                            {isMobileMenuOpen ? "✕" : "☰"}
+                            {isMobileMenuOpen ? (
+                                <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            ) : (
+                                <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                </svg>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -175,14 +339,69 @@ export default function Header({ isDarkMode, setIsDarkMode }) {
                                 </Link>
                             );
                         })}
-                        <Link
-                            href={route("logout")}
-                            method="post"
-                            as="button"
-                            className="w-full text-left px-4 py-2.5 text-rose-500 font-bold uppercase text-xs"
-                        >
-                            Logout
-                        </Link>
+                        {user ? (
+                            <>
+                                <a
+                                    href={props?.erpAppUrl || "http://localhost:5173"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <svg
+                                            className="w-4 h-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth={2.2}
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                            />
+                                        </svg>
+                                        <span>Launch ERP</span>
+                                    </span>
+                                    <svg
+                                        className="w-3.5 h-3.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2.2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                                        />
+                                    </svg>
+                                </a>
+                                <Link
+                                    href={route("logout")}
+                                    method="post"
+                                    as="button"
+                                    className="w-full text-left px-4 py-2.5 text-rose-500 font-bold uppercase text-xs"
+                                >
+                                    Logout
+                                </Link>
+                            </>
+                        ) : (
+                            <div className="pt-2 flex flex-col gap-1 border-t border-slate-200 dark:border-slate-800">
+                                <Link
+                                    href="/login"
+                                    className="px-4 py-2.5 text-slate-700 dark:text-slate-200 font-bold uppercase text-xs"
+                                >
+                                    Sign In
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="px-4 py-2.5 text-orange-500 font-bold uppercase text-xs"
+                                >
+                                    Register Account
+                                </Link>
+                            </div>
+                        )}
                     </nav>
                 </div>
             )}

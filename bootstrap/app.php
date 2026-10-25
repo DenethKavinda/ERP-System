@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(except: [
-            'api/payhere/webhook',
+            'payhere/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

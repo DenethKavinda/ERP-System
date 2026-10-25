@@ -1,7 +1,9 @@
 import React from "react";
 import { useForm, Link } from "@inertiajs/react";
+import { useT } from "@/hooks/useT";
 
 export default function Login() {
+    const t = useT();
     const { data, setData, post, processing, errors, reset } = useForm({
         email: "",
         password: "",
@@ -24,10 +26,10 @@ export default function Login() {
             <div className="sm:mx-auto w-full max-w-md relative z-10 animate-fade-in">
                 <div className="text-center mb-6">
                     <span className="text-xs font-black uppercase tracking-widest text-orange-600 bg-orange-100/60 px-3 py-1.5 rounded-full inline-block mb-3">
-                        Secure Environment System
+                        {t("login.nexusErpPortal")}
                     </span>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                        Sign In to Dashboard
+                        {t("login.customerSignIn")}
                     </h2>
                 </div>
 
@@ -36,7 +38,7 @@ export default function Login() {
                         {/* Email Field */}
                         <div>
                             <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
-                                Email Connection Endpoint
+                                {t("login.businessEmail")}
                             </label>
                             <input
                                 type="email"
@@ -58,7 +60,7 @@ export default function Login() {
                         {/* Password Field */}
                         <div>
                             <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
-                                Account Password
+                                {t("login.accountPassword")}
                             </label>
                             <input
                                 type="password"
@@ -93,7 +95,7 @@ export default function Login() {
                                     htmlFor="remember"
                                     className="ml-2 block text-xs font-bold text-slate-500"
                                 >
-                                    Remember session signature
+                                    {t("login.rememberSession")}
                                 </label>
                             </div>
                         </div>
@@ -105,19 +107,19 @@ export default function Login() {
                             className="w-full py-3.5 text-center bg-slate-900 hover:bg-orange-600 active:scale-[0.99] text-white text-xs font-black tracking-wider uppercase rounded-xl shadow-md transition-all duration-300 disabled:opacity-50"
                         >
                             {processing
-                                ? "Authenticating Session Token..."
-                                : "Initialize Dashboard Connection"}
+                                ? t("login.authenticating")
+                                : t("login.initializeDashboard")}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center border-t border-amber-100 pt-4">
                         <p className="text-xs text-slate-400 font-medium">
-                            New operator to this cluster?{" "}
+                            {t("login.newOperator")}{" "}
                             <Link
                                 href="/register"
                                 className="text-orange-600 font-bold hover:underline transition-all"
                             >
-                                Provision Account Node
+                                {t("login.provisionAccount")}
                             </Link>
                         </p>
                     </div>

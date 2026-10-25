@@ -6,11 +6,7 @@ import Footer from "../../Components/Footer";
 export default function KnowledgeCenter({ documentation = [] }) {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== "undefined") {
-            return (
-                localStorage.getItem("theme") === "dark" ||
-                (!localStorage.getItem("theme") &&
-                    window.matchMedia("(prefers-color-scheme: dark)").matches)
-            );
+            return localStorage.getItem("theme") === "dark";
         }
         return false;
     });
@@ -50,18 +46,17 @@ export default function KnowledgeCenter({ documentation = [] }) {
             <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
                 <div>
                     <h1 className="text-2xl font-black tracking-tight">
-                        Ecosystem Knowledge Repository
+                        Nexus ERP Documentation & Knowledge Base
                     </h1>
                     <p className="text-sm text-slate-500">
-                        Access core reference document nodes, integrated API
-                        manuals, and interactive multimedia frameworks.
+                        Official deployment guides, POS hardware manuals, cashier shift controls, and statutory compliance checklists.
                     </p>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-center text-xs">
                     <input
                         type="text"
-                        placeholder="Search parameters..."
+                        placeholder="Search documentation, guides, keywords..."
                         className={`p-2.5 rounded-xl border w-full md:max-w-xs bg-transparent focus:outline-none focus:border-orange-500 ${isDarkMode ? "border-slate-800 text-white" : "border-slate-200"}`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -108,9 +103,22 @@ export default function KnowledgeCenter({ documentation = [] }) {
                                 </span>
                                 <button
                                     onClick={() => setActiveDocument(doc)}
-                                    className="font-black text-orange-500 hover:text-orange-600 uppercase tracking-wider flex items-center gap-1"
+                                    className="font-black text-orange-500 hover:text-orange-600 uppercase tracking-wider flex items-center gap-1 group"
                                 >
-                                    Open Node ➜
+                                    <span>Read Guide</span>
+                                    <svg
+                                        className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2.2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                                        />
+                                    </svg>
                                 </button>
                             </div>
                         </div>
@@ -139,16 +147,42 @@ export default function KnowledgeCenter({ documentation = [] }) {
                                 ) && (
                                     <a
                                         href={`/knowledge-center/download/${activeDocument.id}`}
-                                        className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-colors"
+                                        className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center gap-1.5"
                                     >
-                                        📥 Download File
+                                        <svg
+                                            className="w-3.5 h-3.5"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth={2}
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                                            />
+                                        </svg>
+                                        <span>Download File</span>
                                     </a>
                                 )}
                                 <button
                                     onClick={() => setActiveDocument(null)}
-                                    className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-black uppercase tracking-wider"
+                                    className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-black uppercase tracking-wider flex items-center gap-1"
                                 >
-                                    ✕ Close
+                                    <svg
+                                        className="w-3.5 h-3.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                    <span>Close</span>
                                 </button>
                             </div>
                         </div>
@@ -188,8 +222,20 @@ export default function KnowledgeCenter({ documentation = [] }) {
 
                             {activeDocument.type === "link" && (
                                 <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center space-y-4">
-                                    <div className="p-4 bg-orange-500/10 text-orange-500 rounded-full text-2xl">
-                                        🔗
+                                    <div className="p-4 bg-orange-500/10 text-orange-500 rounded-full">
+                                        <svg
+                                            className="w-8 h-8"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth={2}
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
+                                            />
+                                        </svg>
                                     </div>
                                     <h3 className="font-bold text-base">
                                         External Reference Documentation Hub

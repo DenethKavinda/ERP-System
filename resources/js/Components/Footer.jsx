@@ -1,8 +1,10 @@
 import React from "react";
 import { router } from "@inertiajs/react";
+import { useT } from "@/hooks/useT";
 
 export default function Footer({ isDarkMode }) {
     const currentYear = new Date().getFullYear();
+    const t = useT();
 
     const handleNavigate = (path) => {
         router.visit(path);
@@ -58,19 +60,17 @@ export default function Footer({ isDarkMode }) {
                 </defs>
             </svg>
 
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+            <div className="max-w-[1720px] mx-auto px-4 md:px-10 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                     {/* Brand Section */}
                     <div className="space-y-4">
                         <h3
                             className={`text-base font-bold uppercase tracking-wider ${isDarkMode ? "text-white" : "text-slate-900"}`}
                         >
-                            Enterprise Node
+                            {t("footer.enterpriseNode")}
                         </h3>
                         <p className="text-xs leading-relaxed">
-                            Empowering continuous system operational agility,
-                            custom enterprise architecture solutions, and
-                            real-time infrastructure metrics management.
+                            {t("footer.missionStatement")}
                         </p>
                     </div>
 
@@ -79,7 +79,7 @@ export default function Footer({ isDarkMode }) {
                         <h4
                             className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}
                         >
-                            Core Portals
+                            {t("footer.corePortals")}
                         </h4>
                         <ul className="space-y-2 text-xs">
                             <li>
@@ -87,7 +87,7 @@ export default function Footer({ isDarkMode }) {
                                     onClick={() => handleNavigate("/ERP")}
                                     className="hover:text-orange-500 transition-colors"
                                 >
-                                    ERP Packages
+                                    {t("footer.erpPackages")}
                                 </button>
                             </li>
                             <li>
@@ -95,7 +95,7 @@ export default function Footer({ isDarkMode }) {
                                     onClick={() => handleNavigate("/services")}
                                     className="hover:text-orange-500 transition-colors"
                                 >
-                                    Services
+                                    {t("footer.services")}
                                 </button>
                             </li>
                             <li>
@@ -105,7 +105,7 @@ export default function Footer({ isDarkMode }) {
                                     }
                                     className="hover:text-orange-500 transition-colors"
                                 >
-                                    Complaints Console
+                                    {t("footer.complaintsConsole")}
                                 </button>
                             </li>
                         </ul>
@@ -116,17 +116,17 @@ export default function Footer({ isDarkMode }) {
                         <h4
                             className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}
                         >
-                            Resources
+                            {t("footer.resources")}
                         </h4>
                         <ul className="space-y-2 text-xs">
                             <li>
                                 <button
                                     onClick={() =>
-                                        handleNavigate("/success-stories")
+                                        handleNavigate("/ledger")
                                     }
                                     className="hover:text-orange-500 transition-colors"
                                 >
-                                    Success Stories
+                                    {t("footer.accountLedger")}
                                 </button>
                             </li>
                             <li>
@@ -136,7 +136,7 @@ export default function Footer({ isDarkMode }) {
                                     }
                                     className="hover:text-orange-500 transition-colors"
                                 >
-                                    Knowledge Center
+                                    {t("footer.knowledgeCenter")}
                                 </button>
                             </li>
                             <li>
@@ -146,7 +146,7 @@ export default function Footer({ isDarkMode }) {
                                     }
                                     className="hover:text-orange-500 transition-colors"
                                 >
-                                    Contact & Consultation
+                                    {t("footer.contactConsultation")}
                                 </button>
                             </li>
                         </ul>
@@ -157,15 +157,15 @@ export default function Footer({ isDarkMode }) {
                         <h4
                             className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}
                         >
-                            Stay Updated
+                            {t("footer.stayUpdated")}
                         </h4>
                         <p className="text-xs">
-                            Subscribe to framework patch summaries.
+                            {t("footer.subscribeSummaries")}
                         </p>
                         <div className="flex gap-2">
                             <input
                                 type="email"
-                                placeholder="Email address..."
+                                placeholder={t("footer.emailPlaceholder")}
                                 disabled
                                 className={`text-xs px-3 py-2 rounded border w-full cursor-not-allowed focus:outline-none ${
                                     isDarkMode
@@ -177,7 +177,7 @@ export default function Footer({ isDarkMode }) {
                                 disabled
                                 className="text-[11px] font-bold bg-orange-500 text-white px-3 py-2 rounded opacity-50 cursor-not-allowed uppercase tracking-wider"
                             >
-                                Join
+                                {t("footer.join")}
                             </button>
                         </div>
                     </div>
@@ -190,8 +190,7 @@ export default function Footer({ isDarkMode }) {
                     }`}
                 >
                     <div>
-                        &copy; {currentYear} Enterprise Command Platform. All
-                        rights reserved.
+                        &copy; {currentYear} {t("footer.copyright")}
                     </div>
 
                     {/* Social Media Anchors with Full-Color Gradients */}

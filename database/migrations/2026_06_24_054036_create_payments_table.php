@@ -21,8 +21,6 @@ return new class extends Migration
             $table->string('status')->default('pending'); // pending, completed, failed
             $table->string('payment_id')->nullable(); // PayHere's internal transaction ID
 
-            // 🚀 ADD THIS LINE HERE
-            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
     }

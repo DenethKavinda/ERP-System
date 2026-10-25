@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ErpPackage;
 use App\Models\Package;
 use App\Models\Service;
 use App\Models\SuccessStory;
@@ -12,8 +13,8 @@ class SuccessStoryController extends Controller
 {
     public function index()
     {
-        // Pluck names out securely
-        $packages = Package::pluck('package_name')->toArray();
+        // Pluck active ERP package names
+        $packages = ErpPackage::pluck('name')->toArray();
         $services = Service::where('is_active', true)->pluck('name')->toArray();
 
         // Fetch existing stories with user names

@@ -6,11 +6,7 @@ import Footer from "../../Components/Footer";
 export default function Ledger({ auth, transactions = [] }) {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== "undefined") {
-            return (
-                localStorage.getItem("theme") === "dark" ||
-                (!localStorage.getItem("theme") &&
-                    window.matchMedia("(prefers-color-scheme: dark)").matches)
-            );
+            return localStorage.getItem("theme") === "dark";
         }
         return false;
     });
@@ -174,6 +170,15 @@ export default function Ledger({ auth, transactions = [] }) {
                                                             >
                                                                 {status.text}
                                                             </span>
+
+                                                            {record.order_id && (
+                                                                <a
+                                                                    href={`/checkout/receipt/download?order_id=${record.order_id}&package_name=${encodeURIComponent(record.package_name)}&total_amount=${record.amount}`}
+                                                                    className="px-2 py-0.5 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] uppercase tracking-wide rounded-md transition-colors"
+                                                                >
+                                                                    Receipt PDF
+                                                                </a>
+                                                            )}
 
                                                             {status.canRenew && (
                                                                 <button

@@ -7,27 +7,79 @@ use App\Models\DashboardCard;
 use Inertia\Inertia;
 use App\Models\PackageCart;
 use App\Models\Package;
+use App\Models\ErpPackage;
 use App\Models\Service;
+use App\Models\Payment;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     /**
-     * Render public customer/user workspace dashboard node.
-     * Eager loads all package carts alongside their nested sub-packages and injects session flash memory data.
+     * Render customer/user workspace dashboard node.
+     * Eager loads navigation cards, active subscription metadata, and session flash data.
      */
     public function index()
     {
         $navigationCards = DashboardCard::all();
-        $packageCarts = PackageCart::with('packages')->get();
-        $services = Service::where('is_active', true)->get();
+
+        $user = Auth::user();
+        $activeSubscription = null;
+
+        if ($user) {
+            $latestPayment = Payment::where('user_id', $user->id)
+                ->where('status', 'Completed')
+                ->latest()
+                ->first();
+
+            $planName = $latestPayment ? $latestPayment->package_name : 'ERP Free Starter';
+            
+            // Resolve structured plan quota limits dynamically from the ErpPackage database model
+            $package = ErpPackage::where('name', $planName)
+                ->orWhere('code', $planName)
+                ->first();
+
+            if ($package) {
+                $planLimits = [
+                    'branches'   => $package->max_branches === -1 ? 'Unlimited' : $package->max_branches,
+                    'warehouses' => $package->max_warehouses === -1 ? 'Unlimited' : $package->max_warehouses,
+                    'users'      => $package->max_users === -1 ? 'Unlimited' : ($package->max_users >= 50 ? '50+ Users' : $package->max_users),
+                    'bills'      => $package->max_monthly_bills === -1 ? 'Unlimited Bills' : ($package->max_products && $package->max_products !== -1 ? "{$package->max_products} Items & Bills" : "{$package->max_monthly_bills} Items & Bills"),
+                    'modules'    => $package->modules ?? [],
+                ];
+            } else {
+                $planLimits = [
+                    'branches'   => 1,
+                    'warehouses' => 1,
+                    'users'      => 2,
+                    'bills'      => '100 Items & Bills',
+                    'modules'    => [],
+                ];
+            }
+
+            $activeSubscription = [
+                'plan_name'   => $planName,
+                'order_id'    => $latestPayment ? $latestPayment->order_id : 'TRIAL_INIT',
+                'expires_at'  => $latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : now()->addDays(30)->toIso8601String(),
+                'is_active'   => true,
+                'limits'      => $planLimits,
+                'usage'       => [
+                    'branches'   => 1,
+                    'warehouses' => 1,
+                    'users'      => 1,
+                ]
+            ];
+        }
 
         return Inertia::render('Users/Dashboard', [
-            'navigationCards' => $navigationCards,
-            'packageCarts' => $packageCarts,
-            'services' => $services,
+            'navigationCards'    => $navigationCards,
+            'activeSubscription' => $activeSubscription,
+            'erpAppUrl'          => env('ERP_APP_URL', 'http://localhost:5173'),
+            'newAccountActivated'=> session('new_account_activated', false),
+            'erpLoginEmail'      => session('erp_login_email'),
+            'erpProvisioned'     => session('erp_provisioned', false),
+            'flashPlanName'      => session('plan_name'),
 
-            // 🚀 SECURE FLASH SYSTEM DEPLOYMENT MAP:
-            // Extracts server-side session memory keys and hydrates Inertia props natively
+            // Flash payment info for receipt download
             'flashPayment' => [
                 'order_id' => session('payment_success_order_id'),
                 'amount'   => session('payment_success_amount'),

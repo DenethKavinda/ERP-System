@@ -4,13 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\DashboardCard;
-use App\Models\PackageCart;
-use App\Models\Package;
-use App\Models\Service;
 use App\Models\ErpPackage;
+use App\Models\KnowledgeDoc;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -21,162 +18,168 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Admin Account
-        User::updateOrCreate(
+        // 1. Users
+        $admin = User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
-                'name' => 'System Admin',
-                'nic' => '111111111V',
-                'address' => 'Head Office, Colombo',
-                'mobile_number' => '0770000000',
-                'password' => Hash::make('password'),
+                'name' => 'Admin User',
+                'business_name' => 'Nexus Global Technologies',
+                'nic' => '199912345678',
+                'address' => 'Colombo, Sri Lanka',
+                'mobile_number' => '0771234567',
                 'role' => 'admin',
-                'email_verified_at' => now(),
+                'password' => bcrypt('password'),
             ]
         );
 
-        // 2. Standard User Account
-        User::updateOrCreate(
-            ['email' => 'test@example.com'],
+        $client = User::firstOrCreate(
+            ['email' => 'client@example.com'],
             [
-                'name' => 'Test User',
-                'nic' => '222222222V',
-                'address' => 'Sample Street, Kandy',
-                'mobile_number' => '0771111111',
-                'password' => Hash::make('password'),
+                'name' => 'Dinith Kavinda',
+                'business_name' => 'Apex Retail Solutions Ltd',
+                'nic' => '199512345679',
+                'address' => 'Kandy, Sri Lanka',
+                'mobile_number' => '0719876543',
                 'role' => 'user',
-                'email_verified_at' => now(),
+                'password' => bcrypt('password'),
             ]
         );
 
-        // 3. Central Operations Framework Cards
-        DashboardCard::firstOrCreate(
-            ['name' => 'Inventory & POS Control'],
+        // 2. Dashboard Cards (Central Operations Framework)
+        $cards = [
             [
+                'name' => 'ERP Architecture Packages',
                 'path' => '/ERP',
-                'button_text' => 'Launch Workspace',
-                'description' => 'Manage stock, product catalogs, point of sale transactions, and supplier orders in real time.',
-                'accent_color' => 'from-blue-500 to-indigo-600',
-            ]
-        );
-
-        DashboardCard::firstOrCreate(
-            ['name' => 'Financial Ledger & Invoices'],
+                'button_text' => 'Explore Packages',
+                'description' => 'Deploy modular, scalable Enterprise Resource Planning packages tailored for your specific industry vertical.',
+                'accent_color' => 'from-blue-600 to-indigo-600',
+            ],
             [
+                'name' => 'Compliance & Grievance Console',
+                'path' => '/complaints',
+                'button_text' => 'Open Portal',
+                'description' => 'Submit and track enterprise compliance issues, service tickets, and resolution documentation in real-time.',
+                'accent_color' => 'from-amber-500 to-orange-600',
+            ],
+            [
+                'name' => 'Knowledge Center & Docs',
+                'path' => '/knowledge-center',
+                'button_text' => 'Access Docs',
+                'description' => 'Explore API technical documentation, architecture blueprints, guides, and integration specifications.',
+                'accent_color' => 'from-purple-600 to-pink-600',
+            ],
+            [
+                'name' => 'Transactional Ledger',
                 'path' => '/ledger',
-                'button_text' => 'View Transactions',
-                'description' => 'Track enterprise cash flow, customer invoice balances, sales reports, and recurring billing.',
-                'accent_color' => 'from-emerald-500 to-teal-600',
-            ]
-        );
+                'button_text' => 'View Ledger',
+                'description' => 'Access settlement logs, download signed tax invoices, and monitor active recurring subscription licenses.',
+                'accent_color' => 'from-cyan-500 to-blue-600',
+        ];
 
-        DashboardCard::firstOrCreate(
-            ['name' => 'Service Workspace & Support'],
-            [
-                'path' => '/services',
-                'button_text' => 'Explore Services',
-                'description' => 'Access specialized enterprise migration, cloud infrastructure, and 24/7 technical support.',
-                'accent_color' => 'from-purple-500 to-pink-600',
-            ]
-        );
+        foreach ($cards as $card) {
+            DashboardCard::firstOrCreate(['name' => $card['name']], $card);
+        }
 
-        // 4. Available Packages & Modules (Package Carts + Nested Packages)
-        $cart = PackageCart::firstOrCreate(
-            ['cart_name' => 'Nexus Core ERP Suites'],
+        // 3. ERP Packages (Storefront `/ERP`)
+        $erpPackages = [
             [
-                'button_name' => 'Explore Core Packages',
-                'description' => 'All-in-one business management suites tailored for retail, wholesale, and multi-branch operations.',
-                'color_class' => 'from-orange-500 to-amber-600',
-            ]
-        );
-
-        Package::firstOrCreate(
-            ['package_name' => 'Retail Starter Edition'],
+                'name' => 'ERP Free Starter',
+                'price' => 0.00,
+                'suitable_for' => 'Startups, Solo Founders & Evaluation',
+                'features' => 'Fast POS Billing & Barcode Support, Thermal (80mm) & A4 Invoices, Cash & Card Split Payments, Real-Time Live Stock View, End-of-Day Sales Report',
+                'benefits' => 'Free 30-Day Evaluation, Zero credit card required, Hardware compatibility testing',
+                'rating' => '4.7',
+                'youtube_id' => 'dQw4w9WgXcQ',
+            ],
             [
-                'package_cart_id' => $cart->id,
-                'main_topic' => 'Retail Essentials',
-                'small_description' => 'Ideal for single-store retail businesses needing fast billing and inventory control.',
+                'name' => 'ERP Basic Essentials',
                 'price' => 45000.00,
-                'suitable_business' => 'Single Retail Outlets, Boutiques, Supermarkets',
-                'core_features' => 'Barcode Scanner Integration, POS Terminal, Stock History, Basic Reports',
-                'benefits' => 'Quick setup, 99.9% uptime, Automated receipts',
-                'rating' => 4.9,
-                'discount_percentage' => 10.00,
-                'discount_description' => '10% Launch Discount',
-            ]
-        );
-
-        Package::firstOrCreate(
-            ['package_name' => 'Enterprise Pro Edition'],
+                'suitable_for' => 'Single Retail Shops, Boutiques & Pharmacies',
+                'features' => 'High-Speed POS & Multi-Price Batches, Cashier Shift Control & Float Count, Dual-Location Showroom/Storeroom Stock, Purchases & Supplier GRN Tracking, Customer Credit Ledger & Return Bills, Single-Store Bin Card (Theft Audit), Daily Gross Profit on Sales Report',
+                'benefits' => 'Single-Branch Powerhouse, Cashier Shift Reconciliation, Real-Time Gross Profit Analytics',
+                'rating' => '4.8',
+                'youtube_id' => 'dQw4w9WgXcQ',
+            ],
             [
-                'package_cart_id' => $cart->id,
-                'main_topic' => 'Enterprise Multi-Branch',
-                'small_description' => 'Complete ERP solution for multi-branch retail, inventory transfers, and advanced analytics.',
-                'price' => 120000.00,
-                'suitable_business' => 'Multi-Branch Chains, Distributors, Enterprise Businesses',
-                'core_features' => 'Multi-Store Sync, Supplier GRN, Role-Based Access Control, Custom Reports',
-                'benefits' => 'Unlimited Users, Priority Support, Custom Integrations',
-                'rating' => 5.0,
-                'discount_percentage' => 15.00,
-                'discount_description' => '15% Enterprise Bundle',
-            ]
-        );
-
-        // 5. Additional Services
-        Service::firstOrCreate(
-            ['name' => 'Cloud Hosting & Automated Backup'],
+                'name' => 'ERP Professional Growth',
+                'price' => 95000.00,
+                'suitable_for' => 'Multi-Branch Retailers, Wholesalers & Distributors',
+                'features' => 'Inter-Branch Stock Transfers & Dispatch, Centralized Price Control & Batch Markups, Manager Real-Time Approval Requests, Financial Summary & Profit Tracking, Expense & Bank Account Management, Multi-Branch Net Profit & Loss Reports, Granular Per-Module RBAC Permissions, Phone & WhatsApp Priority Support',
+                'benefits' => 'Multi-Branch Sync, Approval Override Gates, Complete Financial Reports',
+                'rating' => '4.9',
+                'youtube_id' => 'dQw4w9WgXcQ',
+            ],
             [
-                'category' => 'Cloud & Security',
-                'price' => 15000.00,
-                'billing_type' => 'monthly',
-                'description' => 'Managed cloud server deployment with automated daily database backups and SSL encryption.',
-                'is_active' => true,
-            ]
-        );
-
-        Service::firstOrCreate(
-            ['name' => 'ERP System Implementation & Training'],
-            [
-                'category' => 'Support',
-                'price' => 35000.00,
-                'billing_type' => 'one-time',
-                'description' => 'On-site data migration, employee access training, and custom invoice template setup.',
-                'is_active' => true,
-            ]
-        );
-
-        // 6. ERP Packages for /ERP Page Storefront
-        ErpPackage::firstOrCreate(
-            ['name' => 'Basic ERP'],
-            [
-                'price' => 25000.00,
-                'suitable_for' => 'Small shops, Startups, Small businesses',
-                'features' => 'Customer Management, Product Management, Order Management, Sales Tracking, Basic Reports, 5 User Accounts',
-                'benefits' => 'Easy to use, Affordable, Helps manage daily business operations',
+                'name' => 'Enterprise Custom Core',
+                'price' => 195000.00,
+                'suitable_for' => 'Department Chains, Large Wholesalers & Manufacturers',
+                'features' => 'Dedicated Physically Isolated Database, Platform Security Audit Logging, Granular Per-Module RBAC Permissions, Unlimited Branch & Warehouse Scaling, Service Master & Custom Invoicing, 99.9% Uptime SLA & Dedicated TAM, 24/7 Priority Emergency Support',
+                'benefits' => 'Physically Isolated Database, 99.9% Uptime SLA, Unlimited Scaling & Priority Support',
                 'rating' => '5.0',
-            ]
-        );
+                'youtube_id' => 'dQw4w9WgXcQ',
+            ],
+        ];
 
-        ErpPackage::firstOrCreate(
-            ['name' => 'Standard ERP'],
-            [
-                'price' => 45000.00,
-                'suitable_for' => 'Standard ERP, Medium Outlets, Multi-counters',
-                'features' => 'Everything in Basic, Inventory Management, Supplier Management, Invoice Generation, Purchase Management, Dashboard Analytics, 20 User Accounts',
-                'benefits' => 'Better inventory control, Detailed business insights, Faster order processing',
-                'rating' => '5.0',
-            ]
-        );
+        foreach ($erpPackages as $pkg) {
+            ErpPackage::updateOrCreate(['name' => $pkg['name']], $pkg);
+        }
 
-        ErpPackage::firstOrCreate(
-            ['name' => 'Premium ERP'],
+        // 5. Services & Add-ons Marketplace — Removed (no real purchasable services exist in the ERP system)
+
+        // 6. Knowledge Docs (`/knowledge-center`)
+        $docs = [
             [
-                'price' => 75000.00,
-                'suitable_for' => 'Growing businesses, Companies with multiple departments, Organizations with 50-200 employees',
-                'features' => 'Everything in Standard, Employee Management, Leave Management, Attendance Tracking, Customer Relationship Management (CRM), Advanced Inventory Control, Supplier Performance Tracking, Custom Dashboard, Up to 100 User Accounts',
-                'benefits' => 'Manage multiple departments in one system, Improve employee productivity, Better customer relationship management, More detailed business reports',
-                'rating' => '5.0',
-            ]
-        );
+                'slug' => 'nexus-erp-quickstart-branch-setup-guide',
+                'title' => 'Nexus ERP Quickstart & Branch Setup Guide',
+                'category' => 'Deployment Guide',
+                'type' => 'pdf',
+                'description' => 'Step-by-step walkthrough covering initial branch configuration, user roles, warehouse bins, and company branding settings.',
+                'file_url' => 'https://example.com/docs/nexus-erp-quickstart.pdf',
+            ],
+            [
+                'slug' => 'pos-cashier-shift-control-reconciliation',
+                'title' => 'POS Cashier Shift Control & Daily Reconciliation',
+                'category' => 'Operations',
+                'type' => 'pdf',
+                'description' => 'Guide on cashier opening floats, cash/card split payments, shift handovers, and blind end-of-day sales balancing.',
+                'file_url' => 'https://example.com/docs/pos-shift-balancing.pdf',
+            ],
+            [
+                'slug' => 'thermal-pos-printer-80mm-setup-manual',
+                'title' => 'Thermal POS Printer (80mm) & Windows Setup Manual',
+                'category' => 'Hardware Setup',
+                'type' => 'pdf',
+                'description' => 'ESC/POS commands, driver installation, page margins, and automatic cash drawer kick-out configuration.',
+                'file_url' => 'https://example.com/docs/thermal-printer-guide.pdf',
+            ],
+            [
+                'slug' => 'barcode-qr-scanner-pairing-nexus-inventory',
+                'title' => 'Barcode & QR Scanner Pairing with Nexus Inventory',
+                'category' => 'Hardware Setup',
+                'type' => 'link',
+                'description' => 'Configuring auto-enter suffixes, UPC/EAN format reading, and batch scanning for rapid inventory stocktaking.',
+                'file_url' => 'https://example.com/docs/scanner-guide.pdf',
+            ],
+            [
+                'slug' => 'bulk-products-customer-credit-csv-migration',
+                'title' => 'Bulk Products & Customer Credit CSV Migration Guide',
+                'category' => 'Data Migration',
+                'type' => 'pdf',
+                'description' => 'Excel & CSV spreadsheet templates for importing SKUs, cost prices, selling tiers, and customer credit ledgers.',
+                'file_url' => 'https://example.com/docs/csv-migration.pdf',
+            ],
+            [
+                'slug' => 'sri-lanka-statutory-payroll-compliance-checklist',
+                'title' => 'Sri Lanka Statutory Payroll Compliance Checklist',
+                'category' => 'Compliance',
+                'type' => 'pdf',
+                'description' => 'Reference tables and rules for EPF (12% + 8%), ETF (3%), and APIT withholding tax deductions with salary slips.',
+                'file_url' => 'https://example.com/docs/statutory-payroll.pdf',
+            ],
+        ];
+
+        foreach ($docs as $doc) {
+            KnowledgeDoc::updateOrCreate(['title' => $doc['title']], $doc);
+        }
     }
 }

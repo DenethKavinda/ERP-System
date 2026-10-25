@@ -34,6 +34,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'erpAppUrl' => config('services.erp.app_url', 'http://localhost:5173'),
         ];
     }
 }

@@ -15,10 +15,37 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\LedgerController;
 use App\Models\Payment;
 use App\Http\Controllers\SuccessStoryController;
+use App\Http\Controllers\landingController;
+
+// ==========================================
+// 1. PUBLIC VIEW & PRICING ROUTES (Login Optional)
+// ==========================================
+Route::get('/', [landingController::class, 'index'])->name('landing');
+Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
+Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.center');
+Route::get('/knowledge-center/download/{id}', [KnowledgeCenter::class, 'download'])->name('knowledge.download');
+Route::get('/success-stories', [SuccessStoryController::class, 'index'])->name('success.stories.index');
+
+// Public Checkout & Billing Endpoints
+Route::post('/checkout/initialize', [CheckoutController::class, 'initialize'])->name('checkout.initialize');
+Route::post('/checkout/services', [CheckoutController::class, 'initializeServices'])->name('checkout.services');
+Route::get('/checkout/receipt/download', [CheckoutController::class, 'downloadReceipt'])->name('receipt.download');
+Route::post('/payhere/webhook', [CheckoutController::class, 'handleWebhook'])->name('payhere.webhook');
+
+// SECURE CALLBACK INTERCEPTOR GATE: PayHere Processing Node Redirect
+Route::get('/checkout/success-callback', function (Request $request) {
+    session()->flash('payment_success_order_id', $request->get('order_id'));
+    session()->flash('payment_success_amount', $request->get('amount', '0.00'));
+    session()->flash('payment_success_items', $request->get('items', 'Package Purchase'));
+
+    return redirect()->route('dashboard');
+})->name('checkout.success.callback');
 
 // Public Auth Action Layer endpoints 
-Route::get('/', [AuthController::class, 'showLogin']);
-Route::post('/', [AuthController::class, 'login']);
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -26,27 +53,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // ==========================================
-// 1. SHARED AUTHENTICATED ROUTES (All Logged-In Roles)
+// 2. SHARED AUTHENTICATED ROUTES (Protected User Workspaces)
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
-
-    // SECURE CALLBACK INTERCEPTOR GATE: PayHere Processing Node Redirect
-    Route::get('/checkout/success-callback', function (Request $request) {
-        session()->flash('payment_success_order_id', $request->get('order_id'));
-        session()->flash('payment_success_amount', $request->get('amount', '0.00'));
-        session()->flash('payment_success_items', $request->get('items', 'Package Purchase'));
-
-        return redirect()->route('dashboard');
-    })->name('checkout.success.callback');
-
-    // User Workspace Interfaces
-    Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
-    Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
-
-    Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.center');
-    Route::get('/knowledge-center/download/{id}', [KnowledgeCenter::class, 'download'])->name('knowledge.download');
-
     // 🎫 Grievance Document Handling Matrix
     Route::get('/complaints', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
@@ -54,13 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Non-overlapping distinct secure document streaming gateways
     Route::get('/complaints/download/{id}', [ComplaintController::class, 'downloadUserAttachment'])->name('complaints.download');
     Route::get('/complaints/reply-download/{id}', [ComplaintController::class, 'downloadReplyAttachment'])->name('complaints.reply.download');
-
     Route::delete('/complaints/user-remove/{id}', [ComplaintController::class, 'userDestroy'])->name('complaints.user.destroy');
-
-    // Checkout Billing & Invoicing Actions
-    Route::post('/checkout/initialize', [CheckoutController::class, 'initialize'])->name('checkout.initialize');
-    Route::get('/checkout/receipt/download', [CheckoutController::class, 'downloadReceipt'])->name('receipt.download');
-    Route::post('/payhere/webhook', [CheckoutController::class, 'handleWebhook'])->name('payhere.webhook');
 
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -71,11 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger.index');
     Route::get('/ledger/receipt/{order_id}', [CheckoutController::class, 'downloadReceiptByOrder'])->name('ledger.receipt.download');
 
-    // Service Marketplace Payment Gateway Routes
-    Route::post('/checkout/services', [CheckoutController::class, 'initializeServices'])->name('checkout.services');
-
-    // Inside Route::middleware(['auth', 'verified'])->group(function () { ...[cite: 2]
-    Route::get('/success-stories', [SuccessStoryController::class, 'index'])->name('success.stories.index');
+    // Submit Customer Success Story / Review
     Route::post('/success-stories', [SuccessStoryController::class, 'store'])->name('success.stories.store');
 });
 
@@ -83,11 +82,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // 2. PROTECTED ADMINISTRATIVE ROUTES (Admins Only)
 // ==========================================
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-
-    // Direct /admin shortcut redirect to dashboard manager
-    Route::get('/', function () {
-        return redirect()->route('admin.dashboard.manager');
-    });
 
     // Administrative Dashboard Control System
     Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
@@ -128,7 +122,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('/knowledge-manager/{id}', [KnowledgeCenter::class, 'destroy'])->name('knowledge.destroy');
     Route::post('/knowledge-manager/{id}', [KnowledgeCenter::class, 'update'])->name('knowledge.update');
 
-    Route::get('/success-stories', [SuccessStoryController::class, 'adminIndex'])->name('admin.success.stories.index');
+    Route::get('/success-stories', [SuccessStoryController::class, 'adminIndex'])->name('success.stories.index');
 
 
     Route::get('/transactions', function () {
@@ -200,66 +194,64 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
         return response()->stream($callback, 200, $headers);
     })->name('transactions.export-excel');
+
+    Route::get('/transactions/export-summary-pdf', function (Illuminate\Http\Request $request) {
+        $search = $request->get('search');
+
+        $query = \App\Models\Payment::with('user');
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_id', 'LIKE', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        $payments = $query->latest()->get();
+
+        $totalCount = $payments->count();
+        $completedCount = $payments->filter(fn($p) => strtolower($p->status) === 'completed')->count();
+        $pendingCount = $payments->filter(fn($p) => strtolower($p->status) === 'pending')->count();
+        $failedCount = $payments->filter(fn($p) => strtolower($p->status) === 'failed')->count();
+
+        $completedPercentage = $totalCount > 0 ? round(($completedCount / $totalCount) * 100, 1) : 0;
+        $pendingPercentage = $totalCount > 0 ? round(($pendingCount / $totalCount) * 100, 1) : 0;
+        $failedPercentage = $totalCount > 0 ? round(($failedCount / $totalCount) * 100, 1) : 0;
+
+        $completedSum = $payments->filter(fn($p) => strtolower($p->status) === 'completed')->sum('amount');
+        $pendingSum = $payments->filter(fn($p) => strtolower($p->status) === 'pending')->sum('amount');
+        $totalRevenueSum = $payments->sum('amount');
+
+        $chartConfig = urlencode(json_encode([
+            'type' => 'pie',
+            'data' => [
+                'labels' => ["Completed ({$completedPercentage}%)", "Pending ({$pendingPercentage}%)", "Failed ({$failedPercentage}%)"],
+                'datasets' => [['data' => [$completedCount, $pendingCount, $failedCount], 'backgroundColor' => ['#10b981', '#f59e0b', '#ef4444']]]
+            ],
+            'options' => ['plugins' => ['legend' => ['position' => 'bottom']]]
+        ]));
+        $chartUrl = "https://quickchart.io/chart?c={$chartConfig}&w=400&h=250";
+
+        // Pass data array context down to the Blade file template
+        $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.transactions-summary', compact(
+            'search',
+            'totalCount',
+            'completedCount',
+            'pendingCount',
+            'failedCount',
+            'completedPercentage',
+            'pendingPercentage',
+            'failedPercentage',
+            'completedSum',
+            'pendingSum',
+            'totalRevenueSum',
+            'chartUrl'
+        ));
+
+        return $pdf->download('Transactions_Financial_Summary_' . date('Y-m-d_His') . '.pdf');
+    })->name('transactions.export-summary-pdf');
 });
-
-
-// Inside your admin middleware route group prefix('admin'):
-Route::get('/transactions/export-summary-pdf', function (Illuminate\Http\Request $request) {
-    $search = $request->get('search');
-
-    $query = \App\Models\Payment::with('user');
-    if (!empty($search)) {
-        $query->where(function ($q) use ($search) {
-            $q->where('order_id', 'LIKE', "%{$search}%")
-                ->orWhereHas('user', function ($userQuery) use ($search) {
-                    $userQuery->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('email', 'LIKE', "%{$search}%");
-                });
-        });
-    }
-
-    $payments = $query->latest()->get();
-
-    $totalCount = $payments->count();
-    $completedCount = $payments->where('status', 'completed')->count();
-    $pendingCount = $payments->where('status', 'pending')->count();
-    $failedCount = $payments->where('status', 'failed')->count();
-
-    $completedPercentage = $totalCount > 0 ? round(($completedCount / $totalCount) * 100, 1) : 0;
-    $pendingPercentage = $totalCount > 0 ? round(($pendingCount / $totalCount) * 100, 1) : 0;
-    $failedPercentage = $totalCount > 0 ? round(($failedCount / $totalCount) * 100, 1) : 0;
-
-    $completedSum = $payments->where('status', 'completed')->sum('amount');
-    $pendingSum = $payments->where('status', 'pending')->sum('amount');
-    $totalRevenueSum = $payments->sum('amount');
-
-    $chartConfig = urlencode(json_encode([
-        'type' => 'pie',
-        'data' => [
-            'labels' => ["Completed ({$completedPercentage}%)", "Pending ({$pendingPercentage}%)", "Failed ({$failedPercentage}%)"],
-            'datasets' => [['data' => [$completedCount, $pendingCount, $failedCount], 'backgroundColor' => ['#10b981', '#f59e0b', '#ef4444']]]
-        ],
-        'options' => ['plugins' => ['legend' => ['position' => 'bottom']]]
-    ]));
-    $chartUrl = "https://quickchart.io/chart?c={$chartConfig}&w=400&h=250";
-
-    // 🚀 CLEAN AND MODULAR: Pass data array context down to the Blade file template
-    $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.transactions-summary', compact(
-        'search',
-        'totalCount',
-        'completedCount',
-        'pendingCount',
-        'failedCount',
-        'completedPercentage',
-        'pendingPercentage',
-        'failedPercentage',
-        'completedSum',
-        'pendingSum',
-        'totalRevenueSum',
-        'chartUrl'
-    ));
-
-    return $pdf->download('Transactions_Financial_Summary_' . date('Y-m-d_His') . '.pdf');
-})->name('transactions.export-summary-pdf');
 
 require __DIR__ . '/auth.php';
