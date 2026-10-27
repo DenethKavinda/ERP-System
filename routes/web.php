@@ -94,7 +94,65 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::get('/success-stories', [SuccessStoryController::class, 'adminIndex'])->name('success.stories.index');
 
+    // Customer Subscription Management
+    Route::get('/subscribers', function () {
+        $users = \App\Models\User::where('role', 'user')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($user) {
+                $latestPayment = \App\Models\Payment::where('user_id', $user->id)
+                    ->latest()
+                    ->first();
 
+                return [
+                    'id'            => $user->id,
+                    'customer_id'   => $user->customer_id,
+                    'name'          => $user->name,
+                    'business_name' => $user->business_name,
+                    'email'         => $user->email,
+                    'mobile_number' => $user->mobile_number,
+                    'nic'           => $user->nic,
+                    'plan_name'     => $latestPayment?->package_name ?? 'No Plan',
+                    'is_active'     => $latestPayment && $latestPayment->expires_at && $latestPayment->expires_at->isFuture(),
+                    'expires_at'    => $latestPayment?->expires_at?->toIso8601String(),
+                    'created_at'    => $user->created_at->toIso8601String(),
+                ];
+            });
+
+        return Inertia::render('Admin/Subscribers', [
+            'subscribers' => $users,
+        ]);
+    })->name('subscribers.index');
+
+    Route::put('/subscribers/{id}', function (\Illuminate\Http\Request $request, $id) {
+        $request->validate([
+            'package_name' => 'required|string',
+            'expires_at'   => 'required|date',
+        ]);
+
+        $latestPayment = \App\Models\Payment::where('user_id', $id)->latest()->first();
+
+        if ($latestPayment) {
+            $latestPayment->update([
+                'package_name' => $request->package_name,
+                'expires_at'   => $request->expires_at,
+            ]);
+        } else {
+            \App\Models\Payment::create([
+                'order_id'     => 'ADMIN_' . strtoupper(uniqid()),
+                'user_id'      => $id,
+                'package_name' => $request->package_name,
+                'base_price'   => 0,
+                'addons_total' => 0,
+                'amount'       => 0,
+                'currency'     => 'LKR',
+                'status'       => 'Completed',
+                'expires_at'   => $request->expires_at,
+            ]);
+        }
+
+        return redirect()->back();
+    })->name('subscribers.update');
     Route::get('/transactions', function () {
         return Inertia::render('Admin/Transactions', [
             // Ensure you load the relationship inside your Controller or Route: Payment::with('user')->get()
