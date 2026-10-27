@@ -8,11 +8,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ErpPackageController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\KnowledgeCenter;
-use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\CheckoutController;
 use Illuminate\Http\Request;
-use App\Http\Controllers\LedgerController;
 use App\Models\Payment;
 use App\Http\Controllers\SuccessStoryController;
 use App\Http\Controllers\landingController;
@@ -24,8 +21,6 @@ Route::get('/', [landingController::class, 'index'])->name('landing');
 Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
 Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
-Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.center');
-Route::get('/knowledge-center/download/{id}', [KnowledgeCenter::class, 'download'])->name('knowledge.download');
 Route::get('/success-stories', [SuccessStoryController::class, 'index'])->name('success.stories.index');
 
 // Public Checkout & Billing Endpoints
@@ -56,23 +51,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // 2. SHARED AUTHENTICATED ROUTES (Protected User Workspaces)
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
-    // 🎫 Grievance Document Handling Matrix
-    Route::get('/complaints', [ComplaintController::class, 'create'])->name('complaints.create');
-    Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
-
-    // Non-overlapping distinct secure document streaming gateways
-    Route::get('/complaints/download/{id}', [ComplaintController::class, 'downloadUserAttachment'])->name('complaints.download');
-    Route::get('/complaints/reply-download/{id}', [ComplaintController::class, 'downloadReplyAttachment'])->name('complaints.reply.download');
-    Route::delete('/complaints/user-remove/{id}', [ComplaintController::class, 'userDestroy'])->name('complaints.user.destroy');
-
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // Transactional Ledger Matrix Entryways
-    Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger.index');
-    Route::get('/ledger/receipt/{order_id}', [CheckoutController::class, 'downloadReceiptByOrder'])->name('ledger.receipt.download');
 
     // Submit Customer Success Story / Review
     Route::post('/success-stories', [SuccessStoryController::class, 'store'])->name('success.stories.store');
@@ -109,18 +91,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/erp-packages', [ErpPackageController::class, 'store'])->name('packages.store');
     Route::put('/erp-packages/{id}', [ErpPackageController::class, 'update'])->name('packages.update');
     Route::delete('/erp-packages/{id}', [ErpPackageController::class, 'destroy'])->name('packages.destroy');
-
-    // Administrative Complaints Management Console
-    Route::get('/complaints', [ComplaintController::class, 'adminIndex'])->name('complaints.index');
-    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.status');
-    Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
-    Route::post('/complaints/{id}/reply', [ComplaintController::class, 'storeReply'])->name('complaints.reply');
-
-    // Administrative Knowledge Center Management Console
-    Route::get('/knowledge-manager', [KnowledgeCenter::class, 'adminIndex'])->name('knowledge.manager');
-    Route::post('/knowledge-manager', [KnowledgeCenter::class, 'store'])->name('knowledge.store');
-    Route::delete('/knowledge-manager/{id}', [KnowledgeCenter::class, 'destroy'])->name('knowledge.destroy');
-    Route::post('/knowledge-manager/{id}', [KnowledgeCenter::class, 'update'])->name('knowledge.update');
 
     Route::get('/success-stories', [SuccessStoryController::class, 'adminIndex'])->name('success.stories.index');
 

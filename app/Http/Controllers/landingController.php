@@ -50,7 +50,7 @@ class landingController extends Controller
 
             $activeSubscription = [
                 'plan_name'   => $planName ?: 'ERP Free Starter',
-                'order_id'    => $latestPayment ? $latestPayment->order_id : 'TRIAL_INIT',
+                'order_id'    => $latestPayment ? $latestPayment->order_id : 'TRIAL',
                 'expires_at'  => $latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : now()->addDays(30)->toIso8601String(),
                 'is_active'   => true,
                 'limits'      => $planLimits,

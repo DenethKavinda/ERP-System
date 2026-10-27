@@ -15,13 +15,6 @@ export default function Header({ isDarkMode, setIsDarkMode, auth }) {
     const navLinks = [
         { label: t("header.dashboard"), href: "/dashboard-user" },
         { label: t("header.erpPricing"), href: "/ERP" },
-        { label: t("header.knowledgeDocs"), href: "/knowledge-center" },
-        ...(user
-            ? [
-                  { label: t("header.transactionalLedger"), href: "/ledger" },
-                  { label: t("header.complianceAudits"), href: "/complaints" },
-              ]
-            : []),
     ];
 
     // 1. Synchronize theme preference on initial mount (defaults to light theme)

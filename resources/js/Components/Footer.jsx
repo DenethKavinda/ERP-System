@@ -98,16 +98,6 @@ export default function Footer({ isDarkMode }) {
                                     {t("footer.services")}
                                 </button>
                             </li>
-                            <li>
-                                <button
-                                    onClick={() =>
-                                        handleNavigate("/complaints")
-                                    }
-                                    className="hover:text-orange-500 transition-colors"
-                                >
-                                    {t("footer.complaintsConsole")}
-                                </button>
-                            </li>
                         </ul>
                     </div>
 
@@ -119,26 +109,6 @@ export default function Footer({ isDarkMode }) {
                             {t("footer.resources")}
                         </h4>
                         <ul className="space-y-2 text-xs">
-                            <li>
-                                <button
-                                    onClick={() =>
-                                        handleNavigate("/ledger")
-                                    }
-                                    className="hover:text-orange-500 transition-colors"
-                                >
-                                    {t("footer.accountLedger")}
-                                </button>
-                            </li>
-                            <li>
-                                <button
-                                    onClick={() =>
-                                        handleNavigate("/knowledge-center")
-                                    }
-                                    className="hover:text-orange-500 transition-colors"
-                                >
-                                    {t("footer.knowledgeCenter")}
-                                </button>
-                            </li>
                             <li>
                                 <button
                                     onClick={() =>
