@@ -19,7 +19,7 @@ export default function AdminSuccessStories({ feedbacks, isDarkMode }) {
                         className={`text-xs mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
                     >
                         Review and evaluate client experience feedback
-                        submissions across ERP modules.
+                        submissions across ERP packages.
                     </p>
                 </div>
 
@@ -44,7 +44,7 @@ export default function AdminSuccessStories({ feedbacks, isDarkMode }) {
                                 <div className="space-y-3 max-w-3xl">
                                     <div className="flex items-center gap-3 flex-wrap">
                                         <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-orange-500/10 text-orange-500 border border-orange-500/20">
-                                            {item.item_type}
+                                            ERP Package
                                         </span>
                                         <h3 className="font-bold text-sm tracking-wide">
                                             {item.item_name}
@@ -79,7 +79,7 @@ export default function AdminSuccessStories({ feedbacks, isDarkMode }) {
                                     className={`md:text-right border-t md:border-t-0 pt-4 md:pt-0 md:pl-6 flex flex-col justify-center gap-0.5 text-xs ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}
                                 >
                                     <span className="font-bold tracking-wide">
-                                        {item.user?.name || "Unknown Identity"}
+                                        {item.user?.business_name ? `${item.user.business_name} (${item.user.name})` : item.user?.name || "Customer"}
                                     </span>
                                     <span className="text-[11px] opacity-60 font-mono">
                                         {item.user?.email || "N/A"}
