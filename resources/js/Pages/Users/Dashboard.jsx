@@ -381,27 +381,20 @@ export default function Dashboard({
                                     >
                                         {auth?.user?.business_name || "Enterprise Workspace"}
                                     </h3>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                        Order Ref:{" "}
-                                        <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
-                                            {activeSubscription.order_id}
-                                        </span>
-                                        {activeSubscription.expires_at && (
-                                            <span>
-                                                {" "}
-                                                • Valid until:{" "}
-                                                <span className="font-bold text-slate-700 dark:text-slate-300">
-                                                    {new Date(
-                                                        activeSubscription.expires_at,
-                                                    ).toLocaleDateString("en-US", {
-                                                        year: "numeric",
-                                                        month: "short",
-                                                        day: "numeric",
-                                                    })}
-                                                </span>
+                                    {activeSubscription.expires_at && (
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                            Valid until:{" "}
+                                            <span className="font-bold text-slate-700 dark:text-slate-300">
+                                                {new Date(
+                                                    activeSubscription.expires_at,
+                                                ).toLocaleDateString("en-US", {
+                                                    year: "numeric",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                })}
                                             </span>
-                                        )}
-                                    </p>
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
