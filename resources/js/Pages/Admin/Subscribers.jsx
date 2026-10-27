@@ -34,13 +34,23 @@ export default function Subscribers({ auth, subscribers = [] }) {
             `/admin/subscribers/${userId}`,
             {
                 package_name: editPlan,
-                expires_at: editExpiry,
+                expires_at: editExpiry || null,
             },
             {
                 preserveScroll: true,
                 onSuccess: () => setEditingId(null),
             }
         );
+    };
+
+    const handleTerminate = (userId) => {
+        if (confirm("Are you sure you want to terminate this subscription? The customer will lose access immediately.")) {
+            router.post(`/admin/subscribers/${userId}/terminate`, {}, { preserveScroll: true });
+        }
+    };
+
+    const handleReactivate = (userId) => {
+        router.post(`/admin/subscribers/${userId}/reactivate`, {}, { preserveScroll: true });
     };
 
     const stats = useMemo(() => {
@@ -334,48 +344,46 @@ export default function Subscribers({ auth, subscribers = [] }) {
                                                     {editingId === sub.id ? (
                                                         <div className="flex gap-1">
                                                             <button
-                                                                onClick={() =>
-                                                                    handleSaveEdit(
-                                                                        sub.id
-                                                                    )
-                                                                }
+                                                                onClick={() => handleSaveEdit(sub.id)}
                                                                 className="px-2 py-1 text-[10px] font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 cursor-pointer"
                                                             >
                                                                 SAVE
                                                             </button>
                                                             <button
-                                                                onClick={() =>
-                                                                    setEditingId(
-                                                                        null
-                                                                    )
-                                                                }
+                                                                onClick={() => setEditingId(null)}
                                                                 className="px-2 py-1 text-[10px] font-bold bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 cursor-pointer"
                                                             >
                                                                 CANCEL
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingId(
-                                                                    sub.id
-                                                                );
-                                                                setEditPlan(
-                                                                    sub.plan_name ||
-                                                                        "ERP Free Starter"
-                                                                );
-                                                                setEditExpiry(
-                                                                    sub.expires_at
-                                                                        ? sub.expires_at.split(
-                                                                              "T"
-                                                                          )[0]
-                                                                        : ""
-                                                                );
-                                                            }}
-                                                            className="px-2.5 py-1 text-[10px] font-bold bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 cursor-pointer"
-                                                        >
-                                                            EDIT
-                                                        </button>
+                                                        <div className="flex gap-1 flex-wrap">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingId(sub.id);
+                                                                    setEditPlan(sub.plan_name || "ERP Free Starter");
+                                                                    setEditExpiry(sub.expires_at ? sub.expires_at.split("T")[0] : "");
+                                                                }}
+                                                                className="px-2.5 py-1 text-[10px] font-bold bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 cursor-pointer"
+                                                            >
+                                                                UPDATE PLAN
+                                                            </button>
+                                                            {sub.is_active ? (
+                                                                <button
+                                                                    onClick={() => handleTerminate(sub.id)}
+                                                                    className="px-2.5 py-1 text-[10px] font-bold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 cursor-pointer"
+                                                                >
+                                                                    TERMINATE
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleReactivate(sub.id)}
+                                                                    className="px-2.5 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 cursor-pointer"
+                                                                >
+                                                                    REACTIVATE
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </td>
                                             </tr>

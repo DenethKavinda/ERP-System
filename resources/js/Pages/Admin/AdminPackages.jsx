@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useForm, router } from "@inertiajs/react";
 import Sidebar from "../../Components/Sidebar";
 
@@ -396,19 +396,15 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                     <div className="flex items-center gap-1 max-w-7xl mx-auto -mb-px">
                         {TABS.map((tab) => {
                             const isActive = activeTab === tab.id;
-                            const isDisabled = tab.id !== "catalog" && activeTab === "catalog" && !editingId && !data.name;
                             return (
                                 <button
                                     key={tab.id}
                                     type="button"
-                                    disabled={isDisabled}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                                    className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
                                         isActive
                                             ? "border-orange-500 text-orange-500"
-                                            : isDisabled
-                                                ? "border-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed"
-                                                : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300"
+                                            : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300"
                                     }`}
                                 >
                                     <TabIcon type={tab.icon} className="w-3.5 h-3.5" />
@@ -502,50 +498,6 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                                                 LKR 45,000<span className="text-xs font-normal text-slate-400">/mo</span>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-
-                                {/* Quick Create Presets Row */}
-                                <div className={`p-5 rounded-xl border ${isDarkMode ? "bg-slate-800/60 border-slate-700" : "bg-white border-slate-200 shadow-sm"}`}>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                                                Quick Create From Preset Template
-                                            </span>
-                                            <p className="text-[10px] text-slate-400 mt-0.5">
-                                                Load an enterprise blueprint with pre-configured limits & module entitlements.
-                                            </p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                handleCancelEdit();
-                                                setActiveTab("general");
-                                                setShowPreview(true);
-                                            }}
-                                            className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg bg-orange-500 hover:bg-orange-600 text-white shadow-sm transition-colors flex items-center gap-1.5"
-                                        >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                                            New Blank Package
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                        {[
-                                            { type: "free", name: "Free Starter", price: "LKR 0 (30 Days)", color: "emerald" },
-                                            { type: "basic", name: "Basic Essentials", price: "LKR 45,000/mo", color: "blue" },
-                                            { type: "pro", name: "Professional", price: "LKR 95,000/mo (Flagship)", color: "orange" },
-                                            { type: "enterprise", name: "Enterprise Core", price: "LKR 195,000/mo", color: "purple" },
-                                        ].map((t) => (
-                                            <button
-                                                key={t.type}
-                                                type="button"
-                                                onClick={() => applyTemplate(t.type)}
-                                                className={`text-left px-4 py-3 rounded-lg border text-xs font-bold transition-all hover:border-${t.color}-500 hover:bg-${t.color}-500/5 border-slate-200 dark:border-slate-700 hover:shadow-md`}
-                                            >
-                                                <div className={`text-${t.color}-500 font-black text-sm`}>{t.name}</div>
-                                                <div className="text-[10px] text-slate-400 mt-0.5">{t.price}</div>
-                                            </button>
-                                        ))}
                                     </div>
                                 </div>
 

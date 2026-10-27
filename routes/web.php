@@ -127,15 +127,18 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('/subscribers/{id}', function (\Illuminate\Http\Request $request, $id) {
         $request->validate([
             'package_name' => 'required|string',
-            'expires_at'   => 'required|date',
+            'expires_at'   => 'nullable|date',
         ]);
+
+        $expiresAt = $request->expires_at ?: now()->addDays(30);
 
         $latestPayment = \App\Models\Payment::where('user_id', $id)->latest()->first();
 
         if ($latestPayment) {
             $latestPayment->update([
                 'package_name' => $request->package_name,
-                'expires_at'   => $request->expires_at,
+                'expires_at'   => $expiresAt,
+                'status'       => 'Completed',
             ]);
         } else {
             \App\Models\Payment::create([
@@ -147,12 +150,31 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
                 'amount'       => 0,
                 'currency'     => 'LKR',
                 'status'       => 'Completed',
-                'expires_at'   => $request->expires_at,
+                'expires_at'   => $expiresAt,
             ]);
         }
 
         return redirect()->back();
     })->name('subscribers.update');
+
+    // Terminate (expire immediately)
+    Route::post('/subscribers/{id}/terminate', function ($id) {
+        $payment = \App\Models\Payment::where('user_id', $id)->latest()->first();
+        if ($payment) {
+            $payment->update(['expires_at' => now()->subDay(), 'status' => 'Terminated']);
+        }
+        return redirect()->back();
+    })->name('subscribers.terminate');
+
+    // Reactivate (30 days from now)
+    Route::post('/subscribers/{id}/reactivate', function ($id) {
+        $payment = \App\Models\Payment::where('user_id', $id)->latest()->first();
+        if ($payment) {
+            $payment->update(['expires_at' => now()->addDays(30), 'status' => 'Completed']);
+        }
+        return redirect()->back();
+    })->name('subscribers.reactivate');
+
     Route::get('/transactions', function () {
         return Inertia::render('Admin/Transactions', [
             // Ensure you load the relationship inside your Controller or Route: Payment::with('user')->get()
