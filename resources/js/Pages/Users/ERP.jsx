@@ -149,6 +149,12 @@ export default function ERP({ auth, packages = [] }) {
     const WHATSAPP_NUMBER = "94777674308"; // 077 767 4308 in international format
 
     const handleBuyButtonClick = (pkg) => {
+        // Require sign in / sign up before any purchase action
+        if (!auth?.user) {
+            window.location.href = `/register?plan=${encodeURIComponent(pkg.name)}`;
+            return;
+        }
+
         const pkgPrice = Number(pkg.price) || 0;
 
         if (pkgPrice === 0) {
