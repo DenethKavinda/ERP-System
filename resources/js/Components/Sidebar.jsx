@@ -61,27 +61,20 @@ export default function Sidebar({ isDarkMode }) {
                     : "bg-white border-slate-200 text-slate-700"
             }`}
         >
-            {/* Real ERP Logo & Branding Header */}
+            {/* Branding Header */}
             <div
-                className={`p-5 border-b flex items-center gap-3 ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}
+                className={`p-6 border-b ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}
             >
-                <div className="h-9 px-2 bg-white rounded-xl flex items-center justify-center border border-slate-200/80 shadow-xs shrink-0">
-                    <img
-                        src="/images/erp-logo.png"
-                        alt="PosXpress"
-                        className="h-6 w-auto object-contain"
-                    />
-                </div>
-                <div>
+                <Link href="/admin/dashboard" className="block">
                     <h1
-                        className={`font-black tracking-tight text-sm leading-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                        className={`font-black tracking-tight text-lg leading-tight flex items-center gap-1.5 ${isDarkMode ? "text-white" : "text-slate-900"}`}
                     >
-                        PosXpress <span className="text-orange-500">ERP</span>
+                        NEXUS <span className="text-orange-500">ERP</span>
                     </h1>
-                    <span className="text-[10px] text-slate-400 block font-semibold">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 block">
                         Admin Portal
                     </span>
-                </div>
+                </Link>
             </div>
 
             {/* Navigation Menu */}
@@ -131,7 +124,7 @@ export default function Sidebar({ isDarkMode }) {
             <div
                 className={`px-4 py-3 border-t text-[10px] tracking-wide text-slate-400 font-medium text-center ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}
             >
-                PosXpress ERP System
+                Nexus ERP
             </div>
         </aside>
     );
