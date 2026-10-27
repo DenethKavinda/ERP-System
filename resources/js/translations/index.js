@@ -136,6 +136,7 @@ const translations = {
         startFreeTrial: { en: "Start 30-Day Free Trial", si: "දින 30 නොමිලේ අත්හදා බැලීම ආරම්භ කරන්න" },
         activateAnnualPlan: { en: "Activate Annual Plan", si: "වාර්ෂික සැලැස්ම සක්‍රිය කරන්න" },
         buyNow: { en: "Buy Now", si: "දැන් මිලදී ගන්න" },
+        contactWhatsApp: { en: "Contact via WhatsApp", si: "WhatsApp හරහා සම්බන්ධ වන්න" },
         fullBreakdown: { en: "Full Breakdown", si: "සම්පූර්ණ විස්තරය" },
         featureMatrixTitle: { en: "Master Side-by-Side Feature Matrix", si: "ප්‍රධාන අංග සංසන්දන වගුව" },
         featureMatrixSubtitle: {
