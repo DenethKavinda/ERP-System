@@ -149,6 +149,12 @@ export default function ERP({ auth, packages = [] }) {
     const WHATSAPP_NUMBER = "94777674308"; // 077 767 4308 in international format
 
     const handleBuyButtonClick = (pkg) => {
+        // Admin manages packages directly in the admin panel
+        if (auth?.user?.role === "admin") {
+            window.location.href = "/admin/erp-packages";
+            return;
+        }
+
         // Require sign in / sign up before any purchase action
         if (!auth?.user) {
             window.location.href = `/register?plan=${encodeURIComponent(pkg.name)}`;
@@ -731,12 +737,16 @@ export default function ERP({ auth, packages = [] }) {
                                             <button
                                                 onClick={() => handleBuyButtonClick(pkg)}
                                                 className={`w-full py-3 px-6 rounded-xl text-xs font-black tracking-wider uppercase shadow-sm border transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 ${
-                                                    isFree
-                                                        ? "bg-emerald-600 hover:bg-emerald-500 text-white border-transparent"
-                                                        : "bg-[#25D366] hover:bg-[#20BD5A] text-white border-transparent"
+                                                    auth?.user?.role === "admin"
+                                                        ? "bg-slate-900 hover:bg-slate-800 text-white border-slate-700"
+                                                        : isFree
+                                                          ? "bg-emerald-600 hover:bg-emerald-500 text-white border-transparent"
+                                                          : "bg-[#25D366] hover:bg-[#20BD5A] text-white border-transparent"
                                                 }`}
                                             >
-                                                {isFree ? (
+                                                {auth?.user?.role === "admin" ? (
+                                                    <span>Manage Package in Admin</span>
+                                                ) : isFree ? (
                                                     t("erp.startFreeTrial")
                                                 ) : (
                                                     <>

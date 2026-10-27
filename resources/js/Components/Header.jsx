@@ -11,6 +11,8 @@ export default function Header({ isDarkMode, setIsDarkMode, auth }) {
     // Retrieve the current URL and auth props from Inertia
     const { url, props } = usePage();
     const user = auth?.user || props?.auth?.user;
+    const isAdmin = user?.role === "admin";
+    const isSubscriptionActive = isAdmin || Boolean(auth?.isSubscriptionActive ?? props?.auth?.isSubscriptionActive);
 
     const navLinks = [
         { label: t("header.dashboard"), href: "/dashboard-user" },
@@ -176,7 +178,7 @@ export default function Header({ isDarkMode, setIsDarkMode, auth }) {
 
                         {user ? (
                             <>
-                                {auth?.isSubscriptionActive ? (
+                                {isSubscriptionActive ? (
                                     <a
                                         href={props?.erpAppUrl || "http://localhost:5173"}
                                         target="_blank"
@@ -350,15 +352,31 @@ export default function Header({ isDarkMode, setIsDarkMode, auth }) {
                         })}
                         {user ? (
                             <>
-                                <a
-                                    href={props?.erpAppUrl || "http://localhost:5173"}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-between"
-                                >
-                                    <span className="flex items-center gap-2">
+                                {isSubscriptionActive ? (
+                                    <a
+                                        href={props?.erpAppUrl || "http://localhost:5173"}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-between"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                strokeWidth={2.2}
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                                />
+                                            </svg>
+                                            <span>Launch ERP</span>
+                                        </span>
                                         <svg
-                                            className="w-4 h-4"
+                                            className="w-3.5 h-3.5"
                                             fill="none"
                                             viewBox="0 0 24 24"
                                             stroke="currentColor"
@@ -367,25 +385,20 @@ export default function Header({ isDarkMode, setIsDarkMode, auth }) {
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
-                                                d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
                                             />
                                         </svg>
-                                        <span>Launch ERP</span>
-                                    </span>
-                                    <svg
-                                        className="w-3.5 h-3.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        strokeWidth={2.2}
+                                    </a>
+                                ) : (
+                                    <a
+                                        href={`https://wa.me/94777674308?text=${encodeURIComponent("Customer ID: " + (user.customer_id || "N/A") + "\nBusiness: " + (user.business_name || user.name || "N/A") + "\n\nHello, my ERP subscription has expired. I would like to reactivate my plan via WhatsApp. Thank you.")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider bg-red-600 text-white flex items-center justify-between cursor-pointer"
                                     >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                                        />
-                                    </svg>
-                                </a>
+                                        <span>Expired - Reactivate</span>
+                                    </a>
+                                )}
                                 <Link
                                     href={route("logout")}
                                     method="post"

@@ -55,18 +55,26 @@ class DashboardController extends Controller
                 ];
             }
 
-            $isActive = $latestPayment 
+            $isAdmin = $user->role === 'admin';
+
+            $isActive = $isAdmin || ($latestPayment 
                 && $latestPayment->status === 'Completed' 
                 && $latestPayment->expires_at 
-                && $latestPayment->expires_at->isFuture();
+                && $latestPayment->expires_at->isFuture());
 
             $activeSubscription = [
-                'plan_name'   => $planName,
-                'order_id'    => $latestPayment ? $latestPayment->order_id : 'TRIAL',
-                'expires_at'  => $latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : null,
+                'plan_name'   => $isAdmin ? 'Nexus ERP Administrator' : $planName,
+                'order_id'    => $isAdmin ? 'ADMIN_ACCESS' : ($latestPayment ? $latestPayment->order_id : 'TRIAL'),
+                'expires_at'  => $isAdmin ? null : ($latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : null),
                 'is_active'   => (bool)$isActive,
                 'status'      => $isActive ? 'active' : 'expired',
-                'limits'      => $planLimits,
+                'limits'      => $isAdmin ? [
+                    'branches'   => 'Unlimited',
+                    'warehouses' => 'Unlimited',
+                    'users'      => 'Unlimited',
+                    'bills'      => 'Unlimited Bills',
+                    'modules'    => $package ? ($package->modules ?? []) : ['all'],
+                ] : $planLimits,
                 'usage'       => [
                     'branches'   => 1,
                     'warehouses' => 1,
