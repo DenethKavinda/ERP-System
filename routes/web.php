@@ -117,7 +117,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('/erp-packages/{id}', [ErpPackageController::class, 'update'])->name('packages.update');
     Route::delete('/erp-packages/{id}', [ErpPackageController::class, 'destroy'])->name('packages.destroy');
 
-    Route::get('/success-stories', [SuccessStoryController::class, 'adminIndex'])->name('success.stories.index');
+    Route::get('/success-stories', [SuccessStoryController::class, 'adminIndex'])->name('admin.success.stories.index');
+    Route::post('/success-stories/{id}/approve', [SuccessStoryController::class, 'approve'])->name('admin.success.stories.approve');
+    Route::post('/success-stories/{id}/unapprove', [SuccessStoryController::class, 'unapprove'])->name('admin.success.stories.unapprove');
+    Route::delete('/success-stories/{id}', [SuccessStoryController::class, 'destroy'])->name('admin.success.stories.destroy');
 
     // Customer Subscription Management
     Route::get('/subscribers', function () {

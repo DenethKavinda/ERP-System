@@ -17,8 +17,11 @@ class SuccessStoryController extends Controller
             $packages = ErpPackage::pluck('name')->toArray();
         }
 
-        // Fetch existing stories with user names
-        $feedbacks = SuccessStory::with('user:id,name,business_name')->latest()->get();
+        // Only fetch approved success stories for the public page
+        $feedbacks = SuccessStory::with('user:id,name,business_name,customer_id')
+            ->where('is_approved', true)
+            ->latest()
+            ->get();
 
         return Inertia::render('Users/SuccessStories', [
             'packages'  => $packages,
@@ -35,10 +38,12 @@ class SuccessStoryController extends Controller
         ]);
 
         $validated['item_type'] = 'package';
+        // Requires admin approval before appearing publicly
+        $validated['is_approved'] = false;
 
         $request->user()->successStories()->create($validated);
 
-        return redirect()->back()->with('success', 'Thank you for sharing your ERP success story!');
+        return redirect()->back()->with('success', 'Thank you! Your success story has been submitted for admin review. Once approved, it will appear publicly.');
     }
 
     /**
@@ -46,11 +51,46 @@ class SuccessStoryController extends Controller
      */
     public function adminIndex()
     {
-        // Eager loads the complete review collection paired alongside individual user identity lines
-        $feedbacks = SuccessStory::with('user:id,name,email,business_name')->latest()->get();
+        // Eager loads the complete review collection paired alongside customer identification
+        $feedbacks = SuccessStory::with('user:id,name,email,business_name,customer_id')
+            ->latest()
+            ->get();
 
         return Inertia::render('Admin/AdminSuccessStories', [
             'feedbacks' => $feedbacks,
         ]);
+    }
+
+    /**
+     * Admin approves a success story so it displays publicly.
+     */
+    public function approve($id)
+    {
+        $story = SuccessStory::findOrFail($id);
+        $story->update(['is_approved' => true]);
+
+        return redirect()->back()->with('success', "Success story for '{$story->item_name}' approved and published publicly.");
+    }
+
+    /**
+     * Admin unapproves / hides a success story from public display.
+     */
+    public function unapprove($id)
+    {
+        $story = SuccessStory::findOrFail($id);
+        $story->update(['is_approved' => false]);
+
+        return redirect()->back()->with('success', "Success story for '{$story->item_name}' unapproved and hidden from public view.");
+    }
+
+    /**
+     * Admin permanently deletes a rejected or unapproved success story.
+     */
+    public function destroy($id)
+    {
+        $story = SuccessStory::findOrFail($id);
+        $story->delete();
+
+        return redirect()->back()->with('success', 'Success story deleted successfully.');
     }
 }

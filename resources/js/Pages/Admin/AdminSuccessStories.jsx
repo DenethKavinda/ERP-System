@@ -1,96 +1,358 @@
-import React from "react";
-import Sidebar from "../../Components/Sidebar"; // Adjust this relative import path to match your project layouts
+import React, { useState } from "react";
+import { Head, router, usePage } from "@inertiajs/react";
+import Sidebar from "../../Components/Sidebar";
 
-export default function AdminSuccessStories({ feedbacks, isDarkMode }) {
+export default function AdminSuccessStories({ feedbacks = [] }) {
+    const { flash } = usePage().props;
+
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("theme") === "dark";
+        }
+        return false;
+    });
+
+    const [filter, setFilter] = useState("all"); // 'all' | 'pending' | 'approved'
+
+    const pendingCount = feedbacks.filter((item) => !item.is_approved).length;
+    const approvedCount = feedbacks.filter((item) => item.is_approved).length;
+
+    const filteredFeedbacks = feedbacks.filter((item) => {
+        if (filter === "pending") return !item.is_approved;
+        if (filter === "approved") return item.is_approved;
+        return true;
+    });
+
+    const handleApprove = (id) => {
+        router.post(
+            route("admin.success.stories.approve", id),
+            {},
+            { preserveScroll: true },
+        );
+    };
+
+    const handleUnapprove = (id) => {
+        router.post(
+            route("admin.success.stories.unapprove", id),
+            {},
+            { preserveScroll: true },
+        );
+    };
+
+    const handleDelete = (id, itemName) => {
+        if (
+            window.confirm(
+                `Are you sure you want to permanently delete this success story for "${itemName}"? This cannot be undone.`,
+            )
+        ) {
+            router.delete(route("admin.success.stories.destroy", id), {
+                preserveScroll: true,
+            });
+        }
+    };
+
     return (
         <div
-            className={`flex min-h-screen ${isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800"}`}
+            className={`flex min-h-screen ${
+                isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800"
+            }`}
         >
-            {/* System Sidebar Injection Control */}
+            <Head title="Success Stories Administration - Nexus ERP" />
+
+            {/* Sidebar Navigation */}
             <Sidebar isDarkMode={isDarkMode} />
 
-            {/* Central Workarea Dashboard Matrix Panel */}
-            <div className="flex-1 p-6 md:p-10 space-y-8 overflow-y-auto">
-                <div>
-                    <h1 className="text-2xl font-black tracking-tight">
-                        Success Stories Administration
-                    </h1>
-                    <p
-                        className={`text-xs mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
-                    >
-                        Review and evaluate client experience feedback
-                        submissions across ERP packages.
-                    </p>
+            {/* Main Content Area */}
+            <div className="flex-1 p-6 md:p-10 space-y-6 overflow-y-auto max-w-7xl">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-inherit">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-orange-500/10 text-orange-500 border border-orange-500/20 mb-2">
+                            Moderation Desk
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+                            Success Stories Administration
+                        </h1>
+                        <p
+                            className={`text-xs mt-1 ${
+                                isDarkMode ? "text-slate-400" : "text-slate-500"
+                            }`}
+                        >
+                            Review customer feedback submissions, verify company credentials, and approve stories to publish them publicly.
+                        </p>
+                    </div>
+
+                    {/* Quick Stats Badges */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setFilter("all")}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                                filter === "all"
+                                    ? "bg-slate-900 text-white border-slate-700 dark:bg-white dark:text-slate-900"
+                                    : isDarkMode
+                                      ? "bg-slate-900/50 border-slate-800 text-slate-400 hover:text-white"
+                                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
+                            }`}
+                        >
+                            All ({feedbacks.length})
+                        </button>
+                        <button
+                            onClick={() => setFilter("pending")}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center gap-1.5 ${
+                                filter === "pending"
+                                    ? "bg-amber-500 text-white border-amber-600"
+                                    : isDarkMode
+                                      ? "bg-slate-900/50 border-slate-800 text-amber-400 hover:bg-amber-500/10"
+                                      : "bg-white border-slate-200 text-amber-600 hover:bg-amber-50"
+                            }`}
+                        >
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                            Pending ({pendingCount})
+                        </button>
+                        <button
+                            onClick={() => setFilter("approved")}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center gap-1.5 ${
+                                filter === "approved"
+                                    ? "bg-emerald-600 text-white border-emerald-700"
+                                    : isDarkMode
+                                      ? "bg-slate-900/50 border-slate-800 text-emerald-400 hover:bg-emerald-500/10"
+                                      : "bg-white border-slate-200 text-emerald-600 hover:bg-emerald-50"
+                            }`}
+                        >
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            Approved ({approvedCount})
+                        </button>
+                    </div>
                 </div>
 
+                {/* Flash Success Message */}
+                {flash?.success && (
+                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-3">
+                        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{flash.success}</span>
+                    </div>
+                )}
+
                 {/* Main Data Feed Area */}
-                {feedbacks.length === 0 ? (
+                {filteredFeedbacks.length === 0 ? (
                     <div
-                        className={`p-12 text-center rounded-xl border border-dashed ${isDarkMode ? "border-slate-800 text-slate-500" : "border-slate-200 text-slate-400"}`}
+                        className={`p-16 text-center rounded-3xl border border-dashed ${
+                            isDarkMode
+                                ? "border-slate-800 text-slate-500"
+                                : "border-slate-200 text-slate-400"
+                        }`}
                     >
-                        No user feedback reports logged in database records yet.
+                        <svg
+                            className="w-12 h-12 mx-auto mb-3 opacity-40"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"
+                            />
+                        </svg>
+                        <p className="font-semibold text-sm">
+                            {filter === "pending"
+                                ? "No pending success stories to review."
+                                : filter === "approved"
+                                  ? "No approved success stories published yet."
+                                  : "No user success stories logged in database records yet."}
+                        </p>
+                        <p className="text-xs mt-1 opacity-70">
+                            Submissions from the public success story form will appear here for review.
+                        </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                        {feedbacks.map((item) => (
+                    <div className="grid grid-cols-1 gap-5">
+                        {filteredFeedbacks.map((item) => (
                             <div
                                 key={item.id}
-                                className={`p-6 rounded-xl border shadow-sm transition-all flex flex-col md:flex-row justify-between gap-4 ${
+                                className={`p-6 sm:p-7 rounded-2xl border shadow-sm transition-all flex flex-col lg:flex-row justify-between gap-6 ${
                                     isDarkMode
                                         ? "bg-slate-900 border-slate-800"
                                         : "bg-white border-slate-200"
                                 }`}
                             >
-                                <div className="space-y-3 max-w-3xl">
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-orange-500/10 text-orange-500 border border-orange-500/20">
-                                            ERP Package
-                                        </span>
-                                        <h3 className="font-bold text-sm tracking-wide">
-                                            {item.item_name}
-                                        </h3>
+                                <div className="space-y-4 flex-1">
+                                    {/* Badges & Meta */}
+                                    <div className="flex items-center gap-2.5 flex-wrap">
+                                        {/* Approval Status Badge */}
+                                        {item.is_approved ? (
+                                            <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                Approved & Live
+                                            </span>
+                                        ) : (
+                                            <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                Pending Admin Approval
+                                            </span>
+                                        )}
 
-                                        {/* Star Score Block */}
-                                        <div className="flex gap-0.5 text-amber-400 fill-amber-400">
-                                            {Array.from({ length: 5 }).map(
-                                                (_, i) => (
-                                                    <svg
-                                                        key={i}
-                                                        className={`w-4 h-4 ${i < item.rating ? "text-amber-400 fill-amber-400" : isDarkMode ? "text-slate-800" : "text-slate-200"}`}
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                                    </svg>
-                                                ),
-                                            )}
+                                        {/* Package Badge */}
+                                        <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                                            ERP Package: {item.item_name}
+                                        </span>
+
+                                        {/* Star Score */}
+                                        <div className="flex gap-0.5 text-amber-400 fill-amber-400 ml-1">
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <svg
+                                                    key={i}
+                                                    className={`w-4 h-4 ${
+                                                        i < item.rating
+                                                            ? "text-amber-400 fill-amber-400"
+                                                            : isDarkMode
+                                                              ? "text-slate-800"
+                                                              : "text-slate-200"
+                                                    }`}
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                                </svg>
+                                            ))}
                                         </div>
                                     </div>
 
+                                    {/* Testimonial Quote */}
                                     <p
-                                        className={`text-xs leading-relaxed italic ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}
+                                        className={`text-sm leading-relaxed italic ${
+                                            isDarkMode ? "text-slate-200" : "text-slate-700"
+                                        }`}
                                     >
                                         "{item.feedback}"
                                     </p>
+
+                                    {/* Company & Customer Details Grid */}
+                                    <div
+                                        className={`p-3.5 rounded-xl border text-xs grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 ${
+                                            isDarkMode
+                                                ? "bg-slate-950/60 border-slate-800 text-slate-300"
+                                                : "bg-slate-50 border-slate-200 text-slate-700"
+                                        }`}
+                                    >
+                                        <div>
+                                            <span className="block text-[10px] uppercase font-bold text-slate-500">
+                                                Company Name
+                                            </span>
+                                            <span className="font-extrabold text-sm text-orange-500">
+                                                {item.user?.business_name || "N/A (Individual)"}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase font-bold text-slate-500">
+                                                Customer ID
+                                            </span>
+                                            <span className="font-mono font-bold">
+                                                {item.user?.customer_id || "N/A"}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase font-bold text-slate-500">
+                                                Contact Person & Email
+                                            </span>
+                                            <span className="font-semibold block truncate">
+                                                {item.user?.name || "Customer"}
+                                            </span>
+                                            <span className="text-[11px] opacity-70 block font-mono truncate">
+                                                {item.user?.email || "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {/* User Meta Card */}
-                                <div
-                                    className={`md:text-right border-t md:border-t-0 pt-4 md:pt-0 md:pl-6 flex flex-col justify-center gap-0.5 text-xs ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}
-                                >
-                                    <span className="font-bold tracking-wide">
-                                        {item.user?.business_name ? `${item.user.business_name} (${item.user.name})` : item.user?.name || "Customer"}
-                                    </span>
-                                    <span className="text-[11px] opacity-60 font-mono">
-                                        {item.user?.email || "N/A"}
-                                    </span>
-                                    <span className="text-[10px] opacity-40 mt-2">
-                                        {new Date(
-                                            item.created_at,
-                                        ).toLocaleDateString(undefined, {
-                                            dateStyle: "medium",
-                                        })}
-                                    </span>
+                                {/* Actions & Date Section */}
+                                <div className="lg:w-56 flex flex-col justify-between items-stretch lg:items-end gap-4 border-t lg:border-t-0 pt-4 lg:pt-0 lg:pl-6 lg:border-l border-inherit">
+                                    <div className="text-left lg:text-right text-[11px] text-slate-400">
+                                        <span className="block text-[10px] uppercase font-bold text-slate-500">
+                                            Submitted
+                                        </span>
+                                        <span>
+                                            {new Date(item.created_at).toLocaleDateString("en-US", {
+                                                year: "numeric",
+                                                month: "short",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </span>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col gap-2 w-full">
+                                        {!item.is_approved ? (
+                                            <button
+                                                onClick={() => handleApprove(item.id)}
+                                                className="w-full px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer"
+                                            >
+                                                <svg
+                                                    className="w-4 h-4"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth={2.2}
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M4.5 12.75l6 6 9-13.5"
+                                                    />
+                                                </svg>
+                                                <span>Approve & Publish</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleUnapprove(item.id)}
+                                                className={`w-full px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                                    isDarkMode
+                                                        ? "border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300"
+                                                        : "border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                                }`}
+                                            >
+                                                <svg
+                                                    className="w-4 h-4"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth={2}
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                                                    />
+                                                </svg>
+                                                <span>Unpublish / Hide</span>
+                                            </button>
+                                        )}
+
+                                        <button
+                                            onClick={() => handleDelete(item.id, item.item_name)}
+                                            className="w-full px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white border border-red-500/20 hover:border-transparent flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                        >
+                                            <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                strokeWidth={2}
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                                                />
+                                            </svg>
+                                            <span>Delete Story</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
