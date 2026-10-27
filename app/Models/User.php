@@ -25,7 +25,23 @@ class User extends Authenticatable
         'address',
         'mobile_number',
         'role',
+        'customer_id',
     ];
+
+    /**
+     * Auto-generate a unique Customer ID on creation.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($user) {
+            if (empty($user->customer_id)) {
+                $user->customer_id = 'NXS-' . str_pad($user->id, 5, '0', STR_PAD_LEFT);
+                $user->saveQuietly();
+            }
+        });
+    }
 
     /**
      * The attributes that should be hidden for serialization.

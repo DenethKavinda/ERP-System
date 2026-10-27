@@ -430,7 +430,7 @@ export default function Dashboard({
                                         <span>Change Plan</span>
                                     </button>
                                     <a
-                                        href={`https://wa.me/94777674308?text=${encodeURIComponent("Hello, I would like to manage/cancel my ERP subscription. My account: " + (auth?.user?.email || "") + ". Thank you.")}`}
+                                        href={`https://wa.me/94777674308?text=${encodeURIComponent("Customer ID: " + (auth?.user?.customer_id || "N/A") + "\nBusiness: " + (auth?.user?.business_name || auth?.user?.name || "N/A") + "\n\nHello, I would like to manage/cancel my ERP subscription. Thank you.")}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className={`px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider border transition-all flex items-center justify-center gap-2 cursor-pointer ${
