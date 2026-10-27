@@ -177,12 +177,15 @@ export default function Transactions({ auth, payments = [] }) {
                             )}
                         </div>
 
-                        {/* 📊 EXCEL EXPORT ACTION BUTTON */}
+                        {/* EXCEL EXPORT ACTION BUTTON */}
                         <button
                             onClick={handleExportExcel}
-                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
                         >
-                            <span>📥 Export Excel Data</span>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            <span>Export Excel Data</span>
                         </button>
                     </div>
 

@@ -27,7 +27,6 @@ class DashboardController extends Controller
 
         if ($user) {
             $latestPayment = Payment::where('user_id', $user->id)
-                ->where('status', 'Completed')
                 ->latest()
                 ->first();
 
@@ -56,11 +55,17 @@ class DashboardController extends Controller
                 ];
             }
 
+            $isActive = $latestPayment 
+                && $latestPayment->status === 'Completed' 
+                && $latestPayment->expires_at 
+                && $latestPayment->expires_at->isFuture();
+
             $activeSubscription = [
                 'plan_name'   => $planName,
                 'order_id'    => $latestPayment ? $latestPayment->order_id : 'TRIAL',
-                'expires_at'  => $latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : now()->addDays(30)->toIso8601String(),
-                'is_active'   => true,
+                'expires_at'  => $latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : null,
+                'is_active'   => (bool)$isActive,
+                'status'      => $isActive ? 'active' : 'expired',
                 'limits'      => $planLimits,
                 'usage'       => [
                     'branches'   => 1,

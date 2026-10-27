@@ -65,26 +65,51 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ==========================================
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
-    // Administrative Dashboard Control System
-    Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
-    Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
-    Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
-    Route::put('/dashboard-manager/{id}', [DashboardController::class, 'update'])->name('dashboard.update');
+    // Super Admin Operations Dashboard
+    Route::get('/dashboard', function () {
+        $totalCustomers = \App\Models\User::where('role', 'user')->count();
+        $activeCount = \App\Models\Payment::where('status', 'Completed')
+            ->where('expires_at', '>', now())
+            ->distinct('user_id')
+            ->count('user_id');
+        $expiredCount = max(0, $totalCustomers - $activeCount);
+        $totalRevenue = \App\Models\Payment::where('status', 'Completed')->sum('amount');
+        $packagesCount = \App\Models\ErpPackage::count();
 
-    // Packages Management
-    Route::get('/packages', [DashboardController::class, 'adminPackagesIndex'])->name('packages.manager');
-    Route::post('/packages/cart', [DashboardController::class, 'storeCart'])->name('packages.cart.store');
-    Route::post('/packages/item', [DashboardController::class, 'storePackage'])->name('packages.item.store');
-    Route::delete('/packages/cart/{id}', [DashboardController::class, 'destroyCart'])->name('packages.cart.destroy');
-    Route::put('/packages/cart/{id}', [DashboardController::class, 'updateCart'])->name('packages.cart.update');
-    Route::delete('/packages/item/{id}', [DashboardController::class, 'destroyPackage'])->name('packages.item.destroy');
-    Route::put('/packages/item/{id}', [DashboardController::class, 'updatePackage'])->name('packages.item.update');
+        $recentSubscribers = \App\Models\User::where('role', 'user')
+            ->orderBy('created_at', 'desc')
+            ->take(6)
+            ->get()
+            ->map(function ($u) {
+                $p = \App\Models\Payment::where('user_id', $u->id)->latest()->first();
+                return [
+                    'id'            => $u->id,
+                    'customer_id'   => $u->customer_id,
+                    'name'          => $u->name,
+                    'business_name' => $u->business_name,
+                    'email'         => $u->email,
+                    'plan_name'     => $p?->package_name ?? 'No Plan',
+                    'is_active'     => (bool)($p && $p->status === 'Completed' && $p->expires_at && $p->expires_at->isFuture()),
+                    'created_at'    => $u->created_at->toIso8601String(),
+                ];
+            });
 
-    // Service Management Panels
-    Route::get('/adminservices', [ServiceController::class, 'adminIndex'])->name('services.index');
-    Route::post('/adminservices', [ServiceController::class, 'store'])->name('services.store');
-    Route::delete('/adminservices/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
-    Route::put('/adminservices/{id}', [ServiceController::class, 'update'])->name('services.update');
+        return Inertia::render('Admin/AdminDashboard', [
+            'metrics' => [
+                'totalCustomers' => $totalCustomers,
+                'activeCount'    => $activeCount,
+                'expiredCount'   => $expiredCount,
+                'totalRevenue'   => $totalRevenue,
+                'packagesCount'  => $packagesCount,
+            ],
+            'recentSubscribers' => $recentSubscribers,
+        ]);
+    })->name('dashboard');
+
+    // Legacy redirects to keep bookmarks working
+    Route::get('/dashboard-manager', fn() => redirect()->route('admin.dashboard'))->name('dashboard.manager');
+    Route::get('/packages', fn() => redirect()->route('admin.packages.index'))->name('packages.manager');
+    Route::get('/adminservices', fn() => redirect()->route('admin.dashboard'))->name('services.index');
 
     // Administrative Workspace Engine Routes
     Route::get('/erp-packages', [ErpPackageController::class, 'adminIndex'])->name('packages.index');

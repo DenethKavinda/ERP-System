@@ -29,10 +29,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $isSubscriptionActive = false;
+
+        if ($user) {
+            if ($user->role === 'admin') {
+                $isSubscriptionActive = true;
+            } else {
+                $latestPayment = \App\Models\Payment::where('user_id', $user->id)
+                    ->where('status', 'Completed')
+                    ->latest()
+                    ->first();
+                $isSubscriptionActive = (bool)($latestPayment && $latestPayment->expires_at && $latestPayment->expires_at->isFuture());
+            }
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'isSubscriptionActive' => $isSubscriptionActive,
             ],
             'erpAppUrl' => config('services.erp.app_url', 'http://localhost:5173'),
         ];

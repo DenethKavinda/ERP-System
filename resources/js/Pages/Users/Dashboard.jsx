@@ -289,7 +289,7 @@ export default function Dashboard({
                             Manage your active subscription, expand capacity limits, download tax receipts, and launch your central ERP business operations.
                         </p>
                         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                            {auth?.user ? (
+                            {auth?.user && activeSubscription?.is_active ? (
                                 <>
                                     <a
                                         href={erpAppUrl}
@@ -317,6 +317,26 @@ export default function Dashboard({
                                         className="px-6 py-3.5 bg-slate-900/80 hover:bg-slate-800 text-white border border-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-all backdrop-blur-sm flex items-center justify-center cursor-pointer"
                                     >
                                         <span>Upgrade / Change Plan</span>
+                                    </button>
+                                </>
+                            ) : auth?.user && !activeSubscription?.is_active ? (
+                                <>
+                                    <a
+                                        href={`https://wa.me/94777674308?text=${encodeURIComponent("Customer ID: " + (auth?.user?.customer_id || "N/A") + "\nBusiness: " + (auth?.user?.business_name || auth?.user?.name || "N/A") + "\n\nHello, my ERP subscription has expired. I would like to reactivate my plan via WhatsApp. Thank you.")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-red-600/25 flex items-center gap-2.5 transition-all cursor-pointer"
+                                    >
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                        </svg>
+                                        <span>Subscription Expired - Reactivate via WhatsApp</span>
+                                    </a>
+                                    <button
+                                        onClick={() => handleNavigate("/ERP")}
+                                        className="px-6 py-3.5 bg-slate-900/80 hover:bg-slate-800 text-white border border-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-all backdrop-blur-sm flex items-center justify-center cursor-pointer"
+                                    >
+                                        <span>Change Plan</span>
                                     </button>
                                 </>
                             ) : (
@@ -363,7 +383,30 @@ export default function Dashboard({
                                     : "bg-gradient-to-br from-white via-orange-50/20 to-amber-50/30 border-orange-100 shadow-orange-500/5"
                             }`}
                         >
-                            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500" />
+                            <div className={`absolute top-0 left-0 right-0 h-1.5 ${
+                                activeSubscription.is_active
+                                    ? "bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500"
+                                    : "bg-red-500"
+                            }`} />
+
+                            {!activeSubscription.is_active && (
+                                <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                        </svg>
+                                        <span>Your subscription has expired or is currently locked. ERP system access is suspended. Please contact us via WhatsApp to reactivate.</span>
+                                    </div>
+                                    <a
+                                        href={`https://wa.me/94777674308?text=${encodeURIComponent("Customer ID: " + (auth?.user?.customer_id || "N/A") + "\nBusiness: " + (auth?.user?.business_name || auth?.user?.name || "N/A") + "\n\nHello, my ERP subscription has expired. I would like to reactivate my plan via WhatsApp. Thank you.")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shrink-0 shadow-xs cursor-pointer"
+                                    >
+                                        Reactivate on WhatsApp
+                                    </a>
+                                </div>
+                            )}
 
                             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-inherit">
                                 <div className="space-y-2">
@@ -371,10 +414,17 @@ export default function Dashboard({
                                         <span className="px-3 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-black uppercase tracking-wider rounded-lg shadow-sm">
                                             {activeSubscription.plan_name}
                                         </span>
-                                        <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            Active License
-                                        </span>
+                                        {activeSubscription.is_active ? (
+                                            <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                Active License
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-red-500 bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20">
+                                                <span className="w-2 h-2 rounded-full bg-red-500" />
+                                                Subscription Expired
+                                            </span>
+                                        )}
                                     </div>
                                     <h3
                                         className={`text-xl sm:text-2xl font-black tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}
@@ -398,27 +448,41 @@ export default function Dashboard({
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                                    <a
-                                        href={erpAppUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex-1 sm:flex-initial px-5 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
-                                    >
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                            strokeWidth={2.2}
+                                    {activeSubscription.is_active ? (
+                                        <a
+                                            href={erpAppUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 sm:flex-initial px-5 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                                            />
-                                        </svg>
-                                        <span>Open ERP System</span>
-                                    </a>
+                                            <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                strokeWidth={2.2}
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                                />
+                                            </svg>
+                                            <span>Open ERP System</span>
+                                        </a>
+                                    ) : (
+                                        <a
+                                            href={`https://wa.me/94777674308?text=${encodeURIComponent("Customer ID: " + (auth?.user?.customer_id || "N/A") + "\nBusiness: " + (auth?.user?.business_name || auth?.user?.name || "N/A") + "\n\nHello, my ERP subscription has expired. I would like to reactivate my plan via WhatsApp. Thank you.")}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 sm:flex-initial px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-red-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                        >
+                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                            </svg>
+                                            <span>Reactivate via WhatsApp</span>
+                                        </a>
+                                    )}
                                     <button
                                         onClick={() => handleNavigate("/ERP")}
                                         className={`px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider border transition-all flex items-center justify-center cursor-pointer ${

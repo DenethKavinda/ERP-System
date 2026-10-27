@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useForm, router } from "@inertiajs/react";
 import Sidebar from "../../Components/Sidebar";
 
@@ -391,34 +391,49 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                     </div>
                 </div>
 
-                {/* TAB NAVIGATION BAR */}
+                {/* TAB NAVIGATION BAR - Only shows editor tabs when editing/creating a package */}
                 <div className={`shrink-0 px-6 border-b ${isDarkMode ? "bg-slate-800/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
                     <div className="flex items-center gap-1 max-w-7xl mx-auto -mb-px">
-                        {TABS.map((tab) => {
-                            const isActive = activeTab === tab.id;
-                            return (
+                        {!isEditorTab ? (
+                            <div className="flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-orange-500 text-orange-500">
+                                <TabIcon type="grid" className="w-3.5 h-3.5" />
+                                <span>Catalog</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-orange-500/10 text-orange-500">
+                                    {packages.length}
+                                </span>
+                            </div>
+                        ) : (
+                            <>
                                 <button
-                                    key={tab.id}
                                     type="button"
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-                                        isActive
-                                            ? "border-orange-500 text-orange-500"
-                                            : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300"
-                                    }`}
+                                    onClick={handleCancelEdit}
+                                    className="flex items-center gap-1.5 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer mr-2 border-b-2 border-transparent"
                                 >
-                                    <TabIcon type={tab.icon} className="w-3.5 h-3.5" />
-                                    <span>{tab.label}</span>
-                                    {tab.id === "catalog" && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
-                                            isActive ? "bg-orange-500/10 text-orange-500" : "bg-slate-200 dark:bg-slate-700 text-slate-400"
-                                        }`}>
-                                            {packages.length}
-                                        </span>
-                                    )}
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                                    </svg>
+                                    <span>Catalog</span>
                                 </button>
-                            );
-                        })}
+                                {editorTabs.map((tab) => {
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                                                isActive
+                                                    ? "border-orange-500 text-orange-500"
+                                                    : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300"
+                                            }`}
+                                        >
+                                            <TabIcon type={tab.icon} className="w-3.5 h-3.5" />
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </>
+                        )}
 
                         {/* Step progress indicator for editor tabs */}
                         {isEditorTab && (
@@ -548,6 +563,18 @@ export default function AdminPackages({ packages = [], isDarkMode = false }) {
                                                     </button>
                                                 ))}
                                             </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    handleCancelEdit();
+                                                    setActiveTab("general");
+                                                    setShowPreview(true);
+                                                }}
+                                                className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg bg-orange-500 hover:bg-orange-600 text-white shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer ml-1"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                                <span>New Package</span>
+                                            </button>
                                         </div>
                                     </div>
 
