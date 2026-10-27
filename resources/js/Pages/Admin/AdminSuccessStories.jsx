@@ -25,7 +25,7 @@ export default function AdminSuccessStories({ feedbacks = [] }) {
 
     const handleApprove = (id) => {
         router.post(
-            route("admin.success.stories.approve", id),
+            `/admin/success-stories/${id}/approve`,
             {},
             { preserveScroll: true },
         );
@@ -33,7 +33,7 @@ export default function AdminSuccessStories({ feedbacks = [] }) {
 
     const handleUnapprove = (id) => {
         router.post(
-            route("admin.success.stories.unapprove", id),
+            `/admin/success-stories/${id}/unapprove`,
             {},
             { preserveScroll: true },
         );
@@ -45,7 +45,7 @@ export default function AdminSuccessStories({ feedbacks = [] }) {
                 `Are you sure you want to permanently delete this success story for "${itemName}"? This cannot be undone.`,
             )
         ) {
-            router.delete(route("admin.success.stories.destroy", id), {
+            router.delete(`/admin/success-stories/${id}`, {
                 preserveScroll: true,
             });
         }
