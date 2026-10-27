@@ -78,7 +78,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
         $recentSubscribers = \App\Models\User::where('role', 'user')
             ->orderBy('created_at', 'desc')
-            ->take(6)
+            ->take(4)
             ->get()
             ->map(function ($u) {
                 $p = \App\Models\Payment::where('user_id', $u->id)->latest()->first();

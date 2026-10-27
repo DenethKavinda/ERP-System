@@ -241,7 +241,7 @@ export default function AdminDashboard({ auth, metrics = {}, recentSubscribers =
                                             </td>
                                         </tr>
                                     ) : (
-                                        recentSubscribers.map((sub) => (
+                                        recentSubscribers.slice(0, 4).map((sub) => (
                                             <tr key={sub.id} className={`transition-colors ${isDarkMode ? "hover:bg-slate-800/40" : "hover:bg-slate-50"}`}>
                                                 <td className="px-6 py-3 font-mono font-bold text-orange-600 text-xs">
                                                     {sub.customer_id || "-"}
