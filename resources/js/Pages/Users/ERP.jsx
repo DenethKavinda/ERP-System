@@ -352,11 +352,9 @@ export default function ERP({ auth, packages = [] }) {
             category: "Infrastructure, APIs & Enterprise SLAs",
             id: "enterprise",
             features: [
-                { name: "Dedicated Isolated Database", free: false, basic: false, pro: false, ent: "Dedicated (Isolated)" },
-                { name: "Custom Branded Portal & Web Address", free: false, basic: false, pro: false, ent: true },
                 { name: "External App & API Integrations", free: false, basic: false, pro: false, ent: true },
                 { name: "Platform Security Audit Logging", free: false, basic: false, pro: "Basic", ent: "Full Audit Trail" },
-                { name: "Granular Per-Module RBAC Permissions", free: false, basic: false, pro: true, ent: true },
+                { name: "Granular Custom Roles & Permission Control", free: false, basic: false, pro: true, ent: true },
                 { name: "Unlimited Branch & Warehouse Scaling", free: false, basic: false, pro: false, ent: true },
                 { name: "Service Master & Custom Invoicing", free: false, basic: false, pro: false, ent: true },
                 { name: "Support Channel & SLA Guarantee", free: "Community", basic: "Email (Next Day)", pro: "Phone & WhatsApp", ent: "24/7 Priority SLA" },
