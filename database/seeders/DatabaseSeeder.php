@@ -74,6 +74,7 @@ class DatabaseSeeder extends Seeder
                 'button_text' => 'View Ledger',
                 'description' => 'Access settlement logs, download signed tax invoices, and monitor active recurring subscription licenses.',
                 'accent_color' => 'from-cyan-500 to-blue-600',
+            ],
         ];
 
         foreach ($cards as $card) {
