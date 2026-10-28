@@ -96,8 +96,8 @@ class AuthController extends Controller
         );
 
         // Send credentials email
-        $erpUrl = config('services.erp.api_url', 'http://localhost:5173');
-        $erpAppUrl = env('ERP_APP_URL', 'http://localhost:5173');
+        $erpAppUrl = env('ERP_APP_URL', 'https://erp.codexpressitsolutions.com');
+        $portalUrl = config('app.url', 'https://portal.codexpressitsolutions.com');
 
         try {
             Mail::to($user->email)->send(new ErpCredentialsMail(
@@ -105,7 +105,8 @@ class AuthController extends Controller
                 $user->email,
                 $plainPassword,
                 $erpAppUrl,
-                $planName
+                $planName,
+                $portalUrl
             ));
         } catch (\Throwable $e) {
             Log::error('Failed to send ERP credentials email: ' . $e->getMessage());

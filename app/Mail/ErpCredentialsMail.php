@@ -16,6 +16,7 @@ class ErpCredentialsMail extends Mailable
     public string $loginEmail;
     public string $loginPassword;
     public string $erpUrl;
+    public string $portalUrl;
     public string $planName;
 
     /**
@@ -26,13 +27,15 @@ class ErpCredentialsMail extends Mailable
         string $loginEmail,
         string $loginPassword,
         string $erpUrl,
-        string $planName
+        string $planName,
+        string $portalUrl = ''
     ) {
         $this->userName      = $userName;
         $this->loginEmail    = $loginEmail;
         $this->loginPassword = $loginPassword;
         $this->erpUrl        = $erpUrl;
         $this->planName      = $planName;
+        $this->portalUrl     = $portalUrl ?: config('app.url', 'https://portal.codexpressitsolutions.com');
     }
 
     /**

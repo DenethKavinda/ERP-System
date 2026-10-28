@@ -77,12 +77,15 @@
                                 </tr>
                             </table>
 
-                            <!-- CTA Button -->
+                            <!-- CTA Buttons -->
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                                 <tr>
-                                    <td align="center">
-                                        <a href="{{ $erpUrl }}" style="display: inline-block; background: linear-gradient(135deg, #f97316, #f59e0b); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                                            Launch Nexus ERP System
+                                    <td align="center" style="padding: 6px;">
+                                        <a href="{{ $portalUrl }}/login" style="display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; text-decoration: none; padding: 13px 28px; border-radius: 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 4px;">
+                                            Sign In to Customer Portal
+                                        </a>
+                                        <a href="{{ $erpUrl }}" style="display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: #ffffff; text-decoration: none; padding: 13px 28px; border-radius: 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 4px;">
+                                            Launch ERP System
                                         </a>
                                     </td>
                                 </tr>
@@ -93,7 +96,7 @@
                                 <tr>
                                     <td style="background-color: #fefce8; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 16px;">
                                         <p style="margin: 0; font-size: 12px; color: #92400e; line-height: 1.5;">
-                                            <strong style="font-weight: 800;">Security Notice:</strong> For your protection, please change your password immediately after your first login. Navigate to <strong>Settings</strong> in the ERP system to update your credentials.
+                                            <strong style="font-weight: 800;">Security Notice:</strong> Your initial password was system-generated for high security. For your protection, please change your password after logging in. You can update your password at any time by going to <strong>Settings &rarr; Profile</strong>.
                                         </p>
                                     </td>
                                 </tr>
