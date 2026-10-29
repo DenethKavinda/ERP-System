@@ -99,7 +99,44 @@ export default function ERP({ auth, packages = [] }) {
     const getPackageLimits = (pkg) => {
         if (!pkg) return [];
 
-        // Check if database model provides structured limits
+        const pkgName = typeof pkg === "string" ? pkg : (pkg.name || "");
+        const code = (pkg.code || "").toLowerCase();
+
+        // 1. Identify standard plans by code or name first to ensure accurate limits
+        if (code === "free" || pkgName.includes("Free")) {
+            return [
+                { label: "1 Branch", icon: "store" },
+                { label: "1 Warehouse", icon: "warehouse" },
+                { label: "2 Users", icon: "users" },
+                { label: "100 Items & Bills", icon: "box" },
+            ];
+        }
+        if (code === "basic" || pkgName.includes("Basic")) {
+            return [
+                { label: "1 Branch", icon: "store" },
+                { label: "2 Warehouses", icon: "warehouse" },
+                { label: "5 Users", icon: "users" },
+                { label: "Unlimited Bills", icon: "box" },
+            ];
+        }
+        if (code === "pro" || pkgName.includes("Professional")) {
+            return [
+                { label: "5 Branches", icon: "store" },
+                { label: "10 Warehouses", icon: "warehouse" },
+                { label: "20 Users (RBAC)", icon: "users" },
+                { label: "Unlimited Bills", icon: "box" },
+            ];
+        }
+        if (code === "enterprise" || pkgName.includes("Enterprise") || pkgName.includes("Custom")) {
+            return [
+                { label: "Unlimited Branches", icon: "store" },
+                { label: "Unlimited Stores", icon: "warehouse" },
+                { label: "50+ Users", icon: "users" },
+                { label: "Unlimited Bills", icon: "box" },
+            ];
+        }
+
+        // 2. Custom packages with distinct database limits
         if (pkg.max_branches !== undefined && pkg.max_branches !== null) {
             const formatLimit = (val, singular, plural, unlimitedLabel = "Unlimited") => {
                 if (val === -1) return `${unlimitedLabel} ${plural}`;
@@ -108,40 +145,15 @@ export default function ERP({ auth, packages = [] }) {
             return [
                 { label: formatLimit(pkg.max_branches, "Branch", "Branches"), icon: "store" },
                 { label: formatLimit(pkg.max_warehouses, "Warehouse", "Warehouses"), icon: "warehouse" },
-                { label: pkg.max_users === -1 ? "Unlimited Users" : `${pkg.max_users} Users${pkg.code === "pro" || pkg.max_users >= 20 ? " (RBAC)" : ""}`, icon: "users" },
-                { label: pkg.max_monthly_bills === -1 ? "Unlimited Bills" : `${pkg.max_products && pkg.max_products !== -1 ? pkg.max_products : pkg.max_monthly_bills} Items & Bills`, icon: "box" },
+                { label: pkg.max_users === -1 ? "Unlimited Users" : `${pkg.max_users} Users`, icon: "users" },
+                { label: pkg.max_monthly_bills === -1 ? "Unlimited Bills" : `${pkg.max_monthly_bills} Bills`, icon: "box" },
             ];
         }
 
-        const pkgName = typeof pkg === "string" ? pkg : (pkg.name || "");
-        if (pkgName.includes("Free")) {
-            return [
-                { label: "1 Branch", icon: "store" },
-                { label: "1 Warehouse", icon: "warehouse" },
-                { label: "2 Users", icon: "users" },
-                { label: "100 Items & Bills", icon: "box" },
-            ];
-        }
-        if (pkgName.includes("Basic")) {
-            return [
-                { label: "1 Branch", icon: "store" },
-                { label: "2 Warehouses", icon: "warehouse" },
-                { label: "5 Users", icon: "users" },
-                { label: "Unlimited Bills", icon: "box" },
-            ];
-        }
-        if (pkgName.includes("Professional")) {
-            return [
-                { label: "5 Branches", icon: "store" },
-                { label: "10 Warehouses", icon: "warehouse" },
-                { label: "20 Users (RBAC)", icon: "users" },
-                { label: "Unlimited Bills", icon: "box" },
-            ];
-        }
         return [
-            { label: "Unlimited Branches", icon: "store" },
-            { label: "Unlimited Stores", icon: "warehouse" },
-            { label: "50+ Users", icon: "users" },
+            { label: "1 Branch", icon: "store" },
+            { label: "1 Warehouse", icon: "warehouse" },
+            { label: "2 Users", icon: "users" },
             { label: "Unlimited Bills", icon: "box" },
         ];
     };
@@ -343,7 +355,7 @@ export default function ERP({ auth, packages = [] }) {
             features: [
                 { name: "Daily Sales & Gross Profit Reports", free: "Sales Summary", basic: "Full Profit", pro: true, ent: true },
                 { name: "Financial Summary & Profit Tracking", free: false, basic: false, pro: true, ent: true },
-                { name: "Expense & Bank Account Management", free: false, basic: true, pro: true, ent: true },
+                { name: "Expense & Bank Account Management", free: false, basic: false, pro: true, ent: true },
                 { name: "Company Asset & Equipment Tracking", free: false, basic: false, pro: true, ent: true },
                 { name: "Multi-Branch Net Profit & Loss Reports", free: false, basic: false, pro: true, ent: true },
             ],
@@ -470,9 +482,10 @@ export default function ERP({ auth, packages = [] }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-7 items-stretch relative z-10 mb-20">
                             {packages.map((pkg) => {
                                 const isFree = Number(pkg.price) === 0;
-                                const isPopular = pkg.is_popular !== undefined && pkg.is_popular !== null
+                                const isProfessional = (pkg.code === "pro") || (pkg.name && pkg.name.includes("Professional"));
+                                const isPopular = isProfessional || (pkg.is_popular !== undefined && pkg.is_popular !== null
                                     ? Boolean(pkg.is_popular)
-                                    : pkg.name.includes("Professional");
+                                    : false);
                                 const audienceList = parseMeta(pkg.suitable_for);
                                 const featuresList = parseMeta(pkg.features).filter((f) => {
                                     const lower = f.toLowerCase();
@@ -499,8 +512,8 @@ export default function ERP({ auth, packages = [] }) {
                                         className={`rounded-2xl border p-6 sm:p-7 relative group transition-all duration-300 hover:shadow-2xl flex flex-col justify-between ${
                                             isPopular
                                                 ? isDarkMode
-                                                    ? "bg-slate-900/90 border-orange-500 shadow-orange-950/20 text-white ring-2 ring-orange-500/20"
-                                                    : "bg-white border-orange-500 shadow-xl shadow-orange-500/10 text-slate-900 ring-2 ring-orange-500/20"
+                                                    ? "bg-slate-900/90 border-orange-500 shadow-xl shadow-orange-950/40 text-white ring-2 ring-orange-500"
+                                                    : "bg-white border-orange-500 shadow-2xl shadow-orange-500/20 text-slate-900 ring-2 ring-orange-500"
                                                 : isDarkMode
                                                     ? "bg-slate-900/80 border-slate-800 text-white hover:border-orange-500/40"
                                                     : "bg-white/90 border-slate-200/80 text-slate-900 hover:border-orange-500/30"
@@ -508,8 +521,8 @@ export default function ERP({ auth, packages = [] }) {
                                     >
                                         {/* FLAGSHIP / POPULAR BADGE */}
                                         {(isPopular || pkg.badge_text) && (
-                                            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-md z-20 whitespace-nowrap">
-                                                {pkg.badge_text || t("erp.mostPopularFlagship")}
+                                            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-lg shadow-orange-500/30 z-20 whitespace-nowrap">
+                                                {isProfessional ? "BEST SELLING" : (pkg.badge_text || t("erp.mostPopularFlagship"))}
                                             </div>
                                         )}
 
