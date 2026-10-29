@@ -59,40 +59,34 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        $plan = strtolower($request->input('plan', 'free'));
+        $requestedPlan = strtolower($request->input('plan', 'free'));
         $cycle = $request->input('cycle', 'monthly');
 
-        // Resolve human-readable plan name
-        $planNames = [
-            'free'       => 'ERP Free Starter',
-            'basic'      => 'ERP Basic Essentials',
-            'pro'        => 'ERP Professional Growth',
-            'enterprise' => 'Enterprise Custom Core',
-        ];
-        $planName = $planNames[$plan] ?? 'ERP Free Starter';
+        // All public registrations begin as Free Starter 30-Day Evaluation Workspace.
+        // Paid tiers are activated manually by the Admin after offline bank payment verification.
+        $plan = 'free';
+        $planName = 'ERP Free Starter';
 
-        if ($plan === 'free' || empty($plan)) {
-            // Automatically activate 30-Day Free Starter Evaluation Plan
-            Payment::create([
-                'order_id'        => 'FREE_' . strtoupper(uniqid()),
-                'user_id'         => $user->id,
-                'package_name'    => 'ERP Free Starter',
-                'base_price'      => 0.00,
-                'addons_total'    => 0.00,
-                'amount'          => 0.00,
-                'currency'        => 'LKR',
-                'status'          => 'Completed',
-                'expires_at'      => now()->addDays(30),
-            ]);
-        }
+        // Automatically activate 30-Day Free Starter Evaluation Plan in local payments ledger
+        Payment::create([
+            'order_id'        => 'FREE_' . strtoupper(uniqid()),
+            'user_id'         => $user->id,
+            'package_name'    => 'ERP Free Starter',
+            'base_price'      => 0.00,
+            'addons_total'    => 0.00,
+            'amount'          => 0.00,
+            'currency'        => 'LKR',
+            'status'          => 'Completed',
+            'expires_at'      => now()->addDays(30),
+        ]);
 
-        // Provision user in the ERP System via server-to-server API
+        // Provision user in the ERP System via server-to-server API as Free Starter
         $erpProvisioned = $this->provisionErpAccount(
             $validated['name'],
             $validated['email'],
             $hashedPassword,
             $validated['business_name'] ?? null,
-            $plan
+            'free'
         );
 
         // Send credentials email
@@ -112,17 +106,13 @@ class AuthController extends Controller
             Log::error('Failed to send ERP credentials email: ' . $e->getMessage());
         }
 
-        if ($plan === 'free' || empty($plan)) {
-            return redirect()->route('dashboard')->with([
-                'new_account_activated' => true,
-                'erp_login_email'       => $user->email,
-                'erp_provisioned'       => $erpProvisioned,
-                'plan_name'             => $planName,
-            ]);
-        } else {
-            // For paid plans, redirect back to /ERP to complete payment with PayHere
-            return redirect('/ERP?checkout=' . urlencode($plan) . '&cycle=' . urlencode($cycle) . '&new_account=true');
-        }
+        return redirect()->route('dashboard')->with([
+            'new_account_activated' => true,
+            'erp_login_email'       => $user->email,
+            'erp_provisioned'       => $erpProvisioned,
+            'plan_name'             => $planName,
+            'requested_paid_plan'   => ($requestedPlan !== 'free') ? $requestedPlan : null,
+        ]);
     }
 
     /**

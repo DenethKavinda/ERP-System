@@ -11,8 +11,56 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CheckoutController;
 use Illuminate\Http\Request;
 use App\Models\Payment;
+use App\Models\User;
+use App\Models\ErpPackage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use App\Http\Controllers\SuccessStoryController;
 use App\Http\Controllers\landingController;
+
+if (!function_exists('syncErpSubscriptionToBackend')) {
+    /**
+     * Synchronize a subscriber package change or cancellation directly to the ERP Backend API.
+     */
+    function syncErpSubscriptionToBackend(string $email, string $planName, string $status = 'active', ?string $expiresAt = null, string $action = 'update'): bool {
+        $apiUrl = config('services.erp.api_url');
+        $provisioningKey = config('services.erp.provisioning_key');
+
+        if (empty($apiUrl) || empty($provisioningKey)) {
+            Log::warning('ERP subscription sync skipped: API URL or key not configured.');
+            return false;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'X-ERP-Provisioning-Key' => $provisioningKey,
+                'Accept'                 => 'application/json',
+                'Content-Type'           => 'application/json',
+            ])->timeout(15)->post("{$apiUrl}/api/internal/subscriptions/sync", [
+                'email'         => $email,
+                'plan'          => $planName,
+                'status'        => $status,
+                'expires_at'    => $expiresAt,
+                'action'        => $action,
+            ]);
+
+            if ($response->successful()) {
+                Log::info("ERP subscription synced successfully for {$email}", $response->json());
+                return true;
+            }
+
+            Log::error("ERP subscription sync failed for {$email}", [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error("ERP subscription sync exception for {$email}: " . $e->getMessage());
+            return false;
+        }
+    }
+}
 
 // ==========================================
 // 1. PUBLIC VIEW & PRICING ROUTES (Login Optional)
@@ -158,48 +206,91 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             'expires_at'   => 'nullable|date',
         ]);
 
-        $expiresAt = $request->expires_at ?: now()->addDays(30);
+        $user = User::findOrFail($id);
+        $expiresAt = $request->expires_at ? Carbon::parse($request->expires_at) : now()->addDays(30);
 
-        $latestPayment = \App\Models\Payment::where('user_id', $id)->latest()->first();
+        // Fetch official package price to maintain reliable revenue reporting
+        $pkg = ErpPackage::where('name', $request->package_name)
+            ->orWhere('code', strtolower($request->package_name))
+            ->first();
+        $basePrice = $pkg ? (float) $pkg->price : 0;
+
+        $latestPayment = Payment::where('user_id', $id)->latest()->first();
 
         if ($latestPayment) {
             $latestPayment->update([
                 'package_name' => $request->package_name,
                 'expires_at'   => $expiresAt,
                 'status'       => 'Completed',
+                'base_price'   => ($latestPayment->base_price == 0 && $basePrice > 0) ? $basePrice : $latestPayment->base_price,
+                'amount'       => ($latestPayment->amount == 0 && $basePrice > 0) ? $basePrice : $latestPayment->amount,
             ]);
         } else {
-            \App\Models\Payment::create([
+            Payment::create([
                 'order_id'     => 'ADMIN_' . strtoupper(uniqid()),
                 'user_id'      => $id,
                 'package_name' => $request->package_name,
-                'base_price'   => 0,
+                'base_price'   => $basePrice,
                 'addons_total' => 0,
-                'amount'       => 0,
+                'amount'       => $basePrice,
                 'currency'     => 'LKR',
                 'status'       => 'Completed',
                 'expires_at'   => $expiresAt,
             ]);
         }
 
+        // Atomically synchronize package and status to ERP Backend
+        syncErpSubscriptionToBackend(
+            $user->email,
+            $request->package_name,
+            'active',
+            $expiresAt->toIso8601String(),
+            'update'
+        );
+
         return redirect()->back();
     })->name('subscribers.update');
 
-    // Terminate (expire immediately)
+    // Terminate (expire immediately and suspend ERP access)
     Route::post('/subscribers/{id}/terminate', function ($id) {
-        $payment = \App\Models\Payment::where('user_id', $id)->latest()->first();
+        $user = User::findOrFail($id);
+        $payment = Payment::where('user_id', $id)->latest()->first();
         if ($payment) {
             $payment->update(['expires_at' => now()->subDay(), 'status' => 'Terminated']);
         }
+
+        // Atomically sync cancellation to ERP Backend
+        syncErpSubscriptionToBackend(
+            $user->email,
+            'free',
+            'cancelled',
+            now()->subDay()->toIso8601String(),
+            'terminate'
+        );
+
         return redirect()->back();
     })->name('subscribers.terminate');
 
-    // Reactivate (30 days from now)
+    // Reactivate (30 days from now and restore ERP access)
     Route::post('/subscribers/{id}/reactivate', function ($id) {
-        $payment = \App\Models\Payment::where('user_id', $id)->latest()->first();
+        $user = User::findOrFail($id);
+        $payment = Payment::where('user_id', $id)->latest()->first();
+        $reactivatePlan = $payment ? $payment->package_name : 'ERP Free Starter';
+        $expiresAt = now()->addDays(30);
+
         if ($payment) {
-            $payment->update(['expires_at' => now()->addDays(30), 'status' => 'Completed']);
+            $payment->update(['expires_at' => $expiresAt, 'status' => 'Completed']);
         }
+
+        // Atomically sync reactivation to ERP Backend
+        syncErpSubscriptionToBackend(
+            $user->email,
+            $reactivatePlan,
+            'active',
+            $expiresAt->toIso8601String(),
+            'reactivate'
+        );
+
         return redirect()->back();
     })->name('subscribers.reactivate');
 

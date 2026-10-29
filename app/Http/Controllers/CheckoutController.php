@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Service; // Reference to Service.php model
 use App\Models\Payment; // Your database model tracking layer
+use App\Models\ErpPackage; // Reference to official packages
 use Illuminate\Support\Facades\Auth; // Pull the Auth Facade class hook
 use Barryvdh\DomPDF\Facade\Pdf; // Pull the DOMPDF compiler facade string
 use Carbon\Carbon; // 🕒 Handles local Sri Lankan times layout calculations
@@ -147,15 +148,36 @@ class CheckoutController extends Controller
     public function initialize(Request $request)
     {
         $request->validate([
-            'package_id' => 'required',
-            'package_name' => 'required|string',
-            'base_price' => 'required|numeric',
-            'addon_ids' => 'nullable|array',
+            'package_id'    => 'required',
+            'package_name'  => 'required|string',
+            'base_price'    => 'nullable|numeric',
+            'addon_ids'     => 'nullable|array',
+            'billing_cycle' => 'nullable|string',
         ]);
 
         $orderId = 'ORD_' . uniqid();
 
-        $basePrice = (float) $request->base_price;
+        // Server-side package verification to prevent client-side price tampering
+        $package = ErpPackage::where('id', $request->package_id)
+            ->orWhere('code', strtolower((string) $request->package_id))
+            ->orWhere('name', $request->package_name)
+            ->first();
+
+        $billingCycle = strtolower((string) $request->get('billing_cycle', 'monthly'));
+        $isAnnual = in_array($billingCycle, ['annual', 'yearly']);
+
+        if ($package) {
+            $officialMonthly = (float) $package->price;
+            $expectedBasePrice = $isAnnual ? ($officialMonthly * 10) : $officialMonthly;
+            $isFreePlan = ($package->code === 'free' || $officialMonthly == 0);
+        } else {
+            $isFreePlan = str_contains(strtolower($request->package_name), 'free');
+            $expectedBasePrice = $isFreePlan ? 0.00 : (float) $request->base_price;
+        }
+
+        // Enforce verified base price (cannot be 0 unless it is authentically the Free plan)
+        $basePrice = $isFreePlan ? 0.00 : max($expectedBasePrice, 1.00);
+
         $addonsTotal = 0.00;
         $addonsManifestArray = [];
 
@@ -181,7 +203,7 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
 
-        // 🛠️ Storing transaction with 'pending' status until PayHere settlement confirmation
+        // Storing transaction with 'pending' status until PayHere settlement confirmation
         $payment = Payment::create([
             'order_id' => $orderId,
             'user_id' => $user ? $user->id : null,
@@ -194,16 +216,20 @@ class CheckoutController extends Controller
             'status' => 'pending',
 
             // Automatically calculate expiration (1 year for annual, 30 days for monthly / trial)
-            'expires_at'      => $request->get('billing_cycle') === 'annual' ? now()->addYear() : now()->addDays(30),
+            'expires_at' => $isAnnual ? now()->addYear() : now()->addDays(30),
         ]);
 
-        if ($totalAmount <= 0) {
+        if ($isFreePlan && $totalAmount <= 0) {
             $payment->update(['status' => 'Completed']);
             return response()->json([
                 'is_free' => true,
                 'order_id' => $orderId,
                 'message' => 'Free Plan activated successfully!'
             ]);
+        }
+
+        if ($totalAmount <= 0) {
+            return response()->json(['error' => 'Invalid transaction amount for paid package.'], 422);
         }
 
         $paymentData = [
