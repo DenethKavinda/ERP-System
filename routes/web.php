@@ -203,6 +203,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
         return Inertia::render('Admin/Subscribers', [
             'subscribers' => $users,
+            'packages'    => \App\Models\ErpPackage::orderBy('price', 'asc')->get(['id', 'name', 'code', 'price', 'annual_price']),
         ]);
     })->name('subscribers.index');
 

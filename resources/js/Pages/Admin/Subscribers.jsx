@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Head, router } from "@inertiajs/react";
 import Sidebar from "@/Components/Sidebar";
 
-export default function Subscribers({ auth, subscribers = [] }) {
+export default function Subscribers({ auth, subscribers = [], packages = [] }) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -35,13 +35,19 @@ export default function Subscribers({ auth, subscribers = [] }) {
     }, [subscribers, search, statusFilter]);
 
     const getStandardPrice = (planName, cycle) => {
-        const prices = {
+        const found = packages.find(p => p.name === planName || p.code === planName);
+        if (found) {
+            return cycle === 'annual'
+                ? (found.annual_price ? Number(found.annual_price) : Number(found.price) * 10)
+                : Number(found.price);
+        }
+        const fallback = {
             "ERP Free Starter": { monthly: 0, annual: 0 },
             "ERP Basic Essentials": { monthly: 45000, annual: 450000 },
-            "ERP Professional Growth": { monthly: 85000, annual: 850000 },
-            "Enterprise Custom Core": { monthly: 180000, annual: 1800000 },
+            "ERP Professional Growth": { monthly: 95000, annual: 950000 },
+            "Enterprise Custom Core": { monthly: 195000, annual: 1950000 },
         };
-        return prices[planName]?.[cycle] ?? 0;
+        return fallback[planName]?.[cycle] ?? 0;
     };
 
     const openEditModal = (sub) => {
@@ -474,10 +480,20 @@ export default function Subscribers({ auth, subscribers = [] }) {
                                             onChange={(e) => handlePlanChange(e.target.value)}
                                             className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white font-medium"
                                         >
-                                            <option value="ERP Free Starter">ERP Free Starter (LKR 0)</option>
-                                            <option value="ERP Basic Essentials">ERP Basic Essentials (LKR 45,000/mo)</option>
-                                            <option value="ERP Professional Growth">ERP Professional Growth (LKR 85,000/mo)</option>
-                                            <option value="Enterprise Custom Core">Enterprise Custom Core (LKR 180,000/mo)</option>
+                                            {packages && packages.length > 0 ? (
+                                                packages.map((pkg) => (
+                                                    <option key={pkg.id} value={pkg.name}>
+                                                        {pkg.name} ({pkg.price > 0 ? `LKR ${Number(pkg.price).toLocaleString()}/mo` : 'Free'})
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <>
+                                                    <option value="ERP Free Starter">ERP Free Starter (LKR 0)</option>
+                                                    <option value="ERP Basic Essentials">ERP Basic Essentials (LKR 45,000/mo)</option>
+                                                    <option value="ERP Professional Growth">ERP Professional Growth (LKR 95,000/mo)</option>
+                                                    <option value="Enterprise Custom Core">Enterprise Custom Core (LKR 195,000/mo)</option>
+                                                </>
+                                            )}
                                         </select>
                                     </div>
 
