@@ -128,10 +128,27 @@ class CheckoutController extends Controller
 
             if ($payment) {
                 if ($statusCode == 2) {
+                    $manifest = is_array($payment->addons_manifest) ? $payment->addons_manifest : [];
+                    $cycle = $manifest['billing_cycle'] ?? 'monthly';
+                    $expiresAt = $cycle === 'annual' ? now()->addYear() : now()->addDays(30);
+
                     $payment->update([
-                        'status' => 'Completed',
-                        'payment_id' => $request->get('payment_id')
+                        'status'     => 'Completed',
+                        'payment_id' => $request->get('payment_id'),
+                        'expires_at' => $expiresAt,
                     ]);
+
+                    // Sync paid package directly to ERP Backend API
+                    if ($payment->user && function_exists('syncErpSubscriptionToBackend')) {
+                        syncErpSubscriptionToBackend(
+                            $payment->user->email,
+                            $payment->package_name,
+                            'active',
+                            $expiresAt->toIso8601String(),
+                            'update',
+                            $cycle
+                        );
+                    }
                 } else {
                     $payment->update(['status' => 'failed']);
                 }
@@ -149,7 +166,7 @@ class CheckoutController extends Controller
     {
         $request->validate([
             'package_id'    => 'required',
-            'package_name'  => 'required|string',
+            'package_name'  => 'nullable|string',
             'base_price'    => 'nullable|numeric',
             'addon_ids'     => 'nullable|array',
             'billing_cycle' => 'nullable|string',
@@ -157,26 +174,42 @@ class CheckoutController extends Controller
 
         $orderId = 'ORD_' . uniqid();
 
-        // Server-side package verification to prevent client-side price tampering
-        $package = ErpPackage::where('id', $request->package_id)
-            ->orWhere('code', strtolower((string) $request->package_id))
-            ->orWhere('name', $request->package_name)
-            ->first();
+        // Resolve package strictly from database — never trust client-submitted pricing
+        $package = null;
+        if (is_numeric($request->package_id)) {
+            $package = ErpPackage::find($request->package_id);
+        }
+        if (!$package && is_string($request->package_id)) {
+            $package = ErpPackage::where('code', strtolower(trim($request->package_id)))->first();
+        }
+        if (!$package && $request->filled('package_name')) {
+            $cleanName = preg_replace('/\s*\((Monthly|Yearly|Annual|Annual Prepay)\)/i', '', $request->package_name);
+            $package = ErpPackage::where('name', trim($cleanName))
+                ->orWhere('code', strtolower(trim($cleanName)))
+                ->first();
+        }
+
+        if (!$package) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or unrecognized ERP package selected.'
+            ], 422);
+        }
 
         $billingCycle = strtolower((string) $request->get('billing_cycle', 'monthly'));
         $isAnnual = in_array($billingCycle, ['annual', 'yearly']);
 
-        if ($package) {
-            $officialMonthly = (float) $package->price;
-            $expectedBasePrice = $isAnnual ? ($officialMonthly * 10) : $officialMonthly;
-            $isFreePlan = ($package->code === 'free' || $officialMonthly == 0);
-        } else {
-            $isFreePlan = str_contains(strtolower($request->package_name), 'free');
-            $expectedBasePrice = $isFreePlan ? 0.00 : (float) $request->base_price;
-        }
+        // Derive package name authoritatively from the database record
+        $packageName = $package->name . ($isAnnual ? ' (Annual Prepay)' : ' (Monthly)');
 
-        // Enforce verified base price (cannot be 0 unless it is authentically the Free plan)
-        $basePrice = $isFreePlan ? 0.00 : max($expectedBasePrice, 1.00);
+        $officialMonthly = (float) $package->price;
+        $isFreePlan = ($package->code === 'free' || $officialMonthly == 0);
+
+        if ($isFreePlan) {
+            $basePrice = 0.00;
+        } else {
+            $basePrice = $isAnnual ? round($officialMonthly * 10, 2) : $officialMonthly;
+        }
 
         $addonsTotal = 0.00;
         $addonsManifestArray = [];
@@ -205,26 +238,34 @@ class CheckoutController extends Controller
 
         // Storing transaction with 'pending' status until PayHere settlement confirmation
         $payment = Payment::create([
-            'order_id' => $orderId,
-            'user_id' => $user ? $user->id : null,
-            'package_name' => $request->package_name,
-            'base_price' => $basePrice,
-            'addons_total' => $addonsTotal,
-            'addons_manifest' => $addonsManifestArray,
-            'amount' => $totalAmount,
-            'currency' => 'LKR',
-            'status' => 'pending',
+            'order_id'        => $orderId,
+            'user_id'         => $user ? $user->id : null,
+            'package_name'    => $packageName,
+            'base_price'      => $basePrice,
+            'addons_total'    => $addonsTotal,
+            'addons_manifest' => [
+                'items'         => $addonsManifestArray,
+                'billing_cycle' => $isAnnual ? 'annual' : 'monthly',
+                'package_code'  => $package->code,
+            ],
+            'amount'          => $totalAmount,
+            'currency'        => 'LKR',
+            'status'          => 'pending',
 
             // Automatically calculate expiration (1 year for annual, 30 days for monthly / trial)
-            'expires_at' => $isAnnual ? now()->addYear() : now()->addDays(30),
+            'expires_at'      => $isAnnual ? now()->addYear() : now()->addDays(30),
         ]);
 
         if ($isFreePlan && $totalAmount <= 0) {
-            $payment->update(['status' => 'Completed']);
+            $payment->update([
+                'status'     => 'Completed',
+                'expires_at' => now()->addDays($package->trial_days ?: 30),
+            ]);
             return response()->json([
-                'is_free' => true,
-                'order_id' => $orderId,
-                'message' => 'Free Plan activated successfully!'
+                'is_free'      => true,
+                'order_id'     => $orderId,
+                'redirect_url' => route('dashboard'),
+                'message'      => 'Free Plan activated successfully!'
             ]);
         }
 

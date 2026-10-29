@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Head, router } from "@inertiajs/react";
 import Sidebar from "@/Components/Sidebar";
 
-export default function Subscribers({ auth, subscribers = [], packages = [] }) {
+export default function Subscribers({ auth, subscribers = [], packages = [], flash = {} }) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -52,8 +52,23 @@ export default function Subscribers({ auth, subscribers = [], packages = [] }) {
 
     const openEditModal = (sub) => {
         setSelectedSub(sub);
-        const plan = sub.plan_name && sub.plan_name !== "No Plan" ? sub.plan_name : "ERP Professional Growth";
-        const cycle = sub.billing_cycle || "monthly";
+        const rawPlan = sub.plan_name && sub.plan_name !== "No Plan" ? sub.plan_name : "ERP Professional Growth";
+        // Strip billing cycle suffixes e.g. " (Monthly)" or " (Annual Prepay)"
+        const cleanPlan = rawPlan.replace(/\s*\((Monthly|Yearly|Annual|Annual Prepay)\)/i, '').trim();
+        
+        // Match against valid packages from the database or map fuzzy
+        const match = packages.find(p => p.name.toLowerCase() === cleanPlan.toLowerCase() || p.code === cleanPlan.toLowerCase());
+        const plan = match ? match.name : (
+            cleanPlan.toLowerCase().includes("enterprise") ? "Enterprise Custom Core" :
+            cleanPlan.toLowerCase().includes("pro") ? "ERP Professional Growth" :
+            cleanPlan.toLowerCase().includes("basic") ? "ERP Basic Essentials" : "ERP Free Starter"
+        );
+
+        let cycle = sub.billing_cycle || "monthly";
+        if (rawPlan.toLowerCase().includes("annual") || rawPlan.toLowerCase().includes("yearly")) {
+            cycle = "annual";
+        }
+
         setEditPlan(plan);
         setEditCycle(cycle);
         setEditBankRef(sub.bank_ref || "");
@@ -148,6 +163,18 @@ export default function Subscribers({ auth, subscribers = [], packages = [] }) {
                             View and manage all customer accounts, bank transfer activations, and subscription plans
                         </p>
                     </div>
+
+                    {/* Flash Messages */}
+                    {flash?.success && (
+                        <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm font-bold flex items-center justify-between">
+                            <span>{flash.success}</span>
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-sm font-bold flex items-center justify-between">
+                            <span>{flash.error}</span>
+                        </div>
+                    )}
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">

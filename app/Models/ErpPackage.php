@@ -40,4 +40,11 @@ class ErpPackage extends Model
         'sort_order' => 'integer',
         'modules' => 'array',
     ];
+
+    protected $appends = ['annual_price'];
+
+    public function getAnnualPriceAttribute(): float
+    {
+        return round(((float) ($this->attributes['price'] ?? 0)) * 10, 2);
+    }
 }

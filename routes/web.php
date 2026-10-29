@@ -195,7 +195,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
                     'billing_cycle' => $manifest['billing_cycle'] ?? 'monthly',
                     'bank_ref'      => $latestPayment?->payment_id ?? '',
                     'amount'        => (float) ($latestPayment?->amount ?? 0),
-                    'is_active'     => $latestPayment && $latestPayment->expires_at && $latestPayment->expires_at->isFuture(),
+                    'is_active'     => $latestPayment 
+                        && in_array(strtolower((string)$latestPayment->status), ['completed', 'active']) 
+                        && $latestPayment->expires_at 
+                        && $latestPayment->expires_at->isFuture(),
                     'expires_at'    => $latestPayment?->expires_at?->toIso8601String(),
                     'created_at'    => $user->created_at->toIso8601String(),
                 ];
@@ -203,7 +206,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
         return Inertia::render('Admin/Subscribers', [
             'subscribers' => $users,
-            'packages'    => \App\Models\ErpPackage::orderBy('price', 'asc')->get(['id', 'name', 'code', 'price', 'annual_price']),
+            'packages'    => \App\Models\ErpPackage::orderBy('price', 'asc')->get(['id', 'name', 'code', 'price']),
         ]);
     })->name('subscribers.index');
 
@@ -278,7 +281,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         }
 
         // Atomically synchronize package, cycle, and status to ERP Backend
-        syncErpSubscriptionToBackend(
+        $synced = syncErpSubscriptionToBackend(
             $user->email,
             $request->package_name,
             'active',
@@ -287,7 +290,11 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             $cycle
         );
 
-        return redirect()->back();
+        if (!$synced) {
+            return redirect()->back()->with('error', 'Package recorded locally, but ERP subscription sync failed. Please verify ERP API connection.');
+        }
+
+        return redirect()->back()->with('success', 'Customer package updated and synchronized to ERP system successfully.');
     })->name('subscribers.update');
 
     // Terminate (expire immediately and suspend ERP access)
@@ -299,7 +306,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         }
 
         // Atomically sync cancellation to ERP Backend
-        syncErpSubscriptionToBackend(
+        $synced = syncErpSubscriptionToBackend(
             $user->email,
             'free',
             'cancelled',
@@ -307,30 +314,42 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             'terminate'
         );
 
-        return redirect()->back();
+        if (!$synced) {
+            return redirect()->back()->with('error', 'Subscription terminated locally, but ERP cancellation sync failed.');
+        }
+
+        return redirect()->back()->with('success', 'Subscription terminated and ERP access revoked successfully.');
     })->name('subscribers.terminate');
 
-    // Reactivate (30 days from now and restore ERP access)
+    // Reactivate (restore term and ERP access)
     Route::post('/subscribers/{id}/reactivate', function ($id) {
         $user = User::findOrFail($id);
         $payment = Payment::where('user_id', $id)->latest()->first();
         $reactivatePlan = $payment ? $payment->package_name : 'ERP Free Starter';
-        $expiresAt = now()->addDays(30);
+        $manifest = is_array($payment?->addons_manifest) ? $payment->addons_manifest : [];
+        $cycle = $manifest['billing_cycle'] ?? 'monthly';
+        $days = $cycle === 'annual' ? 365 : 30;
+        $expiresAt = now()->addDays($days);
 
         if ($payment) {
             $payment->update(['expires_at' => $expiresAt, 'status' => 'Completed']);
         }
 
         // Atomically sync reactivation to ERP Backend
-        syncErpSubscriptionToBackend(
+        $synced = syncErpSubscriptionToBackend(
             $user->email,
             $reactivatePlan,
             'active',
             $expiresAt->toIso8601String(),
-            'reactivate'
+            'reactivate',
+            $cycle
         );
 
-        return redirect()->back();
+        if (!$synced) {
+            return redirect()->back()->with('error', 'Subscription reactivated locally, but ERP sync failed.');
+        }
+
+        return redirect()->back()->with('success', 'Subscription reactivated and restored in ERP successfully.');
     })->name('subscribers.reactivate');
 
     Route::get('/transactions', function () {
