@@ -29,7 +29,7 @@ class NotifyExpiringPackages extends Command
         $targetDateEnd = Carbon::now()->addDays(5)->endOfDay();
 
         // Query active, completed payments tracking within that specific date boundary
-        $expiringPayments = Payment::where('status', 'completed')
+        $expiringPayments = Payment::whereIn('status', ['Completed', 'completed'])
             ->whereBetween('expires_at', [$targetDateStart, $targetDateEnd])
             ->with('user') // Eager load user relationship mapping
             ->get();

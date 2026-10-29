@@ -32,10 +32,26 @@ class DashboardController extends Controller
 
             $planName = $latestPayment ? $latestPayment->package_name : 'ERP Free Starter';
             
+            // Clean billing cycle suffixes (e.g. " (Monthly)", " (Annual Prepay)", " (Yearly)")
+            $cleanPlanName = preg_replace('/\s*\((Monthly|Yearly|Annual|Annual Prepay)\)/i', '', $planName);
+            $cleanPlanName = trim($cleanPlanName);
+
             // Resolve structured plan quota limits dynamically from the ErpPackage database model
-            $package = ErpPackage::where('name', $planName)
+            $package = ErpPackage::where('name', $cleanPlanName)
+                ->orWhere('name', $planName)
+                ->orWhere('code', $cleanPlanName)
                 ->orWhere('code', $planName)
                 ->first();
+
+            if (!$package) {
+                $codeKey = match(true) {
+                    stripos($planName, 'enterprise') !== false => 'enterprise',
+                    stripos($planName, 'professional') !== false || stripos($planName, 'pro') !== false => 'pro',
+                    stripos($planName, 'basic') !== false => 'basic',
+                    default => 'free'
+                };
+                $package = ErpPackage::where('code', $codeKey)->first();
+            }
 
             if ($package) {
                 $planLimits = [

@@ -1,0 +1,1 @@
+import{n as e}from"./app-BAXQVZnW.js";import t from"./Dashboard-ZN5ZPsWl.js";import n from"./ERP-Cjkm4OpM.js";var r=e();function i(e){return(0,r.jsx)(t,{...e})}function a(e){return(0,r.jsx)(n,{...e})}export{a as ERPPage,i as default};

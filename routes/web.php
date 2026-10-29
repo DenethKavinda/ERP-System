@@ -23,7 +23,7 @@ if (!function_exists('syncErpSubscriptionToBackend')) {
     /**
      * Synchronize a subscriber package change or cancellation directly to the ERP Backend API.
      */
-    function syncErpSubscriptionToBackend(string $email, string $planName, string $status = 'active', ?string $expiresAt = null, string $action = 'update'): bool {
+    function syncErpSubscriptionToBackend(string $email, string $planName, string $status = 'active', ?string $expiresAt = null, string $action = 'update', string $billingCycle = 'monthly'): bool {
         $apiUrl = config('services.erp.api_url');
         $provisioningKey = config('services.erp.provisioning_key');
 
@@ -41,6 +41,7 @@ if (!function_exists('syncErpSubscriptionToBackend')) {
                 'email'         => $email,
                 'plan'          => $planName,
                 'status'        => $status,
+                'billing_cycle' => $billingCycle,
                 'expires_at'    => $expiresAt,
                 'action'        => $action,
             ]);
@@ -180,6 +181,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
                     ->latest()
                     ->first();
 
+                $manifest = is_array($latestPayment?->addons_manifest) ? $latestPayment->addons_manifest : [];
+
                 return [
                     'id'            => $user->id,
                     'customer_id'   => $user->customer_id,
@@ -189,6 +192,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
                     'mobile_number' => $user->mobile_number,
                     'nic'           => $user->nic,
                     'plan_name'     => $latestPayment?->package_name ?? 'No Plan',
+                    'billing_cycle' => $manifest['billing_cycle'] ?? 'monthly',
+                    'bank_ref'      => $latestPayment?->payment_id ?? '',
+                    'amount'        => (float) ($latestPayment?->amount ?? 0),
                     'is_active'     => $latestPayment && $latestPayment->expires_at && $latestPayment->expires_at->isFuture(),
                     'expires_at'    => $latestPayment?->expires_at?->toIso8601String(),
                     'created_at'    => $user->created_at->toIso8601String(),
@@ -202,50 +208,82 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::put('/subscribers/{id}', function (\Illuminate\Http\Request $request, $id) {
         $request->validate([
-            'package_name' => 'required|string',
-            'expires_at'   => 'nullable|date',
+            'package_name'  => 'required|string',
+            'billing_cycle' => 'nullable|string|in:monthly,annual',
+            'bank_ref'      => 'nullable|string|max:100',
+            'amount'        => 'nullable|numeric|min:0',
+            'expires_at'    => 'nullable|date',
         ]);
 
         $user = User::findOrFail($id);
-        $expiresAt = $request->expires_at ? Carbon::parse($request->expires_at) : now()->addDays(30);
+        $cycle = $request->input('billing_cycle', 'monthly') ?: 'monthly';
+        $defaultDays = $cycle === 'annual' ? 365 : 30;
+        $expiresAt = $request->expires_at ? Carbon::parse($request->expires_at) : now()->addDays($defaultDays);
 
-        // Fetch official package price to maintain reliable revenue reporting
+        // Fetch official package price by billing cycle
         $pkg = ErpPackage::where('name', $request->package_name)
             ->orWhere('code', strtolower($request->package_name))
             ->first();
-        $basePrice = $pkg ? (float) $pkg->price : 0;
+
+        $basePrice = 0;
+        if ($pkg) {
+            $basePrice = $cycle === 'annual' 
+                ? (float) ($pkg->annual_price ?: ($pkg->price * 10)) 
+                : (float) $pkg->price;
+        }
+
+        $finalAmount = $request->filled('amount') && (float) $request->amount > 0 
+            ? (float) $request->amount 
+            : $basePrice;
+
+        $bankRef = $request->filled('bank_ref') 
+            ? trim($request->bank_ref) 
+            : ('OFFLINE_' . strtoupper(uniqid()));
+
+        $addonsManifest = [
+            'billing_cycle'  => $cycle,
+            'bank_ref'       => $bankRef,
+            'payment_method' => 'bank_transfer',
+            'verified_by'    => auth()->user()?->email ?? 'admin',
+            'verified_at'    => now()->toIso8601String(),
+        ];
 
         $latestPayment = Payment::where('user_id', $id)->latest()->first();
 
         if ($latestPayment) {
             $latestPayment->update([
-                'package_name' => $request->package_name,
-                'expires_at'   => $expiresAt,
-                'status'       => 'Completed',
-                'base_price'   => ($latestPayment->base_price == 0 && $basePrice > 0) ? $basePrice : $latestPayment->base_price,
-                'amount'       => ($latestPayment->amount == 0 && $basePrice > 0) ? $basePrice : $latestPayment->amount,
+                'package_name'    => $request->package_name,
+                'payment_id'      => $bankRef,
+                'expires_at'      => $expiresAt,
+                'status'          => 'Completed',
+                'base_price'      => $basePrice,
+                'amount'          => $finalAmount,
+                'addons_manifest' => $addonsManifest,
             ]);
         } else {
             Payment::create([
-                'order_id'     => 'ADMIN_' . strtoupper(uniqid()),
-                'user_id'      => $id,
-                'package_name' => $request->package_name,
-                'base_price'   => $basePrice,
-                'addons_total' => 0,
-                'amount'       => $basePrice,
-                'currency'     => 'LKR',
-                'status'       => 'Completed',
-                'expires_at'   => $expiresAt,
+                'order_id'        => 'ADMIN_' . strtoupper(uniqid()),
+                'payment_id'      => $bankRef,
+                'user_id'         => $id,
+                'package_name'    => $request->package_name,
+                'base_price'      => $basePrice,
+                'addons_total'    => 0,
+                'addons_manifest' => $addonsManifest,
+                'amount'          => $finalAmount,
+                'currency'        => 'LKR',
+                'status'          => 'Completed',
+                'expires_at'      => $expiresAt,
             ]);
         }
 
-        // Atomically synchronize package and status to ERP Backend
+        // Atomically synchronize package, cycle, and status to ERP Backend
         syncErpSubscriptionToBackend(
             $user->email,
             $request->package_name,
             'active',
             $expiresAt->toIso8601String(),
-            'update'
+            'update',
+            $cycle
         );
 
         return redirect()->back();

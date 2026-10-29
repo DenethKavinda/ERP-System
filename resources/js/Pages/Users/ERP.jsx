@@ -188,7 +188,8 @@ export default function ERP({ auth, packages = [] }) {
         const businessName = auth?.user?.business_name || auth?.user?.name || "N/A";
         const priceFormatted = `LKR ${pkgPrice.toLocaleString()}`;
         const cycle = billingCycle === "annual" ? "Annual" : "Monthly";
-        const message = `Customer ID: ${customerId}\nBusiness: ${businessName}\n\nHello, I am interested in purchasing the *${pkg.name}* package (${priceFormatted}/month, ${cycle} billing). I would like to discuss the details and proceed with the purchase. Thank you.`;
+        const periodUnit = billingCycle === "annual" ? "/year" : "/month";
+        const message = `Customer ID: ${customerId}\nBusiness: ${businessName}\n\nHello, I am interested in purchasing the *${pkg.name}* package (${priceFormatted}${periodUnit}, ${cycle} billing). I would like to discuss the details and proceed with the purchase. Thank you.`;
         const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, "_blank");
     };
