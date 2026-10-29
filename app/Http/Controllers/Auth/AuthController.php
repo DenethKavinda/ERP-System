@@ -96,7 +96,7 @@ class AuthController extends Controller
         );
 
         // Send credentials email
-        $erpAppUrl = env('ERP_APP_URL', 'https://erp.codexpressitsolutions.com');
+        $erpAppUrl = env('ERP_APP_URL', 'https://erp-codexpressitsolutions.vercel.app/login');
         $portalUrl = config('app.url', 'https://portal.codexpressitsolutions.com');
 
         try {
