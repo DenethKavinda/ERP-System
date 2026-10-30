@@ -16,13 +16,10 @@ export default function KnowledgeCenter({ documentation = [] }) {
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [activeDocument, setActiveDocument] = useState(null);
 
-    const categories = [
-        "All",
-        "Technical Documentation & Whitepapers",
-        "API Integrations & Custom Webhooks",
-        "Ecosystem Core Configuration Manuals",
-        "Video Guides & Training Frameworks",
-    ];
+    const docCategories = Array.from(
+        new Set(documentation.map((d) => d.category).filter(Boolean))
+    );
+    const categories = ["All", ...docCategories];
 
     const filteredDocs = documentation.filter((doc) => {
         const matchesCategory =

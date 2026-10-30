@@ -136,16 +136,21 @@ class KnowledgeCenter extends Controller
             abort(400, 'This node asset format type does not support storage file streaming streams.');
         }
 
-        $diskPath = str_replace('/storage/', '', $doc->file_url);
-
-        if (!Storage::disk('public')->exists($diskPath)) {
-            abort(404, 'Asset target resource is missing from disk storage paths.');
+        $publicPath = public_path(ltrim($doc->file_url, '/\\'));
+        if (file_exists($publicPath) && is_file($publicPath)) {
+            $downloadName = Str::slug($doc->title) . '.' . pathinfo($publicPath, PATHINFO_EXTENSION);
+            return response()->download($publicPath, $downloadName);
         }
 
-        $fullPath = storage_path('app/public/' . $diskPath);
-        $downloadName = Str::slug($doc->title) . '.' . pathinfo($fullPath, PATHINFO_EXTENSION);
+        $diskPath = str_replace('/storage/', '', $doc->file_url);
 
-        return response()->download($fullPath, $downloadName);
+        if (Storage::disk('public')->exists($diskPath)) {
+            $fullPath = storage_path('app/public/' . $diskPath);
+            $downloadName = Str::slug($doc->title) . '.' . pathinfo($fullPath, PATHINFO_EXTENSION);
+            return response()->download($fullPath, $downloadName);
+        }
+
+        abort(404, 'Asset target resource is missing from disk storage paths.');
     }
 
     /**

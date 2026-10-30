@@ -175,7 +175,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Deployment Guide',
                 'type' => 'pdf',
                 'description' => 'Step-by-step walkthrough covering initial branch configuration, user roles, warehouse bins, and company branding settings.',
-                'file_url' => 'https://example.com/docs/nexus-erp-quickstart.pdf',
+                'file_url' => '/docs/nexus-erp-quickstart.pdf',
             ],
             [
                 'slug' => 'pos-cashier-shift-control-reconciliation',
@@ -183,7 +183,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Operations',
                 'type' => 'pdf',
                 'description' => 'Guide on cashier opening floats, cash/card split payments, shift handovers, and blind end-of-day sales balancing.',
-                'file_url' => 'https://example.com/docs/pos-shift-balancing.pdf',
+                'file_url' => '/docs/pos-shift-balancing.pdf',
             ],
             [
                 'slug' => 'thermal-pos-printer-80mm-setup-manual',
@@ -191,15 +191,15 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Hardware Setup',
                 'type' => 'pdf',
                 'description' => 'ESC/POS commands, driver installation, page margins, and automatic cash drawer kick-out configuration.',
-                'file_url' => 'https://example.com/docs/thermal-printer-guide.pdf',
+                'file_url' => '/docs/thermal-printer-guide.pdf',
             ],
             [
                 'slug' => 'barcode-qr-scanner-pairing-nexus-inventory',
                 'title' => 'Barcode & QR Scanner Pairing with Nexus Inventory',
                 'category' => 'Hardware Setup',
-                'type' => 'link',
+                'type' => 'pdf',
                 'description' => 'Configuring auto-enter suffixes, UPC/EAN format reading, and batch scanning for rapid inventory stocktaking.',
-                'file_url' => 'https://example.com/docs/scanner-guide.pdf',
+                'file_url' => '/docs/scanner-guide.pdf',
             ],
             [
                 'slug' => 'bulk-products-customer-credit-csv-migration',
@@ -207,7 +207,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Data Migration',
                 'type' => 'pdf',
                 'description' => 'Excel & CSV spreadsheet templates for importing SKUs, cost prices, selling tiers, and customer credit ledgers.',
-                'file_url' => 'https://example.com/docs/csv-migration.pdf',
+                'file_url' => '/docs/csv-migration.pdf',
             ],
             [
                 'slug' => 'sri-lanka-statutory-payroll-compliance-checklist',
@@ -215,7 +215,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Compliance',
                 'type' => 'pdf',
                 'description' => 'Reference tables and rules for EPF (12% + 8%), ETF (3%), and APIT withholding tax deductions with salary slips.',
-                'file_url' => 'https://example.com/docs/statutory-payroll.pdf',
+                'file_url' => '/docs/statutory-payroll.pdf',
             ],
         ];
 
