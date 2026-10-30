@@ -64,37 +64,8 @@ export default function Header({ isDarkMode, setIsDarkMode, auth }) {
         >
             <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-10">
                 <div className="flex items-center justify-between h-16 gap-4">
-                    {/* BRANDING LOGO */}
-                    <Link href="/dashboard-user" className="flex items-center gap-3 shrink-0 group">
-                        <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-xl shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={2.2}
-                                stroke="currentColor"
-                                className="w-5 h-5"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-                                />
-                                <polyline
-                                    points="3.27 6.96 12 12.01 20.73 6.96"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                                <line
-                                    x1="12"
-                                    y1="22.08"
-                                    x2="12"
-                                    y2="12"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            </svg>
-                        </div>
+                    {/* BRANDING */}
+                    <Link href="/dashboard-user" className="flex items-center shrink-0 group">
                         <div className="flex flex-col">
                             <span
                                 className={`text-base font-black tracking-tight leading-tight flex items-center gap-1.5 ${isDarkMode ? "text-white" : "text-slate-900"}`}

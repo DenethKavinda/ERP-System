@@ -25,10 +25,10 @@ const translations = {
 
     // ==================== FOOTER ====================
     footer: {
-        enterpriseNode: { en: "Enterprise Node", si: "ව්‍යවසාය මධ්‍යස්ථානය" },
+        enterpriseNode: { en: "Nexus ERP", si: "Nexus ERP" },
         missionStatement: {
-            en: "Empowering continuous system operational agility, custom enterprise architecture solutions, and real-time infrastructure metrics management.",
-            si: "අඛණ්ඩ පද්ධති මෙහෙයුම් සාධනය, අභිරුචි ව්‍යවසාය ගෘහ නිර්මාණ විසඳුම් සහ තත්‍ය කාලීන යටිතල පහසුකම් කළමනාකරණය සවිබල ගැන්වීම.",
+            en: "High-speed POS billing, dual-location inventory, purchases, supplier GRN, and multi-branch enterprise resource planning.",
+            si: "වේගවත් POS බිල්පත්, ද්විත්ව ස්ථාන තොග, මිලදී ගැනීම් සහ බහු-ශාඛා ව්‍යාපාර සම්පත් කළමනාකරණය.",
         },
         corePortals: { en: "Core Portals", si: "ප්‍රධාන පෝර්ටල" },
         erpPackages: { en: "ERP Packages", si: "ERP පැකේජ" },
@@ -39,10 +39,10 @@ const translations = {
         knowledgeCenter: { en: "Knowledge Center", si: "දැනුම් මධ්‍යස්ථානය" },
         contactConsultation: { en: "Contact & Consultation", si: "සම්බන්ධ කර ගැනීම සහ උපදේශනය" },
         stayUpdated: { en: "Stay Updated", si: "යාවත්කාලීනව සිටින්න" },
-        subscribeSummaries: { en: "Subscribe to framework patch summaries.", si: "යාවත්කාලීන සාරාංශ සඳහා දායක වන්න." },
+        subscribeSummaries: { en: "Subscribe to Nexus ERP updates and product announcements.", si: "Nexus ERP යාවත්කාලීන සහ නිෂ්පාදන නිවේදන සඳහා දායක වන්න." },
         emailPlaceholder: { en: "Email address...", si: "ඊමේල් ලිපිනය..." },
         join: { en: "Join", si: "එක්වන්න" },
-        copyright: { en: "Enterprise Command Platform. All rights reserved.", si: "එන්ටර්ප්‍රයිස් කමාන්ඩ් ප්ලැට්ෆෝම්. සියලුම හිමිකම් ඇවිරිණි." },
+        copyright: { en: "Nexus ERP by CodeXpress IT Solutions. All rights reserved.", si: "Nexus ERP - CodeXpress IT Solutions. සියලුම හිමිකම් ඇවිරිණි." },
     },
 
     // ==================== REGISTER PAGE ====================
