@@ -36,11 +36,13 @@ class HandleInertiaRequests extends Middleware
             if ($user->role === 'admin') {
                 $isSubscriptionActive = true;
             } else {
-                $latestPayment = \App\Models\Payment::where('user_id', $user->id)
-                    ->where('status', 'Completed')
-                    ->latest()
-                    ->first();
-                $isSubscriptionActive = (bool)($latestPayment && $latestPayment->expires_at && $latestPayment->expires_at->isFuture());
+                $latestPayment = \App\Models\Payment::latestPlanForUser($user->id);
+                $isSubscriptionActive = (bool)(
+                    $latestPayment 
+                    && in_array(strtolower((string)$latestPayment->status), ['completed', 'active']) 
+                    && $latestPayment->expires_at 
+                    && $latestPayment->expires_at->isFuture()
+                );
             }
         }
 
@@ -49,6 +51,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
                 'isSubscriptionActive' => $isSubscriptionActive,
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error'   => fn () => $request->session()->get('error'),
             ],
             'erpAppUrl' => config('services.erp.app_url', 'http://localhost:5173'),
         ];

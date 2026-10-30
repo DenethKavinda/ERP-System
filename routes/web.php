@@ -32,6 +32,8 @@ if (!function_exists('syncErpSubscriptionToBackend')) {
             return false;
         }
 
+        $portalUser = \App\Models\User::where('email', $email)->first();
+
         try {
             $response = Http::withHeaders([
                 'X-ERP-Provisioning-Key' => $provisioningKey,
@@ -39,6 +41,8 @@ if (!function_exists('syncErpSubscriptionToBackend')) {
                 'Content-Type'           => 'application/json',
             ])->timeout(15)->post("{$apiUrl}/api/internal/subscriptions/sync", [
                 'email'         => $email,
+                'name'          => $portalUser?->name,
+                'business_name' => $portalUser?->business_name,
                 'plan'          => $planName,
                 'status'        => $status,
                 'billing_cycle' => $billingCycle,
@@ -177,11 +181,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($user) {
-                $latestPayment = \App\Models\Payment::where('user_id', $user->id)
-                    ->latest()
-                    ->first();
+                $latestPayment = \App\Models\Payment::latestPlanForUser($user->id);
 
                 $manifest = is_array($latestPayment?->addons_manifest) ? $latestPayment->addons_manifest : [];
+                $erpSync = is_array($manifest['erp_sync'] ?? null) ? $manifest['erp_sync'] : [];
 
                 return [
                     'id'            => $user->id,
@@ -201,12 +204,17 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
                         && $latestPayment->expires_at->isFuture(),
                     'expires_at'    => $latestPayment?->expires_at?->toIso8601String(),
                     'created_at'    => $user->created_at->toIso8601String(),
+                    'sync_status'   => $erpSync['status'] ?? ($latestPayment ? 'synced' : 'none'),
                 ];
             });
 
         return Inertia::render('Admin/Subscribers', [
             'subscribers' => $users,
             'packages'    => \App\Models\ErpPackage::orderBy('price', 'asc')->get(['id', 'name', 'code', 'price']),
+            'flash'       => [
+                'success' => session('success'),
+                'error'   => session('error'),
+            ],
         ]);
     })->name('subscribers.index');
 
@@ -252,10 +260,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             'verified_at'    => now()->toIso8601String(),
         ];
 
-        $latestPayment = Payment::where('user_id', $id)->latest()->first();
+        $targetPayment = Payment::latestPlanForUser($id);
 
-        if ($latestPayment) {
-            $latestPayment->update([
+        if ($targetPayment) {
+            $targetPayment->update([
                 'package_name'    => $request->package_name,
                 'payment_id'      => $bankRef,
                 'expires_at'      => $expiresAt,
@@ -265,7 +273,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
                 'addons_manifest' => $addonsManifest,
             ]);
         } else {
-            Payment::create([
+            $targetPayment = Payment::create([
                 'order_id'        => 'ADMIN_' . strtoupper(uniqid()),
                 'payment_id'      => $bankRef,
                 'user_id'         => $id,
@@ -290,6 +298,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             $cycle
         );
 
+        $addonsManifest['erp_sync'] = [
+            'status'    => $synced ? 'synced' : 'failed',
+            'synced_at' => now()->toIso8601String(),
+        ];
+        $targetPayment->update(['addons_manifest' => $addonsManifest]);
+
         if (!$synced) {
             return redirect()->back()->with('error', 'Package recorded locally, but ERP subscription sync failed. Please verify ERP API connection.');
         }
@@ -300,7 +314,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     // Terminate (expire immediately and suspend ERP access)
     Route::post('/subscribers/{id}/terminate', function ($id) {
         $user = User::findOrFail($id);
-        $payment = Payment::where('user_id', $id)->latest()->first();
+        $payment = Payment::latestPlanForUser($id);
         if ($payment) {
             $payment->update(['expires_at' => now()->subDay(), 'status' => 'Terminated']);
         }
@@ -324,7 +338,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     // Reactivate (restore term and ERP access)
     Route::post('/subscribers/{id}/reactivate', function ($id) {
         $user = User::findOrFail($id);
-        $payment = Payment::where('user_id', $id)->latest()->first();
+        $payment = Payment::latestPlanForUser($id);
         $reactivatePlan = $payment ? $payment->package_name : 'ERP Free Starter';
         $manifest = is_array($payment?->addons_manifest) ? $payment->addons_manifest : [];
         $cycle = $manifest['billing_cycle'] ?? 'monthly';
@@ -365,7 +379,24 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         ]);
 
         $payment = \App\Models\Payment::findOrFail($id);
-        $payment->update(['status' => $request->status]);
+        $normalizedStatus = ucfirst(strtolower($request->status));
+        $payment->update(['status' => $normalizedStatus]);
+
+        if ($payment->isPlanSubscription() && $payment->user && $normalizedStatus === 'Completed') {
+            $manifest = is_array($payment->addons_manifest) ? $payment->addons_manifest : [];
+            $cycle = $manifest['billing_cycle'] ?? 'monthly';
+            $expiresAt = $payment->expires_at ?: ($cycle === 'annual' ? now()->addYear() : now()->addDays(30));
+            $payment->update(['expires_at' => $expiresAt]);
+
+            syncErpSubscriptionToBackend(
+                $payment->user->email,
+                $payment->package_name,
+                'active',
+                $expiresAt->toIso8601String(),
+                'update',
+                $cycle
+            );
+        }
 
         return redirect()->back();
     })->name('transactions.update-status');

@@ -319,7 +319,7 @@ export default function ERP({ auth, packages = [] }) {
             features: [
                 { name: "High-Speed POS Billing & Barcodes", free: true, basic: true, pro: true, ent: true },
                 { name: "Real-Time Stock Level Visibility", free: true, basic: true, pro: true, ent: true },
-                { name: "Faster Billing with Multiple Price Lists", free: false, basic: true, pro: true, ent: true },
+                { name: "Faster Billing with Multi-Price Batches", free: false, basic: true, pro: true, ent: true },
                 { name: "Thermal 80mm & A4 Invoices", free: true, basic: true, pro: true, ent: true },
                 { name: "Split Payments (Cash, Card, Cheque)", free: "Cash & Card", basic: true, pro: true, ent: true },
                 { name: "Cashier Shift Control & Float Count", free: false, basic: true, pro: true, ent: true },

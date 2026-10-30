@@ -112,8 +112,11 @@ export default function Subscribers({ auth, subscribers = [], packages = [], fla
             },
             {
                 preserveScroll: true,
-                onSuccess: () => {
+                onSuccess: (page) => {
                     setIsSubmitting(false);
+                    if (page?.props?.flash?.error) {
+                        return;
+                    }
                     setEditModalOpen(false);
                     setSelectedSub(null);
                 },
@@ -391,6 +394,11 @@ export default function Subscribers({ auth, subscribers = [], packages = [], fla
                                                             ? "ACTIVE"
                                                             : "EXPIRED"}
                                                     </span>
+                                                    {sub.sync_status === 'failed' && (
+                                                        <span className="block mt-1 text-[9px] font-bold text-red-600 dark:text-red-400">
+                                                            ERP Sync Failed
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 text-xs text-slate-500">
                                                     {sub.expires_at ? (
@@ -484,6 +492,12 @@ export default function Subscribers({ auth, subscribers = [], packages = [], fla
                                 </div>
 
                                 <form onSubmit={handleSaveEdit} className="mt-5 space-y-4">
+                                    {flash?.error && (
+                                        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-bold">
+                                            {flash.error}
+                                        </div>
+                                    )}
+
                                     {/* Customer Brief */}
                                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs flex justify-between">
                                         <div>

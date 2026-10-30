@@ -127,7 +127,17 @@ class CheckoutController extends Controller
             $payment = Payment::where('order_id', $orderId)->first();
 
             if ($payment) {
+                // Verify currency & amount matches expected payment
+                $paidAmount = (float)$payhereAmount;
+                $expectedAmount = (float)$payment->amount;
+
                 if ($statusCode == 2) {
+                    if ($payhereCurrency !== $payment->currency || $paidAmount < $expectedAmount) {
+                        \Illuminate\Support\Facades\Log::warning("PayHere amount/currency mismatch for order {$orderId}: paid {$payhereCurrency} {$paidAmount}, expected {$payment->currency} {$expectedAmount}");
+                        $payment->update(['status' => 'failed']);
+                        return response()->json(['status' => 'amount_mismatch'], 400);
+                    }
+
                     $manifest = is_array($payment->addons_manifest) ? $payment->addons_manifest : [];
                     $cycle = $manifest['billing_cycle'] ?? 'monthly';
                     $expiresAt = $cycle === 'annual' ? now()->addYear() : now()->addDays(30);
@@ -138,9 +148,9 @@ class CheckoutController extends Controller
                         'expires_at' => $expiresAt,
                     ]);
 
-                    // Sync paid package directly to ERP Backend API
-                    if ($payment->user && function_exists('syncErpSubscriptionToBackend')) {
-                        syncErpSubscriptionToBackend(
+                    // Sync to ERP Backend ONLY if this is a plan subscription order (NEVER sync standalone service orders)
+                    if ($payment->isPlanSubscription() && $payment->user && function_exists('syncErpSubscriptionToBackend')) {
+                        $synced = syncErpSubscriptionToBackend(
                             $payment->user->email,
                             $payment->package_name,
                             'active',
@@ -148,8 +158,18 @@ class CheckoutController extends Controller
                             'update',
                             $cycle
                         );
+
+                        $manifest['erp_sync'] = [
+                            'status'    => $synced ? 'synced' : 'failed',
+                            'synced_at' => now()->toIso8601String(),
+                        ];
+                        $payment->update(['addons_manifest' => $manifest]);
                     }
+                } elseif ((int)$statusCode === 0) {
+                    // 0 = Pending in PayHere
+                    $payment->update(['status' => 'pending']);
                 } else {
+                    // Negative numbers (-1 Canceled, -2 Failed, -3 Chargedback)
                     $payment->update(['status' => 'failed']);
                 }
             }
@@ -280,7 +300,7 @@ class CheckoutController extends Controller
             'cancel_url' => url('/dashboard-user'),
             'notify_url' => route('payhere.webhook'),
             'order_id' => $orderId,
-            'items' => $request->package_name,
+            'items' => $packageName,
             'amount' => $hashedAmount,
             'currency' => 'LKR',
             'hash' => $payhereHash,

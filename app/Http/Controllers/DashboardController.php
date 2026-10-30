@@ -26,9 +26,7 @@ class DashboardController extends Controller
         $activeSubscription = null;
 
         if ($user) {
-            $latestPayment = Payment::where('user_id', $user->id)
-                ->latest()
-                ->first();
+            $latestPayment = Payment::latestPlanForUser($user->id);
 
             $planName = $latestPayment ? $latestPayment->package_name : 'ERP Free Starter';
             

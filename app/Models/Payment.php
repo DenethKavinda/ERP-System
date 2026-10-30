@@ -38,4 +38,42 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    /**
+     * Scope query to plan subscription orders only (excludes standalone service bundles).
+     */
+    public function scopePlanSubscriptions($query)
+    {
+        return $query->where('order_id', 'not like', 'SRV_%')
+                     ->where('package_name', '!=', 'Custom Service Infrastructure Bundle');
+    }
+
+    /**
+     * Scope query to active/completed plan records.
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['Completed', 'completed', 'active', 'Active'])
+                     ->where('expires_at', '>', now());
+    }
+
+    /**
+     * Determine if this transaction represents an ERP plan subscription.
+     */
+    public function isPlanSubscription(): bool
+    {
+        return !str_starts_with((string)$this->order_id, 'SRV_') 
+            && $this->package_name !== 'Custom Service Infrastructure Bundle';
+    }
+
+    /**
+     * Retrieve the latest plan subscription payment for a given user.
+     */
+    public static function latestPlanForUser($userId)
+    {
+        return static::where('user_id', $userId)
+            ->planSubscriptions()
+            ->latest()
+            ->first();
+    }
 }

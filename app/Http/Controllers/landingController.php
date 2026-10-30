@@ -17,7 +17,8 @@ class landingController extends Controller
         $user = Auth::user();
         $latestPayment = $user
             ? Payment::where('user_id', $user->id)
-                ->where('status', 'Completed')
+                ->planSubscriptions()
+                ->whereIn('status', ['Completed', 'completed', 'active', 'Active'])
                 ->latest()
                 ->first()
             : null;
