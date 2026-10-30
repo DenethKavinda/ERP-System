@@ -31,24 +31,34 @@ export default function Register() {
     useEffect(() => {
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
-            const planParam = (params.get("plan") || "free").toLowerCase();
+            const rawPlan = (params.get("plan") || "").trim().toLowerCase();
             const cycleParam = params.get("cycle") || "monthly";
             const addonsParam = params.get("addons") || "";
 
             const planMap = {
-                free: { title: "ERP Free Starter (30-Day Free Trial)", isFree: true },
-                basic: { title: "ERP Basic Essentials (LKR 45,000 / mo)", isFree: false },
-                pro: { title: "ERP Professional Growth (LKR 95,000 / mo)", isFree: false },
-                enterprise: { title: "Enterprise Custom Core (LKR 195,000 / mo)", isFree: false },
+                free: { code: "free", title: "ERP Free Starter (30-Day Free Trial)", isFree: true },
+                basic: { code: "basic", title: "ERP Basic Essentials (LKR 45,000 / mo)", isFree: false },
+                pro: { code: "pro", title: "ERP Professional Growth (LKR 95,000 / mo)", isFree: false },
+                enterprise: { code: "enterprise", title: "Enterprise Custom Core (LKR 195,000 / mo)", isFree: false },
             };
 
-            const resolved = planMap[planParam] || {
-                title: params.get("package_name") || "ERP Free Starter",
-                isFree: planParam === "free",
-            };
+            let planKey = "free";
+            if (rawPlan.includes("basic") || rawPlan === "basic") {
+                planKey = "basic";
+            } else if (rawPlan.includes("pro") || rawPlan === "pro") {
+                planKey = "pro";
+            } else if (rawPlan.includes("enter") || rawPlan.includes("custom") || rawPlan === "enterprise") {
+                planKey = "enterprise";
+            } else if (rawPlan.includes("starter") || rawPlan === "free") {
+                planKey = "free";
+            } else if (planMap[rawPlan]) {
+                planKey = rawPlan;
+            }
+
+            const resolved = planMap[planKey] || planMap.free;
 
             setPlanInfo({
-                plan: planParam,
+                plan: resolved.code,
                 title: resolved.title,
                 cycle: cycleParam,
                 isFree: resolved.isFree,
@@ -56,7 +66,7 @@ export default function Register() {
 
             setData((prev) => ({
                 ...prev,
-                plan: planParam,
+                plan: resolved.code,
                 cycle: cycleParam,
                 addons: addonsParam,
             }));
@@ -88,8 +98,12 @@ export default function Register() {
                         {t("register.registerCompanyAccount")}
                     </h2>
                     <div className="mt-3">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl shadow-sm">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 ${
+                            planInfo.isFree
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                                : "bg-orange-50 border-orange-200 text-orange-900"
+                        } border text-xs font-bold rounded-xl shadow-sm`}>
+                            <span className={`w-2.5 h-2.5 rounded-full ${planInfo.isFree ? "bg-emerald-500 animate-pulse" : "bg-orange-500 animate-pulse"}`} />
                             <span>{t("register.plan")} <strong className="font-black">{planInfo.title}</strong></span>
                         </div>
                         <p className="text-[11px] text-slate-500 mt-1 font-medium">

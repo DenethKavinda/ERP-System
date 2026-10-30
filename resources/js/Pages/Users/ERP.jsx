@@ -170,7 +170,8 @@ export default function ERP({ auth, packages = [] }) {
 
         // Require sign in / sign up before any purchase action
         if (!auth?.user) {
-            window.location.href = `/register?plan=${encodeURIComponent(pkg.name)}`;
+            const planCode = pkg.code || (pkg.name?.toLowerCase().includes("basic") ? "basic" : pkg.name?.toLowerCase().includes("pro") ? "pro" : pkg.name?.toLowerCase().includes("enter") ? "enterprise" : "free");
+            window.location.href = `/register?plan=${encodeURIComponent(planCode)}&cycle=${encodeURIComponent(billingCycle)}`;
             return;
         }
 

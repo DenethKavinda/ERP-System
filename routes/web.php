@@ -192,7 +192,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
     Route::put('/services/{id}', [ServiceController::class, 'update'])->name('services.update');
     Route::delete('/services/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
-    Route::get('/adminservices', fn() => redirect()->route('admin.services.index'));
+    Route::get('/adminservices', fn() => redirect()->route('admin.services.index'))->name('legacy.services');
 
     // Admin Dashboard Cards Manager (F-04, F-19, F-23, F-55)
     Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');

@@ -60,13 +60,25 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        $requestedPlan = strtolower($request->input('plan', 'free'));
+        $rawPlan = strtolower($request->input('plan', 'free'));
+        if (str_contains($rawPlan, 'basic')) {
+            $requestedPlan = 'basic';
+        } elseif (str_contains($rawPlan, 'pro')) {
+            $requestedPlan = 'pro';
+        } elseif (str_contains($rawPlan, 'enter') || str_contains($rawPlan, 'custom')) {
+            $requestedPlan = 'enterprise';
+        } else {
+            $requestedPlan = 'free';
+        }
         $cycle = $request->input('cycle', 'monthly');
 
-        // All public registrations begin as Free Starter 30-Day Evaluation Workspace.
+        $targetPkg = $requestedPlan !== 'free' ? ErpPackage::where('code', $requestedPlan)->first() : null;
+        $displayPlanName = $targetPkg ? $targetPkg->name : ($requestedPlan === 'free' ? 'ERP Free Starter' : ucfirst($requestedPlan));
+
+        // All public registrations begin with 30-Day Evaluation Workspace.
         // Paid tiers are activated upon payment completion via PayHere or admin verification.
         $plan = 'free';
-        $planName = 'ERP Free Starter';
+        $planName = $displayPlanName;
 
         // Automatically activate 30-Day Free Starter Evaluation Plan in local payments ledger
         Payment::create([
@@ -100,7 +112,7 @@ class AuthController extends Controller
                 $user->email,
                 $plainPassword,
                 $erpAppUrl,
-                $planName,
+                $displayPlanName,
                 $portalUrl
             ));
         } catch (\Throwable $e) {
@@ -109,7 +121,6 @@ class AuthController extends Controller
 
         // If the user registered for a paid plan, take them directly to the pricing page to complete checkout
         if ($requestedPlan !== 'free') {
-            $targetPkg = ErpPackage::where('code', $requestedPlan)->first();
             $targetPkgName = $targetPkg ? $targetPkg->name : ucfirst($requestedPlan);
 
             return redirect()->to('/ERP?checkout=' . urlencode($requestedPlan) . '&cycle=' . urlencode($cycle))->with([
