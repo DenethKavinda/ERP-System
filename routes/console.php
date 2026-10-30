@@ -24,3 +24,8 @@ Artisan::command('inspire', function () {
  * every single day at midnight.
  */
 Schedule::command('packages:notify-expiring')->daily();
+
+/**
+ * Automatically reconcile ERP subscription states hourly.
+ */
+Schedule::command('erp:reconcile-subscriptions')->hourly();

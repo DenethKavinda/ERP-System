@@ -43,8 +43,7 @@ class ReconcileErpSubscriptions extends Command
         $skippedCount = 0;
 
         foreach ($users as $user) {
-            $payment = Payment::latestCompletedOrActivePlanForUser($user->id)
-                ?: Payment::where('user_id', $user->id)->planSubscriptions()->latest()->first();
+            $payment = Payment::latestSyncablePlanForUser($user->id);
 
             if (! $payment) {
                 $skippedCount++;
@@ -79,7 +78,6 @@ class ReconcileErpSubscriptions extends Command
                     'email'         => $user->email,
                     'name'          => $user->name,
                     'business_name' => $user->business_name,
-                    'password_hash' => $user->password,
                     'plan'          => $payment->package_name,
                     'status'        => $status,
                     'billing_cycle' => $cycle,

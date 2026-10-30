@@ -362,14 +362,14 @@ export default function ERP({ auth, packages = [] }) {
             ],
         },
         {
-            category: "Infrastructure, Dedicated Architecture & SLAs",
+            category: "Infrastructure, Operations & Enterprise SLAs",
             id: "enterprise",
             features: [
-                { name: "Dedicated Physically Isolated Database", free: false, basic: false, pro: false, ent: "Dedicated DB" },
+                { name: "Unlimited Branch & Warehouse Scaling", free: false, basic: false, pro: false, ent: true },
                 { name: "Platform Security Audit Logging", free: false, basic: false, pro: "Basic", ent: "Full Audit Trail" },
                 { name: "Granular Custom Roles & Permission Control", free: false, basic: false, pro: true, ent: true },
-                { name: "Unlimited Branch & Warehouse Scaling", free: false, basic: false, pro: false, ent: true },
                 { name: "Service Master & Custom Invoicing", free: false, basic: false, pro: false, ent: true },
+                { name: "Dedicated Account Manager & Guided Setup", free: false, basic: false, pro: false, ent: true },
                 { name: "Support Channel & SLA Guarantee", free: "Community", basic: "Email (Next Day)", pro: "Phone & WhatsApp", ent: "24/7 Priority SLA" },
             ],
         },

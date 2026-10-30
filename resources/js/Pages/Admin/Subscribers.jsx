@@ -453,7 +453,7 @@ export default function Subscribers({ auth, subscribers = [], packages = [], fla
                                                         >
                                                             UPDATE PLAN
                                                         </button>
-                                                        {sub.sync_status !== 'synced' && sub.plan_name !== 'No Plan' && (
+                                                        {sub.sync_status !== 'synced' && sub.sync_status !== 'none' && sub.plan_name !== 'No Plan' && (
                                                             <button
                                                                 onClick={() => handleRetrySync(sub.id)}
                                                                 className="px-2.5 py-1 text-[10px] font-bold bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-400 cursor-pointer"

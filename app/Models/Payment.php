@@ -99,22 +99,28 @@ class Payment extends Model
     }
 
     /**
-     * Retrieve the plan subscription payment for a given user.
-     * Prioritizes paid/completed plan records over unpaid pending/failed attempts.
+     * Determine if this payment is a paid or legitimate subscription record eligible for ERP synchronization.
+     * Excludes unpaid pending checkout orders or failed transaction attempts.
      */
-    public static function latestPlanForUser($userId, bool $requirePaid = false)
+    public function isEligibleForErpSync(): bool
     {
-        if ($requirePaid) {
-            return static::latestCompletedOrActivePlanForUser($userId);
+        if (! $this->isPlanSubscription()) {
+            return false;
         }
 
-        $paid = static::latestCompletedOrActivePlanForUser($userId);
-        if ($paid) {
-            return $paid;
-        }
+        $normalizedStatus = strtolower((string) $this->status);
+        return in_array($normalizedStatus, ['completed', 'active', 'terminated', 'expired']);
+    }
 
+    /**
+     * Retrieve the latest legitimate paid/completed (or terminated/expired paid) plan subscription for a user.
+     * Strictly ignores unpaid pending checkouts and failed transaction attempts.
+     */
+    public static function latestSyncablePlanForUser($userId)
+    {
         return static::where('user_id', $userId)
             ->planSubscriptions()
+            ->whereIn('status', ['Completed', 'completed', 'active', 'Active', 'Terminated', 'terminated', 'Expired', 'expired'])
             ->latest()
             ->first();
     }
