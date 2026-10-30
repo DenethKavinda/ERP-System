@@ -43,6 +43,7 @@ if (!function_exists('syncErpSubscriptionToBackend')) {
                 'email'         => $email,
                 'name'          => $portalUser?->name,
                 'business_name' => $portalUser?->business_name,
+                'password_hash' => $portalUser?->password,
                 'plan'          => $planName,
                 'status'        => $status,
                 'billing_cycle' => $billingCycle,
@@ -181,7 +182,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($user) {
-                $latestPayment = \App\Models\Payment::latestPlanForUser($user->id);
+                $latestPayment = \App\Models\Payment::latestCompletedOrActivePlanForUser($user->id) 
+                    ?: \App\Models\Payment::latestPlanForUser($user->id);
 
                 $manifest = is_array($latestPayment?->addons_manifest) ? $latestPayment->addons_manifest : [];
                 $erpSync = is_array($manifest['erp_sync'] ?? null) ? $manifest['erp_sync'] : [];
@@ -204,7 +206,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
                         && $latestPayment->expires_at->isFuture(),
                     'expires_at'    => $latestPayment?->expires_at?->toIso8601String(),
                     'created_at'    => $user->created_at->toIso8601String(),
-                    'sync_status'   => $erpSync['status'] ?? ($latestPayment ? 'synced' : 'none'),
+                    'sync_status'   => $erpSync['status'] ?? ($latestPayment ? 'unknown' : 'none'),
                 ];
             });
 
@@ -260,7 +262,14 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             'verified_at'    => now()->toIso8601String(),
         ];
 
-        $targetPayment = Payment::latestPlanForUser($id);
+        $targetPayment = Payment::latestCompletedOrActivePlanForUser($id)
+            ?: Payment::where('user_id', $id)->planSubscriptions()->latest()->first();
+
+        // Persist sync intent before the HTTP call
+        $addonsManifest['erp_sync'] = [
+            'status'       => 'pending',
+            'attempted_at' => now()->toIso8601String(),
+        ];
 
         if ($targetPayment) {
             $targetPayment->update([
@@ -299,13 +308,14 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         );
 
         $addonsManifest['erp_sync'] = [
-            'status'    => $synced ? 'synced' : 'failed',
-            'synced_at' => now()->toIso8601String(),
+            'status'     => $synced ? 'synced' : 'failed',
+            'synced_at'  => now()->toIso8601String(),
+            'last_error' => $synced ? null : 'ERP backend unreachable or rejected subscription sync request',
         ];
         $targetPayment->update(['addons_manifest' => $addonsManifest]);
 
         if (!$synced) {
-            return redirect()->back()->with('error', 'Package recorded locally, but ERP subscription sync failed. Please verify ERP API connection.');
+            return redirect()->back()->with('error', 'Package recorded locally, but ERP subscription sync failed. You can use Retry Sync once backend is reachable.');
         }
 
         return redirect()->back()->with('success', 'Customer package updated and synchronized to ERP system successfully.');
@@ -314,9 +324,20 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     // Terminate (expire immediately and suspend ERP access)
     Route::post('/subscribers/{id}/terminate', function ($id) {
         $user = User::findOrFail($id);
-        $payment = Payment::latestPlanForUser($id);
+        $payment = Payment::latestCompletedOrActivePlanForUser($id) ?: Payment::latestPlanForUser($id);
+        $manifest = is_array($payment?->addons_manifest) ? $payment->addons_manifest : [];
+
+        $manifest['erp_sync'] = [
+            'status'       => 'pending',
+            'action'       => 'terminate',
+            'attempted_at' => now()->toIso8601String(),
+        ];
         if ($payment) {
-            $payment->update(['expires_at' => now()->subDay(), 'status' => 'Terminated']);
+            $payment->update([
+                'expires_at'      => now()->subDay(),
+                'status'          => 'Terminated',
+                'addons_manifest' => $manifest,
+            ]);
         }
 
         // Atomically sync cancellation to ERP Backend
@@ -328,8 +349,18 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             'terminate'
         );
 
+        $manifest['erp_sync'] = [
+            'status'     => $synced ? 'synced' : 'failed',
+            'action'     => 'terminate',
+            'synced_at'  => now()->toIso8601String(),
+            'last_error' => $synced ? null : 'Failed to synchronize termination to ERP Backend',
+        ];
+        if ($payment) {
+            $payment->update(['addons_manifest' => $manifest]);
+        }
+
         if (!$synced) {
-            return redirect()->back()->with('error', 'Subscription terminated locally, but ERP cancellation sync failed.');
+            return redirect()->back()->with('error', 'Subscription terminated locally, but ERP cancellation sync failed. You can retry sync.');
         }
 
         return redirect()->back()->with('success', 'Subscription terminated and ERP access revoked successfully.');
@@ -338,15 +369,26 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     // Reactivate (restore term and ERP access)
     Route::post('/subscribers/{id}/reactivate', function ($id) {
         $user = User::findOrFail($id);
-        $payment = Payment::latestPlanForUser($id);
+        $payment = Payment::latestCompletedOrActivePlanForUser($id)
+            ?: Payment::where('user_id', $id)->planSubscriptions()->whereIn('status', ['Terminated', 'terminated', 'Expired', 'expired'])->latest()->first();
+
         $reactivatePlan = $payment ? $payment->package_name : 'ERP Free Starter';
         $manifest = is_array($payment?->addons_manifest) ? $payment->addons_manifest : [];
         $cycle = $manifest['billing_cycle'] ?? 'monthly';
         $days = $cycle === 'annual' ? 365 : 30;
         $expiresAt = now()->addDays($days);
 
+        $manifest['erp_sync'] = [
+            'status'       => 'pending',
+            'action'       => 'reactivate',
+            'attempted_at' => now()->toIso8601String(),
+        ];
         if ($payment) {
-            $payment->update(['expires_at' => $expiresAt, 'status' => 'Completed']);
+            $payment->update([
+                'expires_at'      => $expiresAt,
+                'status'          => 'Completed',
+                'addons_manifest' => $manifest,
+            ]);
         }
 
         // Atomically sync reactivation to ERP Backend
@@ -359,12 +401,62 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             $cycle
         );
 
+        $manifest['erp_sync'] = [
+            'status'     => $synced ? 'synced' : 'failed',
+            'action'     => 'reactivate',
+            'synced_at'  => now()->toIso8601String(),
+            'last_error' => $synced ? null : 'Failed to synchronize reactivation to ERP Backend',
+        ];
+        if ($payment) {
+            $payment->update(['addons_manifest' => $manifest]);
+        }
+
         if (!$synced) {
-            return redirect()->back()->with('error', 'Subscription reactivated locally, but ERP sync failed.');
+            return redirect()->back()->with('error', 'Subscription reactivated locally, but ERP sync failed. You can retry sync.');
         }
 
         return redirect()->back()->with('success', 'Subscription reactivated and restored in ERP successfully.');
     })->name('subscribers.reactivate');
+
+    // Retry synchronization with ERP Backend for a subscriber
+    Route::post('/subscribers/{id}/retry-sync', function ($id) {
+        $user = User::findOrFail($id);
+        $payment = Payment::latestCompletedOrActivePlanForUser($id) ?: Payment::latestPlanForUser($id);
+        if (!$payment) {
+            return redirect()->back()->with('error', "No plan subscription found for {$user->name}.");
+        }
+
+        $manifest = is_array($payment->addons_manifest) ? $payment->addons_manifest : [];
+        $cycle = $manifest['billing_cycle'] ?? 'monthly';
+        $isActive = in_array(strtolower((string)$payment->status), ['completed', 'active']) 
+            && $payment->expires_at 
+            && $payment->expires_at->isFuture();
+        $status = $isActive ? 'active' : 'suspended';
+        $action = $isActive ? 'update' : 'terminate';
+
+        $synced = syncErpSubscriptionToBackend(
+            $user->email,
+            $payment->package_name,
+            $status,
+            $payment->expires_at?->toIso8601String(),
+            $action,
+            $cycle
+        );
+
+        $manifest['erp_sync'] = [
+            'status'       => $synced ? 'synced' : 'failed',
+            'synced_at'    => now()->toIso8601String(),
+            'attempted_at' => now()->toIso8601String(),
+            'last_error'   => $synced ? null : 'ERP backend unreachable or rejected request',
+        ];
+        $payment->update(['addons_manifest' => $manifest]);
+
+        if ($synced) {
+            return redirect()->back()->with('success', "ERP subscription successfully synced for {$user->name}.");
+        }
+
+        return redirect()->back()->with('error', "ERP subscription sync failed for {$user->name}. Check backend connection.");
+    })->name('subscribers.retry-sync');
 
     Route::get('/transactions', function () {
         return Inertia::render('Admin/Transactions', [

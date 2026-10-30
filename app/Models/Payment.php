@@ -58,6 +58,14 @@ class Payment extends Model
     }
 
     /**
+     * Scope query to completed or active plan records regardless of expiry date.
+     */
+    public function scopeCompletedOrActive($query)
+    {
+        return $query->whereIn('status', ['Completed', 'completed', 'active', 'Active']);
+    }
+
+    /**
      * Determine if this transaction represents an ERP plan subscription.
      */
     public function isPlanSubscription(): bool
@@ -67,10 +75,44 @@ class Payment extends Model
     }
 
     /**
-     * Retrieve the latest plan subscription payment for a given user.
+     * Retrieve the latest active (paid and unexpired) plan subscription for a user.
      */
-    public static function latestPlanForUser($userId)
+    public static function latestActivePlanForUser($userId)
     {
+        return static::where('user_id', $userId)
+            ->planSubscriptions()
+            ->active()
+            ->latest('expires_at')
+            ->first();
+    }
+
+    /**
+     * Retrieve the latest completed/paid plan subscription for a user.
+     */
+    public static function latestCompletedOrActivePlanForUser($userId)
+    {
+        return static::where('user_id', $userId)
+            ->planSubscriptions()
+            ->completedOrActive()
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Retrieve the plan subscription payment for a given user.
+     * Prioritizes paid/completed plan records over unpaid pending/failed attempts.
+     */
+    public static function latestPlanForUser($userId, bool $requirePaid = false)
+    {
+        if ($requirePaid) {
+            return static::latestCompletedOrActivePlanForUser($userId);
+        }
+
+        $paid = static::latestCompletedOrActivePlanForUser($userId);
+        if ($paid) {
+            return $paid;
+        }
+
         return static::where('user_id', $userId)
             ->planSubscriptions()
             ->latest()

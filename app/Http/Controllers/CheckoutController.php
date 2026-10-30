@@ -150,6 +150,12 @@ class CheckoutController extends Controller
 
                     // Sync to ERP Backend ONLY if this is a plan subscription order (NEVER sync standalone service orders)
                     if ($payment->isPlanSubscription() && $payment->user && function_exists('syncErpSubscriptionToBackend')) {
+                        $manifest['erp_sync'] = [
+                            'status'       => 'pending',
+                            'attempted_at' => now()->toIso8601String(),
+                        ];
+                        $payment->update(['addons_manifest' => $manifest]);
+
                         $synced = syncErpSubscriptionToBackend(
                             $payment->user->email,
                             $payment->package_name,
@@ -160,8 +166,9 @@ class CheckoutController extends Controller
                         );
 
                         $manifest['erp_sync'] = [
-                            'status'    => $synced ? 'synced' : 'failed',
-                            'synced_at' => now()->toIso8601String(),
+                            'status'     => $synced ? 'synced' : 'failed',
+                            'synced_at'  => now()->toIso8601String(),
+                            'last_error' => $synced ? null : 'ERP backend unreachable during webhook callback',
                         ];
                         $payment->update(['addons_manifest' => $manifest]);
                     }

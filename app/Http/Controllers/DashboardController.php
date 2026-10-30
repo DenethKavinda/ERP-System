@@ -26,9 +26,11 @@ class DashboardController extends Controller
         $activeSubscription = null;
 
         if ($user) {
-            $latestPayment = Payment::latestPlanForUser($user->id);
+            $paidPayment = Payment::latestCompletedOrActivePlanForUser($user->id);
+            $latestPayment = $paidPayment ?: Payment::latestPlanForUser($user->id);
 
-            $planName = $latestPayment ? $latestPayment->package_name : 'ERP Free Starter';
+            // Use paid plan name if paid; otherwise default to ERP Free Starter (never show unpaid pending order)
+            $planName = $paidPayment ? $paidPayment->package_name : 'ERP Free Starter';
             
             // Clean billing cycle suffixes (e.g. " (Monthly)", " (Annual Prepay)", " (Yearly)")
             $cleanPlanName = preg_replace('/\s*\((Monthly|Yearly|Annual|Annual Prepay)\)/i', '', $planName);
@@ -71,17 +73,17 @@ class DashboardController extends Controller
 
             $isAdmin = $user->role === 'admin';
 
-            $isActive = $isAdmin || ($latestPayment 
-                && $latestPayment->status === 'Completed' 
-                && $latestPayment->expires_at 
-                && $latestPayment->expires_at->isFuture());
+            $isActive = $isAdmin || ($paidPayment 
+                && in_array(strtolower($paidPayment->status), ['completed', 'active']) 
+                && $paidPayment->expires_at 
+                && $paidPayment->expires_at->isFuture());
 
             $activeSubscription = [
                 'plan_name'   => $isAdmin ? 'Nexus ERP Administrator' : $planName,
-                'order_id'    => $isAdmin ? 'ADMIN_ACCESS' : ($latestPayment ? $latestPayment->order_id : 'TRIAL'),
-                'expires_at'  => $isAdmin ? null : ($latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : null),
+                'order_id'    => $isAdmin ? 'ADMIN_ACCESS' : ($paidPayment ? $paidPayment->order_id : ($latestPayment ? $latestPayment->order_id : 'TRIAL')),
+                'expires_at'  => $isAdmin ? null : ($paidPayment && $paidPayment->expires_at ? $paidPayment->expires_at->toIso8601String() : null),
                 'is_active'   => (bool)$isActive,
-                'status'      => $isActive ? 'active' : 'expired',
+                'status'      => $isActive ? 'active' : ($paidPayment ? 'expired' : 'trial'),
                 'limits'      => $isAdmin ? [
                     'branches'   => 'Unlimited',
                     'warehouses' => 'Unlimited',

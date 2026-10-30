@@ -154,7 +154,7 @@ class DatabaseSeeder extends Seeder
                 'badge_text' => 'Enterprise Scale',
                 'inherited_from' => 'ERP Professional Growth',
                 'suitable_for' => 'Department Chains, Large Wholesalers & Manufacturers',
-                'features' => 'Platform Security Audit Logging, Granular Custom Roles & Permission Control, External App & API Integrations, Service Master & Custom Invoicing, 99.9% Uptime SLA & Dedicated TAM, 24/7 Priority Emergency Support',
+                'features' => 'Platform Security Audit Logging, Granular Custom Roles & Permission Control, Dedicated Physically Isolated Database Instance, Service Master & Custom Invoicing, 99.9% Uptime SLA & Dedicated TAM, 24/7 Priority Emergency Support',
                 'benefits' => 'Dedicated Account Manager, 99.9% Uptime SLA, Unlimited Scaling & Priority Support',
                 'rating' => '5.0',
                 'youtube_id' => 'dQw4w9WgXcQ',

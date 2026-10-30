@@ -15,13 +15,7 @@ class landingController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $latestPayment = $user
-            ? Payment::where('user_id', $user->id)
-                ->planSubscriptions()
-                ->whereIn('status', ['Completed', 'completed', 'active', 'Active'])
-                ->latest()
-                ->first()
-            : null;
+        $latestPayment = $user ? Payment::latestCompletedOrActivePlanForUser($user->id) : null;
 
         $planName = $latestPayment ? $latestPayment->package_name : ($user ? 'ERP Free Starter' : null);
         

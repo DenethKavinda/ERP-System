@@ -36,13 +36,8 @@ class HandleInertiaRequests extends Middleware
             if ($user->role === 'admin') {
                 $isSubscriptionActive = true;
             } else {
-                $latestPayment = \App\Models\Payment::latestPlanForUser($user->id);
-                $isSubscriptionActive = (bool)(
-                    $latestPayment 
-                    && in_array(strtolower((string)$latestPayment->status), ['completed', 'active']) 
-                    && $latestPayment->expires_at 
-                    && $latestPayment->expires_at->isFuture()
-                );
+                $activePayment = \App\Models\Payment::latestActivePlanForUser($user->id);
+                $isSubscriptionActive = (bool) $activePayment;
             }
         }
 

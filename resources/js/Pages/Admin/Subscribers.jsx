@@ -137,6 +137,10 @@ export default function Subscribers({ auth, subscribers = [], packages = [], fla
         router.post(`/admin/subscribers/${userId}/reactivate`, {}, { preserveScroll: true });
     };
 
+    const handleRetrySync = (userId) => {
+        router.post(`/admin/subscribers/${userId}/retry-sync`, {}, { preserveScroll: true });
+    };
+
     const stats = useMemo(() => {
         const total = subscribers.length;
         const active = subscribers.filter((s) => s.is_active).length;
@@ -396,7 +400,17 @@ export default function Subscribers({ auth, subscribers = [], packages = [], fla
                                                     </span>
                                                     {sub.sync_status === 'failed' && (
                                                         <span className="block mt-1 text-[9px] font-bold text-red-600 dark:text-red-400">
-                                                            ERP Sync Failed
+                                                            Sync Failed
+                                                        </span>
+                                                    )}
+                                                    {sub.sync_status === 'unknown' && (
+                                                        <span className="block mt-1 text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                                                            Sync Unknown
+                                                        </span>
+                                                    )}
+                                                    {sub.sync_status === 'synced' && (
+                                                        <span className="block mt-1 text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
+                                                            ERP Synced
                                                         </span>
                                                     )}
                                                 </td>
@@ -439,6 +453,15 @@ export default function Subscribers({ auth, subscribers = [], packages = [], fla
                                                         >
                                                             UPDATE PLAN
                                                         </button>
+                                                        {sub.sync_status !== 'synced' && sub.plan_name !== 'No Plan' && (
+                                                            <button
+                                                                onClick={() => handleRetrySync(sub.id)}
+                                                                className="px-2.5 py-1 text-[10px] font-bold bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-400 cursor-pointer"
+                                                                title="Retry ERP subscription sync"
+                                                            >
+                                                                RETRY SYNC
+                                                            </button>
+                                                        )}
                                                         {sub.is_active ? (
                                                             <button
                                                                 onClick={() => handleTerminate(sub.id)}
