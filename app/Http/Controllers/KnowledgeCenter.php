@@ -123,7 +123,16 @@ class KnowledgeCenter extends Controller
     {
         $doc = KnowledgeDoc::findOrFail($id);
 
-        if (!in_array($doc->type, ['pdf', 'text', 'image']) || !$doc->file_url) {
+        if (!$doc->file_url) {
+            abort(404, 'No asset URL associated with this document.');
+        }
+
+        // Support external URL links / remote documents (fixes F-72)
+        if (filter_var($doc->file_url, FILTER_VALIDATE_URL) && !str_contains($doc->file_url, request()->getHost())) {
+            return redirect()->away($doc->file_url);
+        }
+
+        if (!in_array($doc->type, ['pdf', 'text', 'image'])) {
             abort(400, 'This node asset format type does not support storage file streaming streams.');
         }
 

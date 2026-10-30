@@ -13,6 +13,8 @@ export default function Dashboard({
     erpLoginEmail = null,
     erpProvisioned = false,
     flashPlanName = null,
+    requestedPaidPlan = null,
+    requestedBillingCycle = "monthly",
 }) {
     // UI Theme state controls
     const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -247,9 +249,9 @@ export default function Dashboard({
                                     <span>Launch ERP Workspace</span>
                                 </a>
 
-                                {/* PROP-BOUND TOTAL SECURED TO RETRIEVE ACCURATE TRANSACTIONS */}
+                                {/* Download receipt PDF strictly by verified order_id */}
                                 <a
-                                    href={`/checkout/receipt/download?order_id=${paymentSuccessData.order_id}&package_name=${encodeURIComponent(paymentSuccessData.package_name)}&total_amount=${paymentSuccessData.amount}`}
+                                    href={`/checkout/receipt/download?order_id=${paymentSuccessData.order_id}`}
                                     className="w-full md:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
                                 >
                                     <svg
@@ -274,6 +276,42 @@ export default function Dashboard({
                                 >
                                     Dismiss
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ==========================================================
+                    PENDING PAID PLAN ACTIVATION BANNER (F-68 RESOLUTION)
+                ========================================================== */}
+                {requestedPaidPlan && !paymentSuccessData && (
+                    <div className="max-w-7xl mx-auto px-4 md:px-8 mt-6 animate-fadeIn">
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 border border-amber-300 dark:border-amber-800 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                            <div className="flex items-start gap-4 text-center md:text-left">
+                                <div className="p-3 bg-amber-500 text-white rounded-full mx-auto md:mx-0 shadow-sm shrink-0">
+                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="font-black text-amber-950 dark:text-amber-400 text-base">
+                                        Pending Subscription Activation: {flashPlanName || requestedPaidPlan.toUpperCase()}
+                                    </h3>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                                        Your account is active on the 30-Day Free Starter Evaluation. Complete checkout to immediately activate your selected tier and unlock enhanced branch and user limits.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="w-full md:w-auto shrink-0 flex flex-wrap gap-3">
+                                <a
+                                    href={`/ERP?checkout=${encodeURIComponent(requestedPaidPlan)}&cycle=${encodeURIComponent(requestedBillingCycle || 'monthly')}`}
+                                    className="w-full md:w-auto px-5 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+                                >
+                                    <span>Complete Payment</span>
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -768,6 +806,55 @@ export default function Dashboard({
                                         Create Account
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ================= CENTRAL OPERATIONS QUICK ACCESS CARDS (F-51 RESOLUTION) ================= */}
+                    {navigationCards && navigationCards.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className={`text-xs font-black uppercase tracking-wider ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+                                    Central Operations & Quick Access
+                                </h3>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                    {navigationCards.length} Portals Available
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {navigationCards.map((card) => (
+                                    <div
+                                        key={card.id || card.name}
+                                        className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between hover:scale-[1.01] ${
+                                            isDarkMode
+                                                ? "bg-slate-900/80 border-slate-800 hover:border-slate-700"
+                                                : "bg-white border-slate-200/90 hover:border-orange-300 shadow-xs"
+                                        }`}
+                                    >
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className={`font-bold text-sm ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+                                                    {card.name}
+                                                </h4>
+                                                <div className="w-2 h-2 rounded-full bg-orange-500/80" />
+                                            </div>
+                                            <p className={`text-xs line-clamp-2 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                                                {card.description}
+                                            </p>
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                                            <a
+                                                href={card.path}
+                                                className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-orange-500 hover:text-orange-600 transition-colors"
+                                            >
+                                                <span>{card.button_text || "Open"}</span>
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}

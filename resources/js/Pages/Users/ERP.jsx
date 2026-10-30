@@ -42,7 +42,8 @@ export default function ERP({ auth, packages = [] }) {
                 const found = packages.find(
                     (p) =>
                         p.name.toLowerCase().includes(checkoutParam.toLowerCase()) ||
-                        String(p.id) === checkoutParam
+                        String(p.id) === checkoutParam ||
+                        (p.code && p.code.toLowerCase() === checkoutParam.toLowerCase())
                 );
                 if (found) {
                     setSelectedPackage(found);

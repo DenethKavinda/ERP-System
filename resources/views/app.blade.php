@@ -8,6 +8,17 @@
 
     <title inertia>{{ config('app.name', 'Nexus ERP') }}</title>
 
+    <!-- SEO & Open Graph Metadata (F-85 Resolution) -->
+    <meta name="description" content="Nexus ERP by CodeXpress IT Solutions — High-speed POS billing, multi-branch inventory, and cloud enterprise resource planning in Sri Lanka.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Nexus ERP Portal">
+    <meta property="og:title" content="Nexus ERP — Enterprise Cloud Resource Planning & POS">
+    <meta property="og:description" content="High-speed POS billing, dual-location stock management, purchases, supplier GRN, and multi-branch accounting.">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Nexus ERP — Enterprise Cloud Resource Planning & POS">
+    <meta name="twitter:description" content="High-speed POS billing, dual-location stock management, purchases, supplier GRN, and multi-branch accounting.">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

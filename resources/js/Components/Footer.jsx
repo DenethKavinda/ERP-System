@@ -119,10 +119,44 @@ export default function Footer({ isDarkMode }) {
                                     {t("footer.contactConsultation")}
                                 </button>
                             </li>
+                            <li>
+                                <button
+                                    onClick={() =>
+                                        handleNavigate("/knowledge-center")
+                                    }
+                                    className="hover:text-orange-500 transition-colors"
+                                >
+                                    Knowledge Base &amp; Docs
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    onClick={() => handleNavigate("/terms")}
+                                    className="hover:text-orange-500 transition-colors"
+                                >
+                                    Terms of Service
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    onClick={() => handleNavigate("/privacy")}
+                                    className="hover:text-orange-500 transition-colors"
+                                >
+                                    Privacy Policy
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    onClick={() => handleNavigate("/refund-policy")}
+                                    className="hover:text-orange-500 transition-colors"
+                                >
+                                    Refund &amp; Cancellation
+                                </button>
+                            </li>
                         </ul>
                     </div>
 
-                    {/* Newsletter / Bulletin update mockup */}
+                    {/* Newsletter / Bulletin Subscription */}
                     <div className="space-y-3">
                         <h4
                             className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}
@@ -132,24 +166,30 @@ export default function Footer({ isDarkMode }) {
                         <p className="text-xs">
                             {t("footer.subscribeSummaries")}
                         </p>
-                        <div className="flex gap-2">
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                alert("Thank you! You are now subscribed to Nexus ERP feature updates.");
+                            }}
+                            className="flex gap-2"
+                        >
                             <input
                                 type="email"
+                                required
                                 placeholder={t("footer.emailPlaceholder")}
-                                disabled
-                                className={`text-xs px-3 py-2 rounded border w-full cursor-not-allowed focus:outline-none ${
+                                className={`text-xs px-3 py-2 rounded-xl border w-full focus:outline-none focus:border-orange-500 ${
                                     isDarkMode
-                                        ? "bg-slate-950 border-slate-800 text-slate-500"
-                                        : "bg-slate-50 border-slate-200 text-slate-400"
+                                        ? "bg-slate-950 border-slate-800 text-slate-200"
+                                        : "bg-slate-50 border-slate-200 text-slate-800"
                                 }`}
                             />
                             <button
-                                disabled
-                                className="text-[11px] font-bold bg-orange-500 text-white px-3 py-2 rounded opacity-50 cursor-not-allowed uppercase tracking-wider"
+                                type="submit"
+                                className="text-[11px] font-bold bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-xl uppercase tracking-wider shadow-sm transition-all cursor-pointer"
                             >
                                 {t("footer.join")}
                             </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
 

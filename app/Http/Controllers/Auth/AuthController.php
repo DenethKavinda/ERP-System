@@ -47,14 +47,15 @@ class AuthController extends Controller
 
         // Create the portal user
         $user = new User();
-        $user->nic           = $validated['nic'];
-        $user->name          = $validated['name'];
-        $user->business_name = $validated['business_name'] ?? null;
-        $user->address       = $validated['address'];
-        $user->mobile_number = $validated['mobile_number'];
-        $user->email         = $validated['email'];
-        $user->password      = $hashedPassword;
-        $user->role          = 'user';
+        $user->nic               = $validated['nic'];
+        $user->name              = $validated['name'];
+        $user->business_name     = $validated['business_name'] ?? null;
+        $user->address           = $validated['address'];
+        $user->mobile_number     = $validated['mobile_number'];
+        $user->email             = $validated['email'];
+        $user->password          = $hashedPassword;
+        $user->role              = 'user';
+        $user->email_verified_at = now();
         $user->save();
 
         Auth::login($user);
@@ -63,7 +64,7 @@ class AuthController extends Controller
         $cycle = $request->input('cycle', 'monthly');
 
         // All public registrations begin as Free Starter 30-Day Evaluation Workspace.
-        // Paid tiers are activated manually by the Admin after offline bank payment verification.
+        // Paid tiers are activated upon payment completion via PayHere or admin verification.
         $plan = 'free';
         $planName = 'ERP Free Starter';
 
@@ -106,12 +107,28 @@ class AuthController extends Controller
             Log::error('Failed to send ERP credentials email: ' . $e->getMessage());
         }
 
+        // If the user registered for a paid plan, take them directly to the pricing page to complete checkout
+        if ($requestedPlan !== 'free') {
+            $targetPkg = ErpPackage::where('code', $requestedPlan)->first();
+            $targetPkgName = $targetPkg ? $targetPkg->name : ucfirst($requestedPlan);
+
+            return redirect()->to('/ERP?checkout=' . urlencode($requestedPlan) . '&cycle=' . urlencode($cycle))->with([
+                'new_account_activated'   => true,
+                'erp_login_email'         => $user->email,
+                'erp_provisioned'         => $erpProvisioned,
+                'plan_name'               => $targetPkgName,
+                'requested_paid_plan'     => $requestedPlan,
+                'requested_billing_cycle' => $cycle,
+                'success'                 => "Account created successfully! Please complete checkout below to activate your {$targetPkgName} subscription.",
+            ]);
+        }
+
         return redirect()->route('dashboard')->with([
-            'new_account_activated' => true,
-            'erp_login_email'       => $user->email,
-            'erp_provisioned'       => $erpProvisioned,
-            'plan_name'             => $planName,
-            'requested_paid_plan'   => ($requestedPlan !== 'free') ? $requestedPlan : null,
+            'new_account_activated'   => true,
+            'erp_login_email'         => $user->email,
+            'erp_provisioned'         => $erpProvisioned,
+            'plan_name'               => $planName,
+            'requested_paid_plan'     => null,
         ]);
     }
 

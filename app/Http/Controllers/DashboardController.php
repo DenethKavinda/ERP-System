@@ -106,7 +106,9 @@ class DashboardController extends Controller
             'newAccountActivated'=> session('new_account_activated', false),
             'erpLoginEmail'      => session('erp_login_email'),
             'erpProvisioned'     => session('erp_provisioned', false),
-            'flashPlanName'      => session('plan_name'),
+            'flashPlanName'         => session('plan_name'),
+            'requestedPaidPlan'     => session('requested_paid_plan'),
+            'requestedBillingCycle' => session('requested_billing_cycle', 'monthly'),
 
             // Flash payment info for receipt download
             'flashPayment' => [

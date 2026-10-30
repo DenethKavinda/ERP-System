@@ -160,7 +160,7 @@ const translations = {
         dualLocation: { en: "Dual-Location & Multi-Branch Inventory", si: "ද්වි-ස්ථාන සහ බහු-ශාඛා ඉන්වෙන්ටරි" },
         realTimeApprovals: { en: "Real-Time Approvals & Governance", si: "තත්‍ය කාලීන අනුමත කිරීම් සහ පාලනය" },
         financials: { en: "Financials, Ledgers & Profit Tracking", si: "මූල්‍ය, ලේජර් සහ ලාභ නිරීක්ෂණය" },
-        infrastructure: { en: "Infrastructure, APIs & Enterprise SLAs", si: "යටිතල පහසුකම්, API සහ ව්‍යවසාය SLA" },
+        infrastructure: { en: "Infrastructure, Dedicated Architecture & SLAs", si: "යටිතල පහසුකම්, කැපවූ ආකෘතිය සහ SLAs" },
     },
 
     // ==================== FEATURE MATRIX ROW LABELS ====================
@@ -187,10 +187,10 @@ const translations = {
         multiBranchProfit: { en: "Multi-Branch Net Profit & Loss Reports", si: "බහු-ශාඛා ශුද්ධ ලාභ සහ අලාභ වාර්තා" },
         branchLevelScoping: { en: "Branch-Level User Data Scoping", si: "ශාඛා-මට්ටම් පරිශීලක දත්ත පරාසය" },
         phoneWhatsapp: { en: "Phone & WhatsApp Priority Support", si: "දුරකථන සහ WhatsApp ප්‍රමුඛතා සහාය" },
-        dedicatedDatabase: { en: "Dedicated Physically Isolated Database", si: "කැපවූ භෞතිකව හුදකලා දත්ත සමුදාය" },
-        securityAuditTrail: { en: "Complete Immutable Security Audit Trail", si: "සම්පූර්ණ වෙනස් කළ නොහැකි ආරක්ෂක විගණන මාර්ගය" },
-        whiteLabelPortal: { en: "White-Label Portal & Custom Domain", si: "වයිට්-ලේබල් පෝර්ටලය සහ අභිරුචි ඩොමේනය" },
-        restApiIntegration: { en: "External REST API Integration", si: "බාහිර REST API ඒකාබද්ධ කිරීම" },
+        dedicatedDatabase: { en: "Dedicated Isolated Cloud Architecture", si: "කැපවූ හුදකලා ක්ලවුඩ් ආකෘතිය" },
+        securityAuditTrail: { en: "Platform Security Audit Logging", si: "වේදිකා ආරක්ෂක විගණන ලොග් කිරීම" },
+        whiteLabelPortal: { en: "Granular Per-Module RBAC Permissions", si: "මොඩියුල අනුව සවිස්තරාත්මක RBAC අවසර" },
+        restApiIntegration: { en: "Unlimited Branch & Warehouse Scaling", si: "අසීමිත ශාඛා සහ ගබඩා පුළුල් කිරීම" },
         serviceMaster: { en: "Service Master & Custom Invoicing", si: "සේවා මාස්ටර් සහ අභිරුචි ඉන්වොයිස්" },
         uptimeSla: { en: "99.9% Uptime SLA & Dedicated TAM", si: "99.9% සක්‍රීයතා SLA සහ කැපවූ TAM" },
         emergencySupport: { en: "24/7 Priority Emergency Support", si: "24/7 ප්‍රමුඛතා හදිසි සහාය" },

@@ -43,11 +43,18 @@ class landingController extends Controller
                 ];
             }
 
+            $isAdmin = $user->role === 'admin';
+            $isActive = $isAdmin || ($latestPayment 
+                && in_array(strtolower((string)$latestPayment->status), ['completed', 'active']) 
+                && $latestPayment->expires_at 
+                && $latestPayment->expires_at->isFuture());
+
             $activeSubscription = [
                 'plan_name'   => $planName ?: 'ERP Free Starter',
                 'order_id'    => $latestPayment ? $latestPayment->order_id : 'TRIAL',
                 'expires_at'  => $latestPayment && $latestPayment->expires_at ? $latestPayment->expires_at->toIso8601String() : now()->addDays(30)->toIso8601String(),
-                'is_active'   => true,
+                'is_active'   => (bool)$isActive,
+                'status'      => $isActive ? 'active' : ($latestPayment ? 'expired' : 'trial'),
                 'limits'      => $planLimits,
                 'usage'       => [
                     'branches'   => 1,

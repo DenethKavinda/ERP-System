@@ -59,7 +59,7 @@ export default function Ledger({ auth, transactions = [] }) {
                 `Would you like to renew your subscription for the ${packageName} package?`,
             )
         ) {
-            router.get(`/dashboard?renew=${encodeURIComponent(packageName)}`);
+            router.get(`/ERP?checkout=${encodeURIComponent(packageName)}`);
         }
     };
 

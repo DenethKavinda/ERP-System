@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Http\Controllers\SuccessStoryController;
 use App\Http\Controllers\landingController;
+use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\KnowledgeCenter;
+use App\Http\Controllers\LedgerController;
 
 if (!function_exists('syncErpSubscriptionToBackend')) {
     /**
@@ -79,13 +82,22 @@ if (!function_exists('syncErpSubscriptionToBackend')) {
 Route::get('/', [landingController::class, 'index'])->name('landing');
 Route::get('/dashboard-user', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/ERP', [ErpPackageController::class, 'index'])->name('erp.index');
-Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+Route::get('/services', [ServiceController::class, 'index'])->name('services.public');
 Route::get('/success-stories', [SuccessStoryController::class, 'index'])->name('success.stories.index');
+Route::get('/contact-consultation', fn() => Inertia::render('Users/ContactConsultation'))->name('contact.consultation');
+Route::get('/knowledge-center', [KnowledgeCenter::class, 'viewKnowledgeCenter'])->name('knowledge.public');
+Route::get('/knowledge-center/download/{id}', [KnowledgeCenter::class, 'download'])->name('knowledge.download');
+
+// Public Legal & Policy Pages
+Route::get('/terms', fn() => Inertia::render('Legal/TermsOfService'))->name('legal.terms');
+Route::get('/privacy', fn() => Inertia::render('Legal/PrivacyPolicy'))->name('legal.privacy');
+Route::get('/refund-policy', fn() => Inertia::render('Legal/RefundPolicy'))->name('legal.refund');
 
 // Public Checkout & Billing Endpoints
 Route::post('/checkout/initialize', [CheckoutController::class, 'initialize'])->name('checkout.initialize');
 Route::post('/checkout/services', [CheckoutController::class, 'initializeServices'])->name('checkout.services');
 Route::get('/checkout/receipt/download', [CheckoutController::class, 'downloadReceipt'])->name('receipt.download');
+Route::get('/checkout/receipt/{orderId}', [CheckoutController::class, 'downloadReceiptByOrder'])->name('receipt.download.by-order');
 Route::post('/payhere/webhook', [CheckoutController::class, 'handleWebhook'])->name('payhere.webhook');
 
 // SECURE CALLBACK INTERCEPTOR GATE: PayHere Processing Node Redirect
@@ -114,6 +126,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Customer Financial Ledger / Transaction History (F-03, F-16, F-43)
+    Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger.index');
+
+    // Customer Support Grievance & Complaint Tickets (F-01, F-14, F-27, F-41)
+    Route::get('/complaints', [ComplaintController::class, 'create'])->name('complaints.create');
+    Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::delete('/complaints/user-remove/{id}', [ComplaintController::class, 'userDestroy'])->name('complaints.user-destroy');
+    Route::get('/complaints/download/{id}', [ComplaintController::class, 'downloadUserAttachment'])->name('complaints.download');
+    Route::get('/complaints/reply-download/{id}', [ComplaintController::class, 'downloadReplyAttachment'])->name('complaints.reply-download');
 
     // Submit Customer Success Story / Review
     Route::post('/success-stories', [SuccessStoryController::class, 'store'])->name('success.stories.store');
@@ -165,10 +187,39 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         ]);
     })->name('dashboard');
 
-    // Legacy redirects to keep bookmarks working
-    Route::get('/dashboard-manager', fn() => redirect()->route('admin.dashboard'))->name('dashboard.manager');
-    Route::get('/packages', fn() => redirect()->route('admin.packages.index'))->name('packages.manager');
-    Route::get('/adminservices', fn() => redirect()->route('admin.dashboard'))->name('services.index');
+    // Admin Services Management (F-06, F-21, F-22, F-54)
+    Route::get('/services', [ServiceController::class, 'adminIndex'])->name('services.index');
+    Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
+    Route::put('/services/{id}', [ServiceController::class, 'update'])->name('services.update');
+    Route::delete('/services/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
+    Route::get('/adminservices', fn() => redirect()->route('admin.services.index'));
+
+    // Admin Dashboard Cards Manager (F-04, F-19, F-23, F-55)
+    Route::get('/dashboard-manager', [DashboardController::class, 'adminIndex'])->name('dashboard.manager');
+    Route::post('/dashboard-manager', [DashboardController::class, 'store'])->name('dashboard.store');
+    Route::put('/dashboard-manager/{id}', [DashboardController::class, 'update'])->name('dashboard.update');
+    Route::delete('/dashboard-manager/{id}', [DashboardController::class, 'destroy'])->name('dashboard.destroy');
+
+    // Admin Packages Manager (Legacy Cart & Items) (F-05, F-20, F-24, F-56)
+    Route::get('/packages', [DashboardController::class, 'adminPackagesIndex'])->name('packages.manager');
+    Route::post('/packages/cart', [DashboardController::class, 'storeCart'])->name('packages.cart.store');
+    Route::put('/packages/cart/{id}', [DashboardController::class, 'updateCart'])->name('packages.cart.update');
+    Route::delete('/packages/cart/{id}', [DashboardController::class, 'destroyCart'])->name('packages.cart.destroy');
+    Route::post('/packages/item', [DashboardController::class, 'storePackage'])->name('packages.item.store');
+    Route::put('/packages/item/{id}', [DashboardController::class, 'updatePackage'])->name('packages.item.update');
+    Route::delete('/packages/item/{id}', [DashboardController::class, 'destroyPackage'])->name('packages.item.destroy');
+
+    // Admin Knowledge Base Manager (F-02, F-18, F-26, F-53)
+    Route::get('/knowledge-manager', [KnowledgeCenter::class, 'adminIndex'])->name('knowledge.manager');
+    Route::post('/knowledge-manager', [KnowledgeCenter::class, 'store'])->name('knowledge.store');
+    Route::post('/knowledge-manager/{id}', [KnowledgeCenter::class, 'update'])->name('knowledge.update');
+    Route::delete('/knowledge-manager/{id}', [KnowledgeCenter::class, 'destroy'])->name('knowledge.destroy');
+
+    // Admin Complaints Queue & Resolution (F-01, F-17, F-25, F-52)
+    Route::get('/complaints', [ComplaintController::class, 'adminIndex'])->name('complaints.index');
+    Route::post('/complaints/{id}/reply', [ComplaintController::class, 'storeReply'])->name('complaints.reply');
+    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.status');
+    Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
 
     // Administrative Workspace Engine Routes
     Route::get('/erp-packages', [ErpPackageController::class, 'adminIndex'])->name('packages.index');

@@ -3,7 +3,7 @@ import { Head } from "@inertiajs/react";
 import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
 
-export default function Services({ auth }) {
+export default function Services({ auth, services = [] }) {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== "undefined") {
             return localStorage.getItem("theme") === "dark";
@@ -32,81 +32,130 @@ export default function Services({ auth }) {
                     auth={auth}
                 />
 
-                <main className="max-w-4xl mx-auto p-4 md:p-8 mt-12">
-                    <div
-                        className={`p-8 sm:p-12 rounded-3xl border text-center transition-all duration-300 ${
-                            isDarkMode
-                                ? "bg-slate-900 border-slate-800"
-                                : "bg-white border-slate-200 shadow-sm"
-                        }`}
-                    >
-                        <div className="w-16 h-16 bg-orange-500/10 border border-orange-500/20 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={1.5}
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"
-                                />
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                            </svg>
+                <main className="max-w-6xl mx-auto p-4 md:p-8 mt-12">
+                    {services && services.length > 0 ? (
+                        <div className="space-y-8">
+                            <div className="text-center space-y-2">
+                                <h1 className={`text-3xl font-black ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+                                    ERP Professional Services & Add-ons
+                                </h1>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Expand your Nexus ERP installation with dedicated cloud modules and engineering services.
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {services.map((service) => (
+                                    <div
+                                        key={service.id}
+                                        className={`p-6 rounded-3xl border flex flex-col justify-between ${
+                                            isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+                                        }`}
+                                    >
+                                        <div className="space-y-3">
+                                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                                                {service.category || "Service"}
+                                            </span>
+                                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                                {service.name}
+                                            </h3>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                {service.description}
+                                            </p>
+                                        </div>
+                                        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                            <div>
+                                                <span className="text-[10px] text-slate-400 font-bold block uppercase">Fee</span>
+                                                <span className="text-base font-black text-orange-500">
+                                                    LKR {Number(service.price).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <a
+                                                href="/contact-consultation"
+                                                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+                                            >
+                                                Inquire
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-
-                        <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 bg-orange-500/10 px-3 py-1 rounded-full inline-block mb-4">
-                            Coming Soon
-                        </span>
-
-                        <h1
-                            className={`text-2xl sm:text-3xl font-black tracking-tight mb-3 ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                    ) : (
+                        <div
+                            className={`p-8 sm:p-12 rounded-3xl border text-center transition-all duration-300 ${
+                                isDarkMode
+                                    ? "bg-slate-900 border-slate-800"
+                                    : "bg-white border-slate-200 shadow-sm"
+                            }`}
                         >
-                            ERP Add-on Services
-                        </h1>
-
-                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto mb-8">
-                            We are preparing professional add-on services including capacity expansions, hardware integrations, and technical support packages. These will be available for purchase once fully implemented and tested.
-                        </p>
-
-                        <div className="flex flex-wrap items-center justify-center gap-3">
-                            <a
-                                href="/ERP"
-                                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
-                            >
-                                <span>View ERP Plans</span>
+                            <div className="w-16 h-16 bg-orange-500/10 border border-orange-500/20 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                 <svg
-                                    className="w-4 h-4"
+                                    className="w-8 h-8"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
-                                    strokeWidth={2.2}
+                                    strokeWidth={1.5}
                                 >
                                     <path
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                                        d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"
+                                    />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                                     />
                                 </svg>
-                            </a>
-                            <a
-                                href="/dashboard-user"
-                                className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
-                                    isDarkMode
-                                        ? "border-slate-700 bg-slate-800 hover:bg-slate-700 text-white"
-                                        : "border-slate-200 bg-white hover:bg-slate-50 text-slate-800"
-                                }`}
+                            </div>
+
+                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 bg-orange-500/10 px-3 py-1 rounded-full inline-block mb-4">
+                                Coming Soon
+                            </span>
+
+                            <h1
+                                className={`text-2xl sm:text-3xl font-black tracking-tight mb-3 ${isDarkMode ? "text-white" : "text-slate-900"}`}
                             >
-                                Back to Dashboard
-                            </a>
+                                ERP Add-on Services
+                            </h1>
+
+                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto mb-8">
+                                We are preparing professional add-on services including capacity expansions, hardware integrations, and technical support packages. These will be available for purchase once fully implemented and tested.
+                            </p>
+
+                            <div className="flex flex-wrap items-center justify-center gap-3">
+                                <a
+                                    href="/ERP"
+                                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
+                                >
+                                    <span>View ERP Plans</span>
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2.2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                                        />
+                                    </svg>
+                                </a>
+                                <a
+                                    href="/dashboard-user"
+                                    className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
+                                        isDarkMode
+                                            ? "border-slate-700 bg-slate-800 hover:bg-slate-700 text-white"
+                                            : "border-slate-200 bg-white hover:bg-slate-50 text-slate-800"
+                                    }`}
+                                >
+                                    Back to Dashboard
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </main>
             </div>
 
