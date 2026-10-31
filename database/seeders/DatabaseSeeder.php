@@ -146,7 +146,7 @@ class DatabaseSeeder extends Seeder
                 'price' => 195000.00,
                 'max_branches' => -1,
                 'max_warehouses' => -1,
-                'max_users' => 50,
+                'max_users' => -1, // Unlimited — matches PlanService::PLANS['enterprise']['limits']['max_users']
                 'max_products' => -1,
                 'max_monthly_bills' => -1,
                 'is_popular' => false,

@@ -131,8 +131,8 @@ export default function ERP({ auth, packages = [] }) {
         if (code === "enterprise" || pkgName.includes("Enterprise") || pkgName.includes("Custom")) {
             return [
                 { label: "Unlimited Branches", icon: "store" },
-                { label: "Unlimited Stores", icon: "warehouse" },
-                { label: "50+ Users", icon: "users" },
+                { label: "Unlimited Warehouses", icon: "warehouse" },
+                { label: "Unlimited Users", icon: "users" },
                 { label: "Unlimited Bills", icon: "box" },
             ];
         }
